@@ -104,6 +104,11 @@ section {
   box-shadow: $shadow-card;
 }
 
+.page {
+  padding-top: 150px;
+  min-height: 100vh;
+}
+
 @media (max-width: 768px) {
   section {
     padding: 70px 0;

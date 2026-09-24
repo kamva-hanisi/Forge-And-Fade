@@ -1,0 +1,240 @@
+@use "../../styles/variables" as *;
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+
+  background: rgba(13, 13, 13, 0.94);
+  backdrop-filter: blur(14px);
+
+  border-bottom: 1px solid rgba(201, 154, 91, 0.12);
+
+  &__container {
+    height: 86px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  // -----------------------
+  // Logo
+  // -----------------------
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1001;
+  }
+
+  &__logo-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid $color-gold;
+
+    color: $color-gold;
+
+    transform: rotate(-5deg);
+  }
+
+  &__logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  &__brand {
+    color: $color-text;
+
+    font-family: $font-heading;
+    font-size: 1rem;
+    font-weight: 700;
+
+    letter-spacing: 2px;
+  }
+
+  &__tagline {
+    margin-top: 5px;
+
+    color: $color-gold;
+
+    font-size: 0.58rem;
+    font-weight: 600;
+
+    letter-spacing: 4px;
+  }
+
+  // -----------------------
+  // Navigation
+  // -----------------------
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 38px;
+  }
+
+  &__link {
+    position: relative;
+
+    color: $color-text-muted;
+
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+
+    transition: color $transition;
+
+    &::after {
+      content: "";
+
+      position: absolute;
+
+      left: 0;
+      bottom: -9px;
+
+      width: 0;
+      height: 1px;
+
+      background: $color-gold;
+
+      transition: width $transition;
+    }
+
+    &:hover {
+      color: $color-text;
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
+
+    &.active {
+      color: $color-gold;
+
+      &::after {
+        width: 100%;
+      }
+    }
+  }
+
+  &__book {
+    padding: 12px 24px;
+  }
+
+  &__mobile-book {
+    display: none;
+  }
+
+  &__toggle {
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+
+    color: $color-text;
+  }
+}
+
+// =======================
+// Tablet / Mobile
+// =======================
+
+@media (max-width: 900px) {
+  .navbar {
+    &__container {
+      height: 76px;
+    }
+
+    &__book {
+      display: none;
+    }
+
+    &__toggle {
+      display: flex;
+
+      position: relative;
+      z-index: 1001;
+    }
+
+    &__nav {
+      position: fixed;
+
+      top: 0;
+      right: -100%;
+
+      width: min(320px, 85%);
+      height: 100vh;
+
+      padding: 120px 32px 40px;
+
+      flex-direction: column;
+      align-items: flex-start;
+
+      gap: 28px;
+
+      background: $color-surface;
+
+      border-left: 1px solid $color-border;
+
+      transition: right 0.35s ease;
+
+      &--open {
+        right: 0;
+      }
+    }
+
+    &__link {
+      width: 100%;
+
+      padding-bottom: 12px;
+
+      font-size: 1rem;
+
+      border-bottom: 1px solid $color-border;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    &__mobile-book {
+      display: inline-flex;
+
+      width: 100%;
+
+      margin-top: 10px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    &__logo-icon {
+      width: 37px;
+      height: 37px;
+    }
+
+    &__brand {
+      font-size: 0.85rem;
+    }
+
+    &__tagline {
+      font-size: 0.5rem;
+      letter-spacing: 3px;
+    }
+  }
+}

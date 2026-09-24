@@ -1,6 +1,6 @@
 const About = () => {
   return (
-    <main>
+    <main className="page">
       <section>
         <div className="container">
           <span className="section-label">Our Story</span>
