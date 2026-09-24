@@ -1,0 +1,115 @@
+@use "./variables" as *;
+@use "./reset";
+
+body {
+  background: $color-background;
+  color: $color-text;
+  font-family: $font-body;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.container {
+  width: min(90%, $container-width);
+  margin: 0 auto;
+}
+
+section {
+  padding: 100px 0;
+}
+
+.section-label {
+  color: $color-gold;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.section-title {
+  margin-top: 12px;
+  font-family: $font-heading;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  color: $color-text;
+}
+
+.section-description {
+  margin-top: 20px;
+  max-width: 650px;
+  color: $color-text-muted;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.gold-text {
+  color: $color-gold;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 14px 28px;
+
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  border-radius: $radius-small;
+
+  transition:
+    background $transition,
+    color $transition,
+    border-color $transition,
+    transform $transition;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.btn-primary {
+  background: $color-gold;
+  color: $color-background;
+
+  &:hover {
+    background: $color-gold-light;
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid $color-gold;
+  color: $color-gold;
+
+  &:hover {
+    background: $color-gold;
+    color: $color-background;
+  }
+}
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-medium;
+  box-shadow: $shadow-card;
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 70px 0;
+  }
+
+  .container {
+    width: 92%;
+  }
+}
