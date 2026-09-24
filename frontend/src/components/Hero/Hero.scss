@@ -1,539 +1,102 @@
 @use "../../styles/variables" as *;
 
 .hero {
-  position: relative;
-
   min-height: 100vh;
 
-  padding-top: 86px;
-  padding-bottom: 40px;
+  padding-top: 76px;
 
   display: flex;
+
   align-items: center;
 
-  overflow: hidden;
-
-  background:
-    radial-gradient(
-      circle at 80% 30%,
-      rgba(201, 154, 91, 0.08),
-      transparent 32%
-    ),
-    $color-background;
-
-  &__background {
-    position: absolute;
-
-    inset: 0;
-
-    pointer-events: none;
-
-    background-image:
-      linear-gradient(
-        rgba(255, 255, 255, 0.018) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.018) 1px,
-        transparent 1px
-      );
-
-    background-size: 70px 70px;
-
-    mask-image:
-      linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.7),
-        transparent
-      );
-  }
+  background: $cream;
 
   &__container {
-    position: relative;
-    z-index: 2;
-
     display: grid;
 
-    grid-template-columns:
-      minmax(0, 1.05fr)
-      minmax(380px, 0.95fr);
+    grid-template-columns: 1fr 1fr;
 
     align-items: center;
 
-    gap: 90px;
+    gap: 70px;
   }
-
-  // ======================
-  // LEFT
-  // ======================
 
   &__content {
-    padding: 80px 0;
-  }
+    max-width: 600px;
 
-  &__eyebrow {
-    margin-bottom: 28px;
-
-    display: flex;
-    align-items: center;
-    gap: 14px;
-
-    color: $color-gold;
-
-    font-size: 0.72rem;
-    font-weight: 600;
-
-    letter-spacing: 3px;
-    text-transform: uppercase;
-
-    span {
-      width: 42px;
-      height: 1px;
-
-      background: $color-gold;
-    }
-  }
-
-  &__title {
-    max-width: 750px;
-
-    color: $color-text;
-
-    font-family: $font-heading;
-
-    font-size: clamp(
-      3.5rem,
-      7vw,
-      6.8rem
-    );
-
-    font-weight: 400;
-
-    line-height: 0.97;
-
-    letter-spacing: -3px;
-
-    span {
-      color: $color-gold;
-      font-style: italic;
-    }
-  }
-
-  &__description {
-    margin-top: 30px;
-
-    max-width: 570px;
-
-    color: $color-text-muted;
-
-    font-size: 1.06rem;
-
-    line-height: 1.9;
-  }
-
-  &__actions {
-    margin-top: 40px;
-
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-
-    gap: 16px;
-  }
-
-  &__primary {
-    min-width: 190px;
-  }
-
-  // ======================
-  // Hero Information
-  // ======================
-
-  &__info {
-    margin-top: 65px;
-
-    padding-top: 30px;
-
-    display: flex;
-    flex-wrap: wrap;
-
-    gap: 50px;
-
-    border-top: 1px solid $color-border;
-  }
-
-  &__info-item {
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    color: $color-gold;
-
-    div {
-      display: flex;
-      flex-direction: column;
-
-      gap: 2px;
-    }
-
-    span {
-      color: $color-text-muted;
-
-      font-size: 0.68rem;
-
-      letter-spacing: 1.5px;
-
-      text-transform: uppercase;
-    }
-
-    strong {
-      color: $color-text;
-
-      font-size: 0.82rem;
-      font-weight: 500;
-    }
-  }
-
-  // ======================
-  // RIGHT VISUAL
-  // ======================
-
-  &__visual {
-    position: relative;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &__image-frame {
-    position: relative;
-
-    width: min(100%, 480px);
-
-    aspect-ratio: 0.78;
-
-    padding: 12px;
-
-    border: 1px solid
-      rgba(201, 154, 91, 0.38);
-
-    &::before {
-      content: "";
-
-      position: absolute;
-
-      top: -18px;
-      right: -18px;
-
-      width: 75%;
-      height: 75%;
-
-      border-top: 1px solid
-        rgba(201, 154, 91, 0.22);
-
-      border-right: 1px solid
-        rgba(201, 154, 91, 0.22);
-    }
-  }
-
-  &__image-placeholder {
-    width: 100%;
-    height: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background:
-      radial-gradient(
-        circle,
-        rgba(201, 154, 91, 0.14),
-        transparent 45%
-      ),
-      linear-gradient(
-        145deg,
-        #202020,
-        #111111
-      );
-
-    border: 1px solid $color-border;
-  }
-
-  // Temporary logo until we add barber photography
-  &__monogram {
-    width: 170px;
-    height: 170px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 15px;
-
-    border: 1px solid
-      rgba(201, 154, 91, 0.45);
-
-    border-radius: 50%;
-
-    color: $color-gold;
-
-    font-family: $font-heading;
-
-    font-size: 3rem;
-
-    span:last-child {
-      transform: scaleX(-1);
-    }
-  }
-
-  &__monogram-line {
-    width: 1px;
-    height: 80px;
-
-    background: rgba(
-      201,
-      154,
-      91,
-      0.45
-    );
-
-    transform: rotate(20deg);
-  }
-
-  // ======================
-  // Floating Booking Card
-  // ======================
-
-  &__booking-card {
-    position: absolute;
-
-    left: -45px;
-    bottom: 45px;
-
-    min-width: 260px;
-
-    padding: 18px 20px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    background: rgba(
-      23,
-      23,
-      23,
-      0.96
-    );
-
-    border: 1px solid $color-border;
-
-    box-shadow: $shadow-card;
-
-    backdrop-filter: blur(10px);
-
-    div:last-child {
-      display: flex;
-      flex-direction: column;
-
-      gap: 2px;
-    }
-
-    span {
-      color: $color-text-muted;
-
-      font-size: 0.66rem;
-
-      letter-spacing: 1px;
-
-      text-transform: uppercase;
-    }
-
-    strong {
-      color: $color-text;
-
+    h1 {
       font-family: $font-heading;
 
-      font-size: 1rem;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+
       font-weight: 500;
+
+      line-height: 1;
+
+      span {
+        color: $gold;
+      }
+    }
+
+    p {
+      margin-top: 24px;
+
+      max-width: 520px;
+
+      color: $text-light;
+
+      font-size: 1rem;
+
+      line-height: 1.8;
     }
   }
 
-  &__booking-icon {
-    width: 42px;
-    height: 42px;
+  &__buttons {
+    margin-top: 32px;
 
     display: flex;
-    align-items: center;
-    justify-content: center;
 
-    flex-shrink: 0;
+    gap: 12px;
 
-    background: $color-gold;
-
-    color: $color-background;
+    flex-wrap: wrap;
   }
 
-  // ======================
-  // EST text
-  // ======================
+  &__image {
+    height: 580px;
 
-  &__outline-text {
-    position: absolute;
+    img {
+      width: 100%;
+      height: 100%;
 
-    top: 12%;
-    right: -80px;
+      display: block;
 
-    color: transparent;
-
-    -webkit-text-stroke:
-      1px rgba(201, 154, 91, 0.17);
-
-    font-family: $font-heading;
-
-    font-size: 4.8rem;
-
-    letter-spacing: 8px;
-
-    writing-mode: vertical-rl;
-
-    user-select: none;
-  }
-
-  // ======================
-  // Bottom Scroll
-  // ======================
-
-  &__scroll {
-    position: absolute;
-
-    left: 50%;
-    bottom: 22px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    transform: translateX(-50%);
-
-    span {
-      color: #666;
-
-      font-size: 0.55rem;
-
-      letter-spacing: 3px;
-    }
-  }
-
-  &__scroll-line {
-    width: 40px;
-    height: 1px;
-
-    background: #555;
-  }
-}
-
-// ======================
-// Responsive
-// ======================
-
-@media (max-width: 1100px) {
-  .hero {
-    &__container {
-      gap: 45px;
-
-      grid-template-columns:
-        minmax(0, 1fr)
-        minmax(330px, 0.8fr);
-    }
-
-    &__title {
-      font-size: clamp(
-        3.2rem,
-        7vw,
-        5.3rem
-      );
-    }
-
-    &__booking-card {
-      left: -25px;
+      object-fit: cover;
     }
   }
 }
 
 @media (max-width: 850px) {
   .hero {
-    padding-top: 76px;
+    padding-top: 120px;
+    padding-bottom: 60px;
+
+    min-height: auto;
 
     &__container {
       grid-template-columns: 1fr;
 
-      gap: 20px;
+      gap: 45px;
     }
 
-    &__content {
-      padding-top: 80px;
-      padding-bottom: 40px;
-    }
-
-    &__description {
-      max-width: 620px;
-    }
-
-    &__visual {
-      padding: 20px 0 100px;
-    }
-
-    &__image-frame {
-      width: min(90%, 480px);
-    }
-
-    &__booking-card {
-      left: -20px;
-    }
-
-    &__outline-text {
-      right: -30px;
-    }
-
-    &__scroll {
-      display: none;
+    &__image {
+      height: 420px;
     }
   }
 }
 
-@media (max-width: 580px) {
+@media (max-width: 500px) {
   .hero {
-    &__content {
-      padding-top: 60px;
-    }
-
-    &__eyebrow {
-      font-size: 0.62rem;
-
-      letter-spacing: 2px;
-    }
-
-    &__title {
-      font-size: clamp(
-        3rem,
-        15vw,
-        4.3rem
-      );
-
-      letter-spacing: -2px;
-    }
-
-    &__description {
-      font-size: 0.95rem;
-    }
-
-    &__actions {
-      align-items: stretch;
+    &__buttons {
       flex-direction: column;
 
       .btn {
@@ -541,32 +104,8 @@
       }
     }
 
-    &__info {
-      margin-top: 45px;
-
-      gap: 25px;
-
-      flex-direction: column;
-    }
-
-    &__image-frame {
-      width: 100%;
-    }
-
-    &__booking-card {
-      left: 15px;
-      right: 15px;
-      bottom: -45px;
-
-      min-width: unset;
-    }
-
-    &__outline-text {
-      display: none;
-    }
-
-    &__visual {
-      padding-bottom: 80px;
+    &__image {
+      height: 340px;
     }
   }
 }

@@ -1,0 +1,108 @@
+@use "../../styles/variables" as *;
+
+.services-section {
+  background: $white;
+
+  &__header {
+    max-width: 650px;
+
+    margin-bottom: 40px;
+  }
+
+  &__grid {
+    display: grid;
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+    gap: 20px;
+  }
+
+  &__footer {
+    margin-top: 35px;
+  }
+}
+
+.service-card {
+  padding: 28px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  border: 1px solid $border;
+
+  background: $white;
+
+  h3 {
+    font-family: $font-heading;
+
+    font-size: 1.4rem;
+
+    font-weight: 500;
+  }
+
+  p {
+    margin-top: 10px;
+
+    color: $text-light;
+
+    font-size: 0.9rem;
+
+    line-height: 1.6;
+  }
+
+  &__bottom {
+    min-width: 80px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    span {
+      color: $gold;
+
+      font-family: $font-heading;
+
+      font-size: 1.3rem;
+    }
+
+    a {
+      color: $black;
+
+      font-size: 0.75rem;
+
+      font-weight: 700;
+
+      text-transform: uppercase;
+
+      border-bottom: 1px solid $black;
+    }
+  }
+}
+
+@media (max-width: 750px) {
+  .services-section {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  .service-card {
+    flex-direction: column;
+
+    &__bottom {
+      flex-direction: row;
+
+      align-items: center;
+    }
+  }
+}

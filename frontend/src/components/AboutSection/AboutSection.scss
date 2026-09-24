@@ -1,0 +1,103 @@
+@use "../../styles/variables" as *;
+
+.about-section {
+  background: $cream;
+
+  &__container {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    align-items: center;
+
+    gap: 70px;
+  }
+
+  &__image {
+    min-height: 480px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #dddddd;
+
+    color: $text-light;
+  }
+
+  &__content {
+    p {
+      margin-top: 18px;
+
+      color: $text-light;
+
+      line-height: 1.8;
+    }
+
+    .btn {
+      margin-top: 30px;
+    }
+  }
+
+  &__points {
+    margin-top: 30px;
+
+    margin-bottom: 10px;
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(3, 1fr);
+
+    gap: 15px;
+
+    div {
+      padding-top: 15px;
+
+      border-top: 2px solid $gold;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 4px;
+    }
+
+    strong {
+      font-size: 0.9rem;
+    }
+
+    span {
+      color: $text-light;
+
+      font-size: 0.75rem;
+    }
+  }
+}
+
+@media (max-width: 850px) {
+  .about-section {
+    &__container {
+      grid-template-columns: 1fr;
+
+      gap: 40px;
+    }
+
+    &__image {
+      min-height: 400px;
+    }
+  }
+}
+
+@media (max-width: 550px) {
+  .about-section {
+    &__points {
+      grid-template-columns: 1fr;
+    }
+
+    &__image {
+      min-height: 320px;
+    }
+  }
+}
