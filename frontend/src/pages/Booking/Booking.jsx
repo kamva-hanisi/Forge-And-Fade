@@ -4,6 +4,10 @@ import axios from "axios";
 
 import { services } from "../../data/services";
 import { barbers } from "../../data/barbers";
+import {
+  openGoogleCalendar,
+  downloadAppleCalendar,
+} from "../../utils/calendar";
 
 import "./Booking.scss";
 
@@ -43,15 +47,16 @@ const Booking = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const apiUrl =
-    import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
   const selectedService = services.find(
-    (service) => service.id === Number(formData.service_id)
+    (service) => service.id === Number(formData.service_id),
   );
 
   const selectedBarber = barbers.find(
-    (barber) => barber.id === Number(formData.barber_id)
+    (barber) => barber.id === Number(formData.barber_id),
   );
 
   useEffect(() => {
@@ -64,15 +69,12 @@ const Booking = () => {
       try {
         setCheckingTimes(true);
 
-        const response = await axios.get(
-          `${apiUrl}/bookings/availability`,
-          {
-            params: {
-              barber_id: formData.barber_id,
-              booking_date: formData.booking_date,
-            },
-          }
-        );
+        const response = await axios.get(`${apiUrl}/bookings/availability`, {
+          params: {
+            barber_id: formData.barber_id,
+            booking_date: formData.booking_date,
+          },
+        });
 
         setBookedTimes(response.data.booked_times || []);
       } catch (err) {
@@ -102,6 +104,7 @@ const Booking = () => {
 
     setMessage("");
     setError("");
+    setConfirmedBooking(null);
 
     if (!selectedService || !selectedBarber) {
       setError("Please select a service and barber.");
@@ -120,6 +123,7 @@ const Booking = () => {
         duration: selectedService.duration,
       });
 
+      setConfirmedBooking(response.data.booking);
       setMessage(response.data.message);
 
       setFormData({
@@ -137,7 +141,7 @@ const Booking = () => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to complete booking. Please try again."
+          "Unable to complete booking. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -148,16 +152,11 @@ const Booking = () => {
 
   return (
     <main className="booking-page">
-
       <section className="booking-page__header">
         <div className="container">
-          <span className="section-label">
-            Book Appointment
-          </span>
+          <span className="section-label">Book Appointment</span>
 
-          <h1 className="section-title">
-            Reserve Your Chair.
-          </h1>
+          <h1 className="section-title">Reserve Your Chair.</h1>
 
           <p className="section-text">
             Choose your service, barber, date and preferred time.
@@ -167,15 +166,9 @@ const Booking = () => {
 
       <section className="booking-page__content">
         <div className="container booking-page__grid">
-
-          <form
-            className="booking-form"
-            onSubmit={handleSubmit}
-          >
+          <form className="booking-form" onSubmit={handleSubmit}>
             <div className="booking-form__group">
-              <label htmlFor="service_id">
-                Service *
-              </label>
+              <label htmlFor="service_id">Service *</label>
 
               <select
                 id="service_id"
@@ -184,15 +177,10 @@ const Booking = () => {
                 onChange={handleChange}
                 required
               >
-                <option value="">
-                  Select service
-                </option>
+                <option value="">Select service</option>
 
                 {services.map((service) => (
-                  <option
-                    value={service.id}
-                    key={service.id}
-                  >
+                  <option value={service.id} key={service.id}>
                     {service.name} — R{service.price}
                   </option>
                 ))}
@@ -200,9 +188,7 @@ const Booking = () => {
             </div>
 
             <div className="booking-form__group">
-              <label htmlFor="barber_id">
-                Barber *
-              </label>
+              <label htmlFor="barber_id">Barber *</label>
 
               <select
                 id="barber_id"
@@ -211,15 +197,10 @@ const Booking = () => {
                 onChange={handleChange}
                 required
               >
-                <option value="">
-                  Select barber
-                </option>
+                <option value="">Select barber</option>
 
                 {barbers.map((barber) => (
-                  <option
-                    value={barber.id}
-                    key={barber.id}
-                  >
+                  <option value={barber.id} key={barber.id}>
                     {barber.name}
                   </option>
                 ))}
@@ -227,11 +208,8 @@ const Booking = () => {
             </div>
 
             <div className="booking-form__row">
-
               <div className="booking-form__group">
-                <label htmlFor="booking_date">
-                  Date *
-                </label>
+                <label htmlFor="booking_date">Date *</label>
 
                 <input
                   type="date"
@@ -245,9 +223,7 @@ const Booking = () => {
               </div>
 
               <div className="booking-form__group">
-                <label htmlFor="booking_time">
-                  Time *
-                </label>
+                <label htmlFor="booking_time">Time *</label>
 
                 <select
                   id="booking_time"
@@ -262,37 +238,25 @@ const Booking = () => {
                   required
                 >
                   <option value="">
-                    {checkingTimes
-                      ? "Checking..."
-                      : "Select time"}
+                    {checkingTimes ? "Checking..." : "Select time"}
                   </option>
 
                   {timeSlots.map((time) => {
-                    const unavailable =
-                      bookedTimes.includes(time);
+                    const unavailable = bookedTimes.includes(time);
 
                     return (
-                      <option
-                        value={time}
-                        key={time}
-                        disabled={unavailable}
-                      >
+                      <option value={time} key={time} disabled={unavailable}>
                         {time}
-                        {unavailable
-                          ? " — Booked"
-                          : ""}
+                        {unavailable ? " — Booked" : ""}
                       </option>
                     );
                   })}
                 </select>
               </div>
-
             </div>
 
             <div className="booking-form__group">
-              <label htmlFor="customer_name">
-                Full Name *
-              </label>
+              <label htmlFor="customer_name">Full Name *</label>
 
               <input
                 type="text"
@@ -306,11 +270,8 @@ const Booking = () => {
             </div>
 
             <div className="booking-form__row">
-
               <div className="booking-form__group">
-                <label htmlFor="email">
-                  Email *
-                </label>
+                <label htmlFor="email">Email *</label>
 
                 <input
                   type="email"
@@ -324,9 +285,7 @@ const Booking = () => {
               </div>
 
               <div className="booking-form__group">
-                <label htmlFor="phone">
-                  Phone *
-                </label>
+                <label htmlFor="phone">Phone *</label>
 
                 <input
                   type="tel"
@@ -338,13 +297,10 @@ const Booking = () => {
                   required
                 />
               </div>
-
             </div>
 
             <div className="booking-form__group">
-              <label htmlFor="notes">
-                Notes
-              </label>
+              <label htmlFor="notes">Notes</label>
 
               <textarea
                 id="notes"
@@ -368,19 +324,45 @@ const Booking = () => {
               </div>
             )}
 
+            {confirmedBooking && (
+              <div className="calendar-options">
+                <h3>Appointment Confirmed</h3>
+
+                <p>
+                  Add your appointment to your calendar so you don't forget your
+                  visit.
+                </p>
+
+                <div className="calendar-options__buttons">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => openGoogleCalendar(confirmedBooking)}
+                  >
+                    Add to Google Calendar
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => downloadAppleCalendar(confirmedBooking)}
+                  >
+                    Add to Apple Calendar
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               className="btn btn-primary booking-form__submit"
               disabled={loading}
             >
-              {loading
-                ? "Booking..."
-                : "Confirm Booking"}
+              {loading ? "Booking..." : "Confirm Booking"}
             </button>
           </form>
 
           <aside className="booking-info">
-
             <h2>Forge & Fade</h2>
 
             <div>
@@ -402,21 +384,14 @@ const Booking = () => {
             <div>
               <strong>Location</strong>
 
-              <p>
-                Cape Town, South Africa
-              </p>
+              <p>Cape Town, South Africa</p>
             </div>
 
             {selectedService && (
               <div className="booking-info__summary">
+                <strong>Your Selection</strong>
 
-                <strong>
-                  Your Selection
-                </strong>
-
-                <p>
-                  {selectedService.name}
-                </p>
+                <p>{selectedService.name}</p>
 
                 <p>
                   R{selectedService.price}
@@ -424,20 +399,12 @@ const Booking = () => {
                   {selectedService.duration} min
                 </p>
 
-                {selectedBarber && (
-                  <p>
-                    Barber: {selectedBarber.name}
-                  </p>
-                )}
-
+                {selectedBarber && <p>Barber: {selectedBarber.name}</p>}
               </div>
             )}
-
           </aside>
-
         </div>
       </section>
-
     </main>
   );
 };

@@ -154,6 +154,54 @@
   }
 }
 
+.calendar-options {
+  margin: 25px 0;
+
+  padding: 22px;
+
+  background: $cream;
+
+  border: 1px solid $border;
+
+  h3 {
+    font-family: $font-heading;
+
+    font-size: 1.3rem;
+
+    font-weight: 500;
+  }
+
+  p {
+    margin-top: 8px;
+
+    color: $text-light;
+
+    font-size: 0.9rem;
+  }
+
+  &__buttons {
+    margin-top: 18px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+  }
+}
+
+@media (max-width: 550px) {
+  .calendar-options {
+    &__buttons {
+      flex-direction: column;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+}
+
 @media (max-width: 850px) {
   .booking-page {
     &__grid {

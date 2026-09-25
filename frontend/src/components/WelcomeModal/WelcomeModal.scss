@@ -1,0 +1,89 @@
+@use "../../styles/variables" as *;
+
+.welcome-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 2000;
+
+  padding: 20px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(0, 0, 0, 0.55);
+
+  &__box {
+    position: relative;
+
+    width: min(100%, 440px);
+
+    padding: 38px;
+
+    background: $white;
+
+    border: 1px solid $border;
+
+    text-align: center;
+
+    h2 {
+      font-family: $font-heading;
+
+      font-size: 2rem;
+
+      font-weight: 500;
+
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 16px auto 25px;
+
+      max-width: 330px;
+
+      color: $text-light;
+
+      line-height: 1.7;
+    }
+  }
+
+  &__close {
+    position: absolute;
+
+    top: 15px;
+    right: 15px;
+
+    display: flex;
+
+    background: transparent;
+
+    color: $black;
+  }
+
+  &__later {
+    display: block;
+
+    margin: 16px auto 0;
+
+    background: transparent;
+
+    color: $text-light;
+
+    font-size: 0.75rem;
+
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 500px) {
+  .welcome-modal {
+    &__box {
+      padding:
+        35px 22px 28px;
+    }
+  }
+}
