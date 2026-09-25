@@ -1,0 +1,55 @@
+@use "../../styles/variables" as *;
+
+.terms-page {
+  padding-top: 76px;
+
+  &__header {
+    padding: 70px 0;
+
+    background: $cream;
+
+    border-bottom: 1px solid $border;
+  }
+
+  &__content {
+    background: $white;
+  }
+
+  &__document {
+    max-width: 800px;
+
+    margin: 0 auto;
+
+    > section {
+      padding: 30px 0;
+
+      border-bottom: 1px solid $border;
+
+      h2 {
+        font-family: $font-heading;
+
+        font-size: 1.35rem;
+
+        font-weight: 500;
+      }
+
+      p {
+        margin-top: 12px;
+
+        color: $text-light;
+
+        line-height: 1.8;
+
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  &__updated {
+    padding-bottom: 20px;
+
+    color: $text-light;
+
+    font-size: 0.8rem;
+  }
+}
