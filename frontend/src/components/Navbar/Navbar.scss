@@ -70,7 +70,7 @@
     }
   }
 
-  &__book {
+  &__book.btn {
     padding: 11px 20px;
   }
 
@@ -82,7 +82,7 @@
     color: $black;
   }
 
-  &__mobile-book {
+  &__mobile-book.btn {
     display: none;
   }
 }
@@ -94,7 +94,7 @@
       height: 48px;
     }
 
-    &__book {
+    &__book.btn {
       display: none;
     }
 
@@ -134,8 +134,8 @@
       }
     }
 
-    &__mobile-book {
-      display: flex !important;
+    &__mobile-book.btn {
+      display: flex;
 
       margin-top: 16px;
 

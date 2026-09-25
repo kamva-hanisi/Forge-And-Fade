@@ -39,7 +39,7 @@ const Navbar = () => {
             About
           </NavLink>
 
-          <NavLink to="/booking" onClick={closeMenu}>
+          <NavLink to="/contact" onClick={closeMenu}>
             Contact
           </NavLink>
 

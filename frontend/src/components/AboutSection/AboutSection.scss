@@ -15,15 +15,19 @@
 
   &__image {
     min-height: 480px;
+    height: 100%;
 
-    display: flex;
+    overflow: hidden;
 
-    align-items: center;
-    justify-content: center;
+    img {
+      width: 100%;
+      height: 100%;
 
-    background: #dddddd;
+      display: block;
 
-    color: $text-light;
+      object-fit: cover;
+      object-position: center;
+    }
   }
 
   &__content {

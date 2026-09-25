@@ -2,32 +2,7 @@ import { Link } from "react-router-dom";
 
 import "./ServicesSection.scss";
 
-const services = [
-  {
-    id: 1,
-    name: "Classic Haircut",
-    description: "Clean, professional haircut finished with styling.",
-    price: 220,
-  },
-  {
-    id: 2,
-    name: "Skin Fade",
-    description: "Sharp skin fade with a clean and modern finish.",
-    price: 250,
-  },
-  {
-    id: 3,
-    name: "Beard Trim",
-    description: "Beard shaping, trimming and clean line-up.",
-    price: 140,
-  },
-  {
-    id: 4,
-    name: "Haircut + Beard",
-    description: "Complete haircut and beard grooming package.",
-    price: 320,
-  },
-];
+import { services } from "../../data/services";
 
 const ServicesSection = () => {
   return (
@@ -49,7 +24,7 @@ const ServicesSection = () => {
         </div>
 
         <div className="services-section__grid">
-          {services.map((service) => (
+          {services.slice(0, 4).map((service) => (
             <div
               className="service-card"
               key={service.id}
@@ -63,7 +38,7 @@ const ServicesSection = () => {
               <div className="service-card__bottom">
                 <span>R{service.price}</span>
 
-                <Link to="/booking">
+                <Link to={`/booking?service=${service.id}`}>
                   Book
                 </Link>
               </div>
