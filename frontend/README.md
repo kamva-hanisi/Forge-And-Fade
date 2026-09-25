@@ -2,6 +2,11 @@
 
 React frontend for Forge & Fade, a modern barbershop website for browsing services, meeting the barbers, booking appointments, and sending contact messages.
 
+## Live Deployment
+
+- Website: https://kamva-hanisi.github.io/Forge-And-Fade/
+- API: https://forge-and-fade.onrender.com/api
+
 ## What It Includes
 
 - Home page with hero, about, services, and barber highlights.
