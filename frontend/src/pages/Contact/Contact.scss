@@ -119,6 +119,34 @@
     }
   }
 
+&__success {
+  margin-bottom: 20px;
+
+  padding: 12px;
+
+  background: #eef8ef;
+
+  color: #256c2e;
+
+  border: 1px solid #bcdcbc;
+
+  font-size: 0.85rem;
+}
+
+&__error {
+  margin-bottom: 20px;
+
+  padding: 12px;
+
+  background: #fff0f0;
+
+  color: #9d2b2b;
+
+  border: 1px solid #e2b8b8;
+
+  font-size: 0.85rem;
+}
+
   .btn {
     width: 100%;
   }

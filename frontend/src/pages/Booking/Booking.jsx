@@ -111,21 +111,14 @@ const Booking = () => {
     try {
       setLoading(true);
 
-      const payload = {
+      const response = await axios.post(`${apiUrl}/bookings`, {
         ...formData,
-
         service_id: selectedService.id,
         service_name: selectedService.name,
-        duration: selectedService.duration,
-
         barber_id: selectedBarber.id,
         barber_name: selectedBarber.name,
-      };
-
-      const response = await axios.post(
-        `${apiUrl}/bookings`,
-        payload
-      );
+        duration: selectedService.duration,
+      });
 
       setMessage(response.data.message);
 
