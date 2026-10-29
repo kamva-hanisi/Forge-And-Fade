@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminRegistrationController;
+use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ContactController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,12 @@ Route::post('/admin/register', [AdminRegistrationController::class, 'store'])->m
 
 Route::post('/admin/login', [AdminController::class, 'login'])->middleware('throttle:5,1');
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminSettingsController::class, 'dashboard']);
+    Route::get('/profile', [AdminSettingsController::class, 'profile']);
+    Route::patch('/profile', [AdminSettingsController::class, 'updateProfile']);
+    Route::put('/password', [AdminSettingsController::class, 'password'])->middleware('throttle:5,1');
+    Route::get('/invitations', [AdminSettingsController::class, 'invitations']);
+    Route::post('/invitations', [AdminSettingsController::class, 'invite'])->middleware('throttle:5,1');
     Route::post('/logout', [AdminController::class, 'logout']);
     Route::get('/bookings', [AdminController::class, 'index']);
     Route::patch('/bookings/{booking}', [AdminController::class, 'update']);

@@ -41,7 +41,6 @@ function Appointment({ booking, barbers, busy, onUpdate }) {
 export default function Admin() {
   const { session, setSession } = useAdmin();
   const token = session?.token || "";
-  const user = session?.user;
   const [filters, setFilters] = useState(emptyFilters);
   const [query, setQuery] = useState({ ...emptyFilters, page: 1 });
   const [result, setResult] = useState(null);
@@ -80,17 +79,6 @@ export default function Admin() {
     return () => controller.abort();
   }, [token, client, query, refresh, setSession]);
 
-  const logout = async () => {
-    setBusy(true); setError("");
-    try {
-      await client.post("/admin/logout");
-      setSession(null); setResult(null); setMessage("Signed out.");
-    } catch (err) {
-      if (err.response?.status === 401) { setSession(null); setResult(null); }
-      else setError("Sign-out could not be confirmed. Check your connection and retry.");
-    } finally { setBusy(false); }
-  };
-
   const update = async (booking, changes) => {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -106,7 +94,7 @@ export default function Admin() {
   if (!token) return <Navigate to="/admin/signin" replace />;
 
   return <main className="admin-page container">
-    <div className="admin-heading"><div><span className="section-label">Forge & Fade · Administration</span><h1 className="section-title">Appointments</h1></div><div className="admin-user"><p>{user?.name}</p><button type="button" className="btn btn-outline" disabled={busy} onClick={logout}>Sign out</button></div></div>
+    <div className="admin-heading"><div><span className="section-label">Forge & Fade · Schedule</span><h1 className="section-title">Appointments</h1><p>Manage bookings, reschedule visits, and keep your day running smoothly.</p></div></div>
     {error && <p role="alert" className="admin-error">{error}</p>}
     {message && <p role="status" className="admin-success">{message}</p>}
     <>

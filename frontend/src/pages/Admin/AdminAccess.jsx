@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { useAdmin } from "../../context/AdminContext";
@@ -10,7 +10,8 @@ const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 export default function AdminAccess({ signup = false }) {
   const { session, authenticate, busy } = useAdmin();
   const navigate = useNavigate();
-  const [fields, setFields] = useState({ name: "", email: "", password: "", password_confirmation: "", invitation: "" });
+  const [params] = useSearchParams();
+  const [fields, setFields] = useState({ name: "", email: signup ? params.get("email") || "" : "", password: "", password_confirmation: "", invitation: signup ? params.get("invitation") || "" : "" });
   const [requiresInvitation, setRequiresInvitation] = useState(true);
   const [checking, setChecking] = useState(signup);
   const [ready, setReady] = useState(!signup);

@@ -21,7 +21,7 @@ export default function Navbar({ admin = false }) {
     <Brand onClick={closeMenu} />
     <nav id="site-navigation" className={`navbar__nav${open ? " open" : ""}`} aria-label={admin ? "Admin navigation" : "Main navigation"}>
       {admin ? <>
-        <NavLink to="/admin" end onClick={closeMenu}>Appointments</NavLink>
+        <NavLink to="/admin" end onClick={closeMenu}>Dashboard</NavLink>
         {!session && <><NavLink to="/admin/signin" onClick={closeMenu}>Admin sign in</NavLink><NavLink to="/admin/signup" onClick={closeMenu}>Admin sign up</NavLink></>}
       </> : <>
         <NavLink to="/" end onClick={closeMenu}>Home</NavLink>
