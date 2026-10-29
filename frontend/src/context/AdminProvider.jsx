@@ -10,10 +10,19 @@ export default function AdminProvider({ children }) {
   const authenticate = async (mode, fields) => {
     setBusy(true);
     try {
-      const { data } = await axios.post(`${apiUrl}/admin/${mode}`, fields, { timeout: 20000, headers: { Accept: "application/json" } });
+      const { data } = await axios.post(`${apiUrl}/admin/${mode}`, fields, {
+        timeout: 20000,
+        headers: { Accept: "application/json" },
+      });
       setSession(data);
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
-  return <AdminContext.Provider value={{ session, setSession, authenticate, busy }}>{children}</AdminContext.Provider>;
+  return (
+    <AdminContext.Provider value={{ session, setSession, authenticate, busy }}>
+      {children}
+    </AdminContext.Provider>
+  );
 }

@@ -8,10 +8,7 @@ const WelcomeModal = () => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const alreadySeen =
-      sessionStorage.getItem(
-        "forgeFadeModalSeen"
-      );
+    const alreadySeen = sessionStorage.getItem("forgeFadeModalSeen");
 
     if (!alreadySeen) {
       const timer = setTimeout(() => {
@@ -25,10 +22,7 @@ const WelcomeModal = () => {
   const closeModal = () => {
     setOpen(false);
 
-    sessionStorage.setItem(
-      "forgeFadeModalSeen",
-      "true"
-    );
+    sessionStorage.setItem("forgeFadeModalSeen", "true");
   };
 
   if (!open) {
@@ -36,15 +30,8 @@ const WelcomeModal = () => {
   }
 
   return (
-    <div
-      className="welcome-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="welcome-title"
-    >
-
+    <div className="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
       <div className="welcome-modal__box">
-
         <button
           type="button"
           className="icon-button welcome-modal__close"
@@ -54,38 +41,20 @@ const WelcomeModal = () => {
           <X size={22} />
         </button>
 
-        <span className="section-label">
-          Forge & Fade
-        </span>
+        <span className="section-label">Forge & Fade</span>
 
-        <h2 id="welcome-title">
-          Online Bookings Are Open.
-        </h2>
+        <h2 id="welcome-title">Online Bookings Are Open.</h2>
 
-        <p>
-          Reserve your chair online.
-          Choose your service, barber,
-          date and preferred time.
-        </p>
+        <p>Reserve your chair online. Choose your service, barber, date and preferred time.</p>
 
-        <Link
-          to="/booking"
-          className="btn btn-primary"
-          onClick={closeModal}
-        >
+        <Link to="/booking" className="btn btn-primary" onClick={closeModal}>
           Book Now
         </Link>
 
-        <button
-          type="button"
-          className="welcome-modal__later"
-          onClick={closeModal}
-        >
+        <button type="button" className="welcome-modal__later" onClick={closeModal}>
           No Thanks
         </button>
-
       </div>
-
     </div>
   );
 };

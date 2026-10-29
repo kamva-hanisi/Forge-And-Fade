@@ -14,8 +14,7 @@
   align-items: center;
   justify-content: center;
 
-  background:
-    rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.55);
 
   &__box {
     position: relative;
@@ -84,8 +83,7 @@
 @media (max-width: 500px) {
   .welcome-modal {
     &__box {
-      padding:
-        64px 24px 24px;
+      padding: 64px 24px 24px;
     }
   }
 }

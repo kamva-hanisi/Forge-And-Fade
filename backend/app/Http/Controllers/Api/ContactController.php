@@ -26,8 +26,7 @@ class ContactController extends Controller
         ]);
 
         return response()->json([
-            'message' =>
-                'Thank you. Your message has been sent successfully.',
+            'message' => 'Thank you. Your message has been sent successfully.',
 
             'contact' => $contactMessage,
         ], 201);

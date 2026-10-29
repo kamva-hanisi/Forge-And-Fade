@@ -45,9 +45,8 @@ const About = () => {
           </div>
 
           <p>
-            No rushed appointments and no one-style-fits-all cuts. We built a
-            barbershop around attention, honest advice and work that still
-            looks good weeks later.
+            No rushed appointments and no one-style-fits-all cuts. We built a barbershop around
+            attention, honest advice and work that still looks good weeks later.
           </p>
         </div>
       </section>
@@ -55,10 +54,7 @@ const About = () => {
       <section className="about-page__story">
         <div className="container about-page__story-grid">
           <div className="about-page__story-image">
-            <img
-              src={craftImage}
-              alt="Traditional barber tools arranged on a workbench"
-            />
+            <img src={craftImage} alt="Traditional barber tools arranged on a workbench" />
 
             <span>Tools change. Standards do not.</span>
           </div>
@@ -69,16 +65,15 @@ const About = () => {
             <h2 className="section-title">A barbershop should earn your trust.</h2>
 
             <p>
-              A great cut begins before a blade touches hair. It begins with
-              paying attention: to how you wear it, how much time you spend on
-              it and how you want to feel when you walk out.
+              A great cut begins before a blade touches hair. It begins with paying attention: to
+              how you wear it, how much time you spend on it and how you want to feel when you walk
+              out.
             </p>
 
             <p>
-              Forge & Fade pairs that personal approach with disciplined
-              technique. We respect the old-school fundamentals, use modern
-              methods where they improve the result and never add complexity
-              for show.
+              Forge & Fade pairs that personal approach with disciplined technique. We respect the
+              old-school fundamentals, use modern methods where they improve the result and never
+              add complexity for show.
             </p>
 
             <Link to="/services" className="about-page__text-link">
@@ -92,8 +87,8 @@ const About = () => {
         <div className="container about-page__manifesto-content">
           <span aria-hidden="true">"</span>
           <blockquote>
-            The best haircut does not compete with who you are. It brings the
-            sharper version into focus.
+            The best haircut does not compete with who you are. It brings the sharper version into
+            focus.
           </blockquote>
           <p>Our approach to every appointment</p>
         </div>
@@ -105,8 +100,7 @@ const About = () => {
             <span className="section-label">The Experience</span>
             <h2 className="section-title">What happens in the chair.</h2>
             <p className="section-text">
-              A straightforward process designed around your style, comfort
-              and time.
+              A straightforward process designed around your style, comfort and time.
             </p>
           </div>
 

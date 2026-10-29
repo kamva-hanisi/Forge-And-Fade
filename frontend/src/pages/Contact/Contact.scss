@@ -117,33 +117,33 @@
     }
   }
 
-&__success {
-  margin-bottom: 20px;
+  &__success {
+    margin-bottom: 20px;
 
-  padding: 12px;
+    padding: 12px;
 
-  background: $success-bg;
+    background: $success-bg;
 
-  color: $success-text;
+    color: $success-text;
 
-  border: 1px solid #bcdcbc;
+    border: 1px solid #bcdcbc;
 
-  font-size: 0.85rem;
-}
+    font-size: 0.85rem;
+  }
 
-&__error {
-  margin-bottom: 20px;
+  &__error {
+    margin-bottom: 20px;
 
-  padding: 12px;
+    padding: 12px;
 
-  background: $error-bg;
+    background: $error-bg;
 
-  color: $error-text;
+    color: $error-text;
 
-  border: 1px solid #e2b8b8;
+    border: 1px solid #e2b8b8;
 
-  font-size: 0.85rem;
-}
+    font-size: 0.85rem;
+  }
 
   .btn {
     width: 100%;
