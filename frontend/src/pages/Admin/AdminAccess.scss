@@ -1,0 +1,15 @@
+@use "../../styles/variables" as *;
+
+.admin-shell { min-height: 100vh; background: $cream; }
+.admin-brand { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px max(5%, calc((100% - 1180px) / 2)); background: $white; border-bottom: 1px solid $border; > a:first-child { font-family: $font-heading; font-weight: 700; font-size: 1.3rem; } > a:last-child { color: $text-light; font-size: .85rem; } }
+.admin-shell .admin-page { padding-top: 44px; }
+.admin-access { width: min(90%, 1080px); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 80px; padding: 56px 0 72px; min-height: calc(100vh - 76px); }
+.admin-access__intro { h1 { font-family: $font-heading; font-size: clamp(2.7rem, 5vw, 4.5rem); font-weight: 400; line-height: 1.05; margin: 24px 0; } > p { color: $text-light; max-width: 360px; } }
+.admin-access__staff { display: flex; gap: 10px; align-items: center; margin-top: 36px; padding-top: 24px; border-top: 1px solid $border; font-size: .8rem; color: $text-light; svg { color: $gold; flex-shrink: 0; } }
+.admin-access__card { padding: 32px; border: 1px solid $border; background: $white; min-width: 0; nav { display: flex; gap: 24px; margin-bottom: 28px; border-bottom: 1px solid $border; a { padding-bottom: 12px; color: $text-light; font-size: .85rem; } a[aria-current="page"] { border-bottom: 2px solid $gold; color: $black; font-weight: 700; } } h2 { font-family: $font-heading; font-size: 1.9rem; font-weight: 400; line-height: 1.2; } > p { margin-top: 12px; font-size: .85rem; color: $text-light; } form { display: grid; gap: 18px; margin-top: 26px; } label, .admin-access__field { display: grid; gap: 8px; } label { font-size: .85rem; font-weight: 600; } input { width: 100%; min-width: 0; border: 1px solid $border; padding: 12px 14px; color: $text; background: $white; } small { font-size: .75rem; font-weight: 400; color: $text-light; } input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid $gold; outline-offset: 3px; } button:disabled { opacity: .55; cursor: wait; } }
+.admin-access__password { position: relative; input { padding-right: 48px; } button { position: absolute; top: 4px; bottom: 4px; right: 4px; width: 38px; display: grid; place-items: center; background: transparent; color: $text-light; } }
+.admin-access__submit { gap: 14px; }
+.admin-access__error { background: #fbecec; color: #8f2626; padding: 12px; margin-top: 20px; font-size: .85rem; }
+.admin-access__switch { text-align: center; a { color: $text; text-decoration: underline; } }
+.admin-access__back { display: block; text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid $border; font-size: .8rem; color: $text-light; }
+@media (max-width: 800px) { .admin-access { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 32px; } .admin-access__intro h1 { font-size: 2.8rem; margin: 16px 0; } .admin-access__intro h1 br { display: none; } .admin-access__staff { display: none; } .admin-access__card { padding: 24px 20px; } .admin-access__card h2 { font-size: 1.6rem; } }

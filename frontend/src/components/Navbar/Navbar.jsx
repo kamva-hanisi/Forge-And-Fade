@@ -43,6 +43,8 @@ const Navbar = () => {
             Contact
           </NavLink>
 
+          <NavLink to="/admin/signin" onClick={closeMenu}>Admin</NavLink>
+
           <Link
             to="/booking"
             className="btn btn-primary navbar__mobile-book"
@@ -64,6 +66,7 @@ const Navbar = () => {
           className="navbar__menu"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
           {open ? <X /> : <Menu />}
         </button>

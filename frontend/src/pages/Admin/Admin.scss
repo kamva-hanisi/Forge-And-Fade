@@ -1,0 +1,26 @@
+@use "../../styles/variables" as *;
+
+.admin-page {
+  padding-top: 130px;
+  padding-bottom: 70px;
+  min-height: 80vh;
+  label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: .9rem; min-width: 0; }
+  input, select { width: 100%; min-width: 0; padding: 12px; border: 1px solid $border; background: $white; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid $gold; outline-offset: 3px; }
+}
+.admin-heading, .admin-toolbar, .admin-appointment header, .admin-pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.admin-login { max-width: 440px; display: grid; gap: 20px; padding: 24px; border: 1px solid $border; background: $cream; }
+.admin-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); align-items: end; gap: 16px; padding: 24px; background: $cream; margin: 24px 0; }
+.admin-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.admin-appointment { padding: 24px; border: 1px solid $border; min-width: 0; overflow-wrap: anywhere; h2 { font-size: 1.25rem; } p { margin-bottom: 10px; } }
+.admin-actions, .admin-confirm { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.admin-confirm p { flex-basis: 100%; }
+.admin-schedule { display: grid; gap: 14px; margin-top: 24px; padding-top: 20px; border-top: 1px solid $border; }
+.admin-badge { padding: 4px 10px; background: #e7f3e9; text-transform: capitalize; font-size: .8rem; }
+.admin-badge--cancelled { background: #f6e4e4; }
+.admin-error, .admin-success { padding: 16px; margin-bottom: 20px; }
+.admin-error { background: #fbecec; color: #7b2525; }
+.admin-success { background: #eaf5ed; color: #245b32; }
+.admin-notes { white-space: pre-wrap; color: $text-light; }
+.admin-pagination { margin-top: 28px; }

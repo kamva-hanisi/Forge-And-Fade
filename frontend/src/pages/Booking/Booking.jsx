@@ -2,27 +2,12 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-import { services } from "../../data/services";
-import { barbers } from "../../data/barbers";
 import {
   openGoogleCalendar,
   downloadAppleCalendar,
 } from "../../utils/calendar";
 
 import "./Booking.scss";
-
-const timeSlots = [
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-];
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
@@ -41,7 +26,11 @@ const Booking = () => {
     notes: "",
   });
 
-  const [bookedTimes, setBookedTimes] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [services, setServices] = useState([]);
+  const [barbers, setBarbers] = useState([]);
+  const [availabilityError, setAvailabilityError] = useState("");
+  const [refresh, setRefresh] = useState(0);
   const [loading, setLoading] = useState(false);
   const [checkingTimes, setCheckingTimes] = useState(false);
   const [message, setMessage] = useState("");
@@ -60,9 +49,20 @@ const Booking = () => {
   );
 
   useEffect(() => {
+    const controller = new AbortController();
+    axios.get(`${apiUrl}/bookings/catalog`, { signal: controller.signal })
+      .then(({ data }) => { setServices(data.services); setBarbers(data.barbers); })
+      .catch((err) => { if (!axios.isCancel(err)) setError("Unable to load services and barbers. Please reload the page."); });
+    return () => controller.abort();
+  }, [apiUrl]);
+
+  useEffect(() => {
+    const controller = new AbortController();
     const getBookedTimes = async () => {
-      if (!formData.barber_id || !formData.booking_date) {
-        setBookedTimes([]);
+      setTimeSlots([]);
+      setAvailabilityError("");
+      if (!formData.service_id || !formData.barber_id || !formData.booking_date) {
+        setCheckingTimes(false);
         return;
       }
 
@@ -70,30 +70,37 @@ const Booking = () => {
         setCheckingTimes(true);
 
         const response = await axios.get(`${apiUrl}/bookings/availability`, {
+          signal: controller.signal,
           params: {
+            service_id: formData.service_id,
             barber_id: formData.barber_id,
             booking_date: formData.booking_date,
           },
         });
 
-        setBookedTimes(response.data.booked_times || []);
+        setTimeSlots(response.data.available_times || []);
       } catch (err) {
-        console.error(err);
+        if (!axios.isCancel(err)) setAvailabilityError(err.response?.data?.message || "Unable to check availability. Please retry.");
       } finally {
-        setCheckingTimes(false);
+        if (!controller.signal.aborted) setCheckingTimes(false);
       }
     };
 
     getBookedTimes();
-  }, [formData.barber_id, formData.booking_date, apiUrl]);
+    return () => controller.abort();
+  }, [formData.service_id, formData.barber_id, formData.booking_date, apiUrl, refresh]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
 
+    setError("");
+    setMessage("");
+    setConfirmedBooking(null);
+
     setFormData((previous) => ({
       ...previous,
       [name]: value,
-      ...(name === "barber_id" || name === "booking_date"
+      ...(name === "service_id" || name === "barber_id" || name === "booking_date"
         ? { booking_time: "" }
         : {}),
     }));
@@ -111,16 +118,18 @@ const Booking = () => {
       return;
     }
 
+    if (checkingTimes || availabilityError || !timeSlots.includes(formData.booking_time)) {
+      setError("Please choose an available time.");
+      return;
+    }
+
     try {
       setLoading(true);
 
       const response = await axios.post(`${apiUrl}/bookings`, {
         ...formData,
         service_id: selectedService.id,
-        service_name: selectedService.name,
         barber_id: selectedBarber.id,
-        barber_name: selectedBarber.name,
-        duration: selectedService.duration,
       });
 
       setConfirmedBooking(response.data.booking);
@@ -137,10 +146,14 @@ const Booking = () => {
         notes: "",
       });
 
-      setBookedTimes([]);
+      setTimeSlots([]);
     } catch (err) {
+      if (err.response?.status === 409 || err.response?.status === 422) {
+        setFormData((previous) => ({ ...previous, booking_time: "" }));
+        setRefresh((previous) => previous + 1);
+      }
       setError(
-        err.response?.data?.message ||
+        Object.values(err.response?.data?.errors || {}).flat().join(" ") || err.response?.data?.message ||
           "Unable to complete booking. Please try again.",
       );
     } finally {
@@ -148,7 +161,7 @@ const Booking = () => {
     }
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Johannesburg", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
   return (
     <main className="booking-page">
@@ -231,6 +244,7 @@ const Booking = () => {
                   value={formData.booking_time}
                   onChange={handleChange}
                   disabled={
+                    !formData.service_id || availabilityError ||
                     !formData.barber_id ||
                     !formData.booking_date ||
                     checkingTimes
@@ -241,17 +255,10 @@ const Booking = () => {
                     {checkingTimes ? "Checking..." : "Select time"}
                   </option>
 
-                  {timeSlots.map((time) => {
-                    const unavailable = bookedTimes.includes(time);
-
-                    return (
-                      <option value={time} key={time} disabled={unavailable}>
-                        {time}
-                        {unavailable ? " — Booked" : ""}
-                      </option>
-                    );
-                  })}
+                  {timeSlots.map((time) => <option value={time} key={time}>{time}</option>)}
                 </select>
+                {availabilityError && <p role="alert">{availabilityError} <button type="button" onClick={() => setRefresh((previous) => previous + 1)}>Retry</button></p>}
+                {!checkingTimes && !availabilityError && formData.service_id && formData.barber_id && formData.booking_date && timeSlots.length === 0 && <p role="status">No available times for this selection.</p>}
               </div>
             </div>
 
@@ -313,13 +320,13 @@ const Booking = () => {
             </div>
 
             {error && (
-              <div className="booking-form__message booking-form__message--error">
+              <div role="alert" className="booking-form__message booking-form__message--error">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="booking-form__message booking-form__message--success">
+              <div role="status" className="booking-form__message booking-form__message--success">
                 {message}
               </div>
             )}
@@ -356,7 +363,7 @@ const Booking = () => {
             <button
               type="submit"
               className="btn btn-primary booking-form__submit"
-              disabled={loading}
+              disabled={loading || checkingTimes || !!availabilityError || !timeSlots.includes(formData.booking_time)}
             >
               {loading ? "Booking..." : "Confirm Booking"}
             </button>
@@ -372,6 +379,8 @@ const Booking = () => {
                 Monday – Saturday
                 <br />
                 08:00 – 18:00
+                <br />
+                Break: 13:00 – 14:00 (South Africa time)
               </p>
             </div>
 

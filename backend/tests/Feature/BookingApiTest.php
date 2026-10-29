@@ -11,6 +11,18 @@ class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-11-02 09:00:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     public function test_customer_can_create_a_booking(): void
     {
         $payload = $this->validBookingPayload();
@@ -32,7 +44,7 @@ class BookingApiTest extends TestCase
         $booking = Booking::firstOrFail();
 
         $this->assertSame($payload['booking_date'], $booking->booking_date->toDateString());
-        $this->assertSame('10:00', $booking->booking_time);
+        $this->assertSame('10:00', substr($booking->booking_time, 0, 5));
     }
 
     public function test_booking_requires_valid_customer_and_appointment_details(): void
@@ -46,12 +58,9 @@ class BookingApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
                 'service_id',
-                'service_name',
                 'barber_id',
-                'barber_name',
                 'booking_date',
                 'booking_time',
-                'duration',
                 'customer_name',
                 'email',
                 'phone',
@@ -105,11 +114,79 @@ class BookingApiTest extends TestCase
             'status' => 'cancelled',
         ]);
 
-        $this->getJson("/api/bookings/availability?barber_id=1&booking_date={$date}")
+        $response = $this->getJson("/api/bookings/availability?service_id=2&barber_id=1&booking_date={$date}")
             ->assertOk()
-            ->assertExactJson([
-                'booked_times' => ['10:00'],
-            ]);
+            ->assertJsonPath('timezone', 'Africa/Johannesburg');
+        $times = $response->json('available_times');
+        $this->assertNotContains('10:00', $times);
+        $this->assertNotContains('09:20', $times);
+        $this->assertContains('10:50', $times);
+        $this->assertContains('11:00', $times);
+        $this->assertContains('12:00', $times);
+    }
+
+    public function test_overlap_in_both_directions_and_containment_is_rejected(): void
+    {
+        $payload = $this->validBookingPayload();
+        $this->postJson('/api/bookings', $payload)->assertCreated();
+        foreach (['09:20', '10:00', '10:20', '10:40'] as $time) {
+            $this->postJson('/api/bookings', [...$payload, 'booking_time' => $time])->assertConflict();
+        }
+        $this->postJson('/api/bookings', [...$payload, 'service_id' => 6, 'booking_time' => '10:10'])->assertConflict();
+        $this->postJson('/api/bookings', [...$payload, 'service_id' => 4, 'booking_time' => '09:50'])->assertConflict();
+        $this->postJson('/api/bookings', [...$payload, 'booking_time' => '09:10'])->assertCreated();
+        $this->postJson('/api/bookings', [...$payload, 'booking_time' => '10:50'])->assertCreated();
+        $this->postJson('/api/bookings', [...$payload, 'barber_id' => 2])->assertCreated();
+        $this->postJson('/api/bookings', [...$payload, 'booking_date' => '2026-11-04'])->assertCreated();
+    }
+
+    public function test_cancelled_slot_can_be_reused_repeatedly(): void
+    {
+        $payload = $this->validBookingPayload();
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $response = $this->postJson('/api/bookings', $payload)->assertCreated();
+            Booking::findOrFail($response->json('booking.id'))->update(['status' => 'cancelled']);
+        }
+        $this->postJson('/api/bookings', $payload)->assertCreated();
+        $this->assertDatabaseCount('bookings', 4);
+    }
+
+    public function test_catalog_values_are_trusted_over_customer_input(): void
+    {
+        $this->postJson('/api/bookings', [
+            ...$this->validBookingPayload(), 'service_name' => 'Fake', 'barber_name' => 'Fake', 'duration' => 1, 'status' => 'cancelled',
+        ])->assertCreated()->assertJsonPath('booking.duration', 50)
+            ->assertJsonPath('booking.service_name', 'Skin Fade')->assertJsonPath('booking.barber_name', 'Liam Carter')
+            ->assertJsonPath('booking.status', 'confirmed');
+        foreach (['service_id', 'barber_id'] as $field) {
+            $this->postJson('/api/bookings', [...$this->validBookingPayload(), $field => 999])->assertUnprocessable()->assertJsonValidationErrors($field);
+        }
+    }
+
+    public function test_hours_breaks_grid_and_past_times_are_enforced(): void
+    {
+        $payload = $this->validBookingPayload();
+        foreach (['07:50', '12:20', '13:00', '13:50', '17:20', '18:00', '10:01'] as $time) {
+            $this->postJson('/api/bookings', [...$payload, 'booking_time' => $time])->assertUnprocessable()->assertJsonValidationErrors('booking_time');
+        }
+        $this->postJson('/api/bookings', [...$payload, 'booking_date' => '2026-11-08'])->assertUnprocessable();
+        $this->postJson('/api/bookings', [...$payload, 'booking_date' => '2026-11-02', 'booking_time' => '08:00'])->assertUnprocessable();
+        $this->assertDatabaseCount('booking_day_locks', 0);
+        foreach (['08:00', '12:10', '14:00', '17:10'] as $time) {
+            $this->postJson('/api/bookings', [...$payload, 'booking_time' => $time])->assertCreated();
+        }
+    }
+
+    public function test_availability_uses_full_duration_and_closed_days(): void
+    {
+        $short = $this->getJson('/api/bookings/availability?service_id=6&barber_id=1&booking_date=2026-11-03')->assertOk()->json('available_times');
+        $long = $this->getJson('/api/bookings/availability?service_id=4&barber_id=1&booking_date=2026-11-03')->assertOk()->json('available_times');
+        $this->assertContains('17:40', $short);
+        $this->assertNotContains('17:40', $long);
+        $this->assertNotContains('12:00', $long);
+        $this->getJson('/api/bookings/availability?service_id=2&barber_id=1&booking_date=2026-11-08')->assertOk()->assertJsonPath('available_times', []);
+        $this->getJson('/api/bookings/availability?service_id=999&barber_id=1&booking_date=2026-11-03')->assertUnprocessable();
+        $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonCount(6, 'services')->assertJsonCount(3, 'barbers');
     }
 
     private function validBookingPayload(): array
