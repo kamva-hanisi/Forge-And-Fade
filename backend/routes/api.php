@@ -32,6 +32,9 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::get('/invitations', [AdminSettingsController::class, 'invitations']);
     Route::post('/invitations', [AdminSettingsController::class, 'invite'])->middleware('throttle:5,1');
     Route::get('/bookings', [AdminController::class, 'index']);
+    Route::post('/bookings', [AdminController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/bookings/catalog', [BookingController::class, 'catalog']);
+    Route::get('/bookings/availability', [BookingController::class, 'availability'])->middleware('throttle:60,1');
     Route::patch('/bookings/{booking}', [AdminController::class, 'update']);
 });
 

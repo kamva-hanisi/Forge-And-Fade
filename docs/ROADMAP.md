@@ -32,12 +32,12 @@ In progress. Shop registration, scoped memberships, role enforcement and passwor
 
 ## Phase 3 — Owner and staff dashboards
 
-In progress. The admin overview, filters, rescheduling and cancellation respect shop memberships. The owner/manager contact inbox and basic booking activity/booked-value statistics are delivered; manual bookings, editable catalog/schedules and actual collected-revenue reporting remain pending. See `PHASE3-INBOX.md` and `PHASE3-STATISTICS.md`.
+In progress. The admin overview, filters, rescheduling, cancellation and manual bookings respect shop memberships. The owner/manager contact inbox and basic booking activity/booked-value statistics are delivered; editable catalog/schedules, fuller staff management and actual collected-revenue reporting remain pending. See `PHASE3-INBOX.md`, `PHASE3-STATISTICS.md` and `PHASE3-MANUAL-BOOKINGS.md`.
 
 - [ ] Create barbershop owner dashboard
 - [ ] Show today's, upcoming and past bookings
 - [ ] Add booking search, filters and status updates
-- [ ] Allow rescheduling, cancellation and manual bookings
+- [x] Allow rescheduling, cancellation and manual bookings (owner/manager access with shared booking protections)
 - [ ] Add staff management and barber schedules
 - [ ] Allow owners to edit services, prices and durations
 - [x] Create contact message inbox (shop-scoped owner/manager access, search, status filters and updates)

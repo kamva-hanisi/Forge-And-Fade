@@ -5,6 +5,22 @@
   color: $text-light;
   font-size: $font-small;
 }
+.staff-booking-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+.staff-manual-booking .staff-form-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.staff-manual-booking .staff-card p {
+  overflow-wrap: anywhere;
+}
 
 .staff-form select {
   width: 100%;

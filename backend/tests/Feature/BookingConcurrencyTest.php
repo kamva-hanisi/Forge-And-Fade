@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -15,11 +16,15 @@ class BookingConcurrencyTest extends TestCase
         return [
             'identical starts' => [['10:00', '10:00']],
             'overlapping starts' => [['10:00', '10:20']],
+            'staff and public identical' => [['10:00', '10:00'], 'mixed'],
+            'staff and public overlapping' => [['10:00', '10:20'], 'mixed'],
+            'staff and staff identical' => [['10:00', '10:00'], 'staff'],
+            'staff and staff overlapping' => [['10:00', '10:20'], 'staff'],
         ];
     }
 
     #[DataProvider('competingTimes')]
-    public function test_competing_requests_for_an_empty_day_create_only_one_booking(array $times): void
+    public function test_competing_requests_for_an_empty_day_create_only_one_booking(array $times, string $mode = 'public'): void
     {
         if (getenv('BOOKING_MYSQL_CONCURRENCY') !== '1') {
             $this->markTestSkipped('Set BOOKING_MYSQL_CONCURRENCY=1 and use a dedicated MySQL test database.');
@@ -32,11 +37,18 @@ class BookingConcurrencyTest extends TestCase
         DB::table('booking_day_locks')->where('booking_date', $date)->delete();
         DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
         $processes = [];
+        $user = null;
         $barrier = tempnam(sys_get_temp_dir(), 'booking-race-');
         unlink($barrier);
         try {
+            if ($mode !== 'public') {
+                $user = User::factory()->create();
+                $this->grantShopRole($user, 'manager');
+                $token = $user->createToken('race-test', ['admin'])->plainTextToken;
+            }
             foreach ($times as $index => $time) {
-                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path());
+                $staff = $mode === 'staff' || ($mode === 'mixed' && $index === 0);
+                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path(), $staff ? ['BOOKING_STAFF_TOKEN' => $token] : ['BOOKING_STAFF_TOKEN' => '']);
                 $process->setTimeout(120);
                 $process->start();
                 $processes[] = $process;
@@ -72,6 +84,11 @@ class BookingConcurrencyTest extends TestCase
             DB::table('bookings')->where('booking_date', $date)->delete();
             DB::table('booking_day_locks')->where('booking_date', $date)->delete();
             DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
+            if ($user) {
+                $user->tokens()->delete();
+                DB::table('audit_events')->where('user_id', $user->id)->delete();
+                $user->delete();
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ import AdminSettings from "./pages/Admin/AdminSettings";
 import ShopSignup from "./pages/Admin/ShopSignup";
 import AdminRecovery from "./pages/Admin/AdminRecovery";
 import AdminInbox from "./pages/Admin/AdminInbox";
+import AdminBooking from "./pages/Admin/AdminBooking";
 
 function App() {
   const { pathname } = useLocation();
@@ -42,6 +43,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminSettings key="dashboard" />} />
           <Route path="appointments" element={<Admin />} />
+          <Route path="appointments/new" element={<AdminBooking />} />
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="settings/profile" element={<AdminSettings key="profile" page="profile" />} />
           <Route

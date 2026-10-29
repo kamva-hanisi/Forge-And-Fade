@@ -38,7 +38,10 @@ export default function AdminLayout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!session) return <Navigate to="/admin/signin" replace />;
-  const current = [...items, ...settings].find(([path]) => path === pathname);
+  const current = [...items, ...settings].find(
+    ([path]) =>
+      path === pathname || (path === "/admin/appointments" && pathname.startsWith(path + "/")),
+  );
   const logout = async () => {
     setBusy(true);
     setError("");

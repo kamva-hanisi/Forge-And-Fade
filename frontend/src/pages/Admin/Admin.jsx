@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import "./Admin.scss";
 
@@ -227,6 +227,11 @@ export default function Admin() {
           <h1 className="section-title">Appointments</h1>
           <p>Manage bookings, reschedule visits, and keep your day running smoothly.</p>
         </div>
+        {session.user.permissions?.includes("bookings.write") && (
+          <Link className="btn btn-primary" to="/admin/appointments/new">
+            Add appointment
+          </Link>
+        )}
       </div>
       {error && (
         <p role="alert" className="admin-error">

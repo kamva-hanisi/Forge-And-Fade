@@ -17,7 +17,12 @@ while (! file_exists($argv[2])) {
     usleep(10000);
     clearstatcache();
 }
-$request = Request::create('/api/bookings', 'POST', [
+$staffToken = getenv('BOOKING_STAFF_TOKEN');
+$headers = ['HTTP_ACCEPT' => 'application/json'];
+if ($staffToken) {
+    $headers['HTTP_AUTHORIZATION'] = 'Bearer '.$staffToken;
+}
+$request = Request::create($staffToken ? '/api/admin/bookings' : '/api/bookings', 'POST', [
     'service_id' => 2,
     'barber_id' => 1,
     'booking_date' => '2099-11-03',
@@ -25,7 +30,7 @@ $request = Request::create('/api/bookings', 'POST', [
     'customer_name' => 'Concurrency test',
     'email' => 'concurrency@example.com',
     'phone' => '0712345678',
-], [], [], ['HTTP_ACCEPT' => 'application/json']);
+], [], [], $headers);
 $response = $kernel->handle($request);
 echo 'STATUS:'.$response->getStatusCode()."\n";
 $kernel->terminate($request, $response);

@@ -45,6 +45,20 @@ class AdminController extends Controller
         ShopAccess::authorize($request, 'bookings.read');
     }
 
+    public function store(Request $request, BookingController $bookings, BookingSchedule $schedule)
+    {
+        ShopAccess::authorize($request, 'bookings.write');
+
+        return DB::transaction(function () use ($request, $bookings, $schedule) {
+            $response = $bookings->store($request, $schedule);
+            if ($response->getStatusCode() === 201) {
+                ShopAccess::audit($request, 'booking.created_by_staff', $response->getData(true)['booking']['id']);
+            }
+
+            return $response;
+        }, 5);
+    }
+
     public function logout(Request $request)
     {
         ShopAccess::audit($request, 'auth.logout');
