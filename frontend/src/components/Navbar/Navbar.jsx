@@ -28,7 +28,6 @@ export default function Navbar({ admin = false }) {
         <NavLink to="/services" onClick={closeMenu}>Services</NavLink>
         <NavLink to="/about" onClick={closeMenu}>About</NavLink>
         <NavLink to="/contact" onClick={closeMenu}>Contact</NavLink>
-        <NavLink to={session ? "/admin" : "/admin/signin"} onClick={closeMenu}>Admin</NavLink>
       </>}
       <Link to={action.to} className="btn btn-primary navbar__mobile-book" onClick={closeMenu}>{action.label}</Link>
     </nav>
