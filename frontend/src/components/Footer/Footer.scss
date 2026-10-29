@@ -6,8 +6,8 @@
   color: $white;
 
   &__grid {
-    padding-top: 65px;
-    padding-bottom: 65px;
+    padding-top: 64px;
+    padding-bottom: 64px;
 
     display: grid;
 
@@ -17,25 +17,7 @@
       1fr
       1fr;
 
-    gap: 50px;
-  }
-
-  &__logo {
-    display: inline-block;
-
-    color: $white;
-
-    font-family: $font-heading;
-
-    font-size: 1.3rem;
-
-    font-weight: 700;
-
-    letter-spacing: 1px;
-
-    span {
-      color: $gold;
-    }
+    gap: 48px;
   }
 
   &__brand {
@@ -60,8 +42,8 @@
     gap: 10px;
 
     a {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
 
       display: inline-flex;
 
@@ -185,7 +167,7 @@
     gap: 20px;
 
     p {
-      color: #8e8e8e;
+      color: #b8b8b8;
 
       font-size: 0.75rem;
     }
@@ -196,7 +178,7 @@
       gap: 20px;
 
       a {
-        color: #8e8e8e;
+        color: #b8b8b8;
 
         font-size: 0.75rem;
 

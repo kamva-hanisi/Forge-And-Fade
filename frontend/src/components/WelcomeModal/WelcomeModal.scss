@@ -22,7 +22,7 @@
 
     width: min(100%, 440px);
 
-    padding: 38px;
+    padding: 64px $card-padding $card-padding;
 
     background: $white;
 
@@ -73,7 +73,9 @@
 
     color: $text-light;
 
-    font-size: 0.75rem;
+    font-size: $font-small;
+    min-height: 44px;
+    padding: 8px 12px;
 
     text-decoration: underline;
   }
@@ -83,7 +85,7 @@
   .welcome-modal {
     &__box {
       padding:
-        35px 22px 28px;
+        64px 24px 24px;
     }
   }
 }

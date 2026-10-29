@@ -257,7 +257,7 @@ const Booking = () => {
 
                   {timeSlots.map((time) => <option value={time} key={time}>{time}</option>)}
                 </select>
-                {availabilityError && <p role="alert">{availabilityError} <button type="button" onClick={() => setRefresh((previous) => previous + 1)}>Retry</button></p>}
+                {availabilityError && <div role="alert" className="booking-form__message booking-form__message--error"><p>{availabilityError}</p><button type="button" className="btn btn-outline" onClick={() => setRefresh((previous) => previous + 1)}>Retry</button></div>}
                 {!checkingTimes && !availabilityError && formData.service_id && formData.barber_id && formData.booking_date && timeSlots.length === 0 && <p role="status">No available times for this selection.</p>}
               </div>
             </div>

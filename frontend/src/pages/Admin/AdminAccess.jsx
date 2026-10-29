@@ -49,8 +49,8 @@ export default function AdminAccess({ signup = false }) {
     }
   };
 
-  return <main className="admin-access">
-    <div className="admin-access__intro"><span className="section-label">Forge & Fade · Administration</span><h1>Your shop.<br />Your schedule.</h1><p>One place to manage appointments, look after your team, and keep the day running smoothly.</p><span className="admin-access__staff"><ShieldCheck size={18} aria-hidden="true" /> For shop owners and authorized staff</span></div>
+  return <main className="admin-access container">
+    <div className="admin-access__intro"><span className="section-label">Forge & Fade · Administration</span><h1 className="section-title">Your shop.<br />Your schedule.</h1><p>One place to manage appointments, look after your team, and keep the day running smoothly.</p><span className="admin-access__staff"><ShieldCheck size={18} aria-hidden="true" /> For shop owners and authorized staff</span></div>
     <section className="admin-access__card" aria-labelledby="admin-access-title">
       <nav aria-label="Admin account access"><Link to="/admin/signin" aria-current={!signup ? "page" : undefined}>Admin sign in</Link><Link to="/admin/signup" aria-current={signup ? "page" : undefined}>Admin sign up</Link></nav>
       <h2 id="admin-access-title">{signup ? "Create an admin account" : "Welcome back, admin."}</h2>

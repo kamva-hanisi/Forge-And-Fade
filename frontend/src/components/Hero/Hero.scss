@@ -3,7 +3,7 @@
 .hero {
   min-height: 100vh;
 
-  padding-top: 76px;
+  padding-top: $header-height;
 
   display: flex;
 
@@ -27,7 +27,7 @@
     h1 {
       font-family: $font-heading;
 
-      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-size: $font-display;
 
       font-weight: 500;
 

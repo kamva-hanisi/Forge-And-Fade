@@ -1,10 +1,10 @@
 @use "../../styles/variables" as *;
 
 .about-page {
-  padding-top: 76px;
+  padding-top: $header-height;
 
   &__header {
-    padding: 88px 0 92px;
+    padding: $section-space 0;
 
     background: $cream;
 
@@ -22,9 +22,9 @@
 
     h1 {
       font-family: $font-heading;
-      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-size: $font-title;
       font-weight: 500;
-      line-height: 1;
+      line-height: 1.15;
 
       span {
         color: $gold;

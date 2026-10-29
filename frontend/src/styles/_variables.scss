@@ -17,3 +17,18 @@ $font-body: Arial, Helvetica, sans-serif;
 $container: 1180px;
 
 $transition: 0.2s ease;
+
+$header-height: 76px;
+$control-height: 48px;
+$card-padding: 32px;
+$section-space: 80px;
+$section-space-mobile: 56px;
+$font-small: 0.875rem;
+$font-label: 0.75rem;
+$font-title: clamp(2rem, 4vw, 3rem);
+$success-bg: #eef6ef;
+$success-text: #245b32;
+$error-bg: #fbefed;
+$error-text: #8f3028;
+$gold-text: #896136;
+$font-display: clamp(3rem, 7vw, 5.5rem);

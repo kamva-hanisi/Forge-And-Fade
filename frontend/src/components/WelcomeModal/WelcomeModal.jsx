@@ -47,7 +47,7 @@ const WelcomeModal = () => {
 
         <button
           type="button"
-          className="welcome-modal__close"
+          className="icon-button welcome-modal__close"
           onClick={closeModal}
           aria-label="Close popup"
         >

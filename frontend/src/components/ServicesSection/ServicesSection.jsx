@@ -38,7 +38,7 @@ const ServicesSection = () => {
               <div className="service-card__bottom">
                 <span>R{service.price}</span>
 
-                <Link to={`/booking?service=${service.id}`}>
+                <Link to={`/booking?service=${service.id}`} className="btn btn-outline">
                   Book
                 </Link>
               </div>

@@ -209,13 +209,13 @@ const Contact = () => {
             </div>
 
             {success && (
-              <div className="contact-form__success">
+              <div role="status" className="contact-form__success">
                 {success}
               </div>
             )}
 
             {error && (
-              <div className="contact-form__error">
+              <div role="alert" className="contact-form__error">
                 {error}
               </div>
             )}

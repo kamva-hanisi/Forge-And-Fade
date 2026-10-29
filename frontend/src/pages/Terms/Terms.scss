@@ -1,10 +1,10 @@
 @use "../../styles/variables" as *;
 
 .terms-page {
-  padding-top: 76px;
+  padding-top: $header-height;
 
   &__header {
-    padding: 70px 0;
+    padding: $section-space 0;
 
     background: $cream;
 

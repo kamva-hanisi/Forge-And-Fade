@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import "./Footer.scss";
+import Brand from "../Brand/Brand";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -21,12 +22,7 @@ const Footer = () => {
         {/* BRAND */}
         <div className="footer__brand">
 
-          <Link
-            to="/"
-            className="footer__logo"
-          >
-            FORGE <span>&</span> FADE
-          </Link>
+          <Brand dark />
 
           <p>
             Professional cuts, clean fades and beard

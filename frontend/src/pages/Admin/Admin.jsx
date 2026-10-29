@@ -106,7 +106,7 @@ export default function Admin() {
   if (!token) return <Navigate to="/admin/signin" replace />;
 
   return <main className="admin-page container">
-    <div className="admin-heading"><div><span className="section-label">Forge & Fade</span><h1 className="section-title">{token ? "Appointments" : "Admin sign in"}</h1></div>{token && <div><p>{user?.name}</p><button type="button" className="btn btn-outline" disabled={busy} onClick={logout}>Sign out</button></div>}</div>
+    <div className="admin-heading"><div><span className="section-label">Forge & Fade · Administration</span><h1 className="section-title">Appointments</h1></div><div className="admin-user"><p>{user?.name}</p><button type="button" className="btn btn-outline" disabled={busy} onClick={logout}>Sign out</button></div></div>
     {error && <p role="alert" className="admin-error">{error}</p>}
     {message && <p role="status" className="admin-success">{message}</p>}
     <>
@@ -116,8 +116,8 @@ export default function Admin() {
         <label>Barber<select value={filters.barber_id} onChange={(event) => setFilters({ ...filters, barber_id: event.target.value })}><option value="">All barbers</option>{barbers.map((barber) => <option key={barber.id} value={barber.id}>{barber.name}</option>)}</select></label>
         <label>Status<select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}><option value="">All statuses</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></label>
         <label>Customer<input type="search" placeholder="Name or email" value={filters.search} maxLength={100} onChange={(event) => setFilters({ ...filters, search: event.target.value })} /></label>
-        <button className="btn btn-primary" disabled={busy || loading}>Apply filters</button>
-        <button type="button" className="btn btn-outline" disabled={busy || loading} onClick={() => { setFilters(emptyFilters); setQuery({ ...emptyFilters, page: 1 }); }}>Reset</button>
+        <div className="admin-filter-actions"><button className="btn btn-primary" disabled={busy || loading}>Apply filters</button>
+        <button type="button" className="btn btn-outline" disabled={busy || loading} onClick={() => { setFilters(emptyFilters); setQuery({ ...emptyFilters, page: 1 }); }}>Reset</button></div>
       </form>
       <div className="admin-toolbar"><p>{loading ? "Loading appointments…" : result ? `${result.total} appointment${result.total === 1 ? "" : "s"} · South Africa time` : "Appointments unavailable"}</p><button type="button" className="btn btn-outline" disabled={busy || loading} onClick={() => setRefresh((previous) => previous + 1)}>Refresh</button></div>
       {result?.data.length === 0 && <p role="status">No appointments match your filters.</p>}

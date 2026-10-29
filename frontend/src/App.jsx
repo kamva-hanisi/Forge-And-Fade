@@ -1,4 +1,4 @@
-import { Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar/Navbar";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
@@ -19,7 +19,7 @@ function App() {
   return (
     <div className={adminPage ? "admin-shell" : undefined}>
       <ScrollToTop />
-      {adminPage ? <header className="admin-brand"><Link to="/">Forge & Fade</Link><Link to="/admin">Administration</Link></header> : <Navbar />}
+      <Navbar key={pathname} admin={adminPage} />
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/services" element={<Services />} />

@@ -1,10 +1,10 @@
 @use "../../styles/variables" as *;
 
 .contact-page {
-  padding-top: 76px;
+  padding-top: $header-height;
 
   &__header {
-    padding: 70px 0;
+    padding: $section-space 0;
 
     background: $cream;
 
@@ -20,7 +20,7 @@
 
     grid-template-columns: 0.8fr 1.2fr;
 
-    gap: 70px;
+    gap: 64px;
 
     align-items: start;
   }
@@ -76,7 +76,7 @@
 }
 
 .contact-form {
-  padding: 30px;
+  padding: $card-padding;
 
   border: 1px solid $border;
 
@@ -90,9 +90,9 @@
     gap: 8px;
 
     label {
-      font-size: 0.8rem;
+      font-size: $font-small;
 
-      font-weight: 700;
+      font-weight: 600;
     }
 
     input,
@@ -106,8 +106,6 @@
       color: $black;
 
       border: 1px solid $border;
-
-      outline: none;
 
       &:focus {
         border-color: $gold;
@@ -124,9 +122,9 @@
 
   padding: 12px;
 
-  background: #eef8ef;
+  background: $success-bg;
 
-  color: #256c2e;
+  color: $success-text;
 
   border: 1px solid #bcdcbc;
 
@@ -138,9 +136,9 @@
 
   padding: 12px;
 
-  background: #fff0f0;
+  background: $error-bg;
 
-  color: #9d2b2b;
+  color: $error-text;
 
   border: 1px solid #e2b8b8;
 
@@ -164,6 +162,6 @@
 
 @media (max-width: 500px) {
   .contact-form {
-    padding: 20px;
+    padding: 24px;
   }
 }

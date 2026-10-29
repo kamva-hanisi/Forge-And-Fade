@@ -1,10 +1,10 @@
 @use "../../styles/variables" as *;
 
 .services-page {
-  padding-top: 76px;
+  padding-top: $header-height;
 
   &__header {
-    padding: 80px 0;
+    padding: $section-space 0;
 
     background: $cream;
 
@@ -16,9 +16,7 @@
   }
 
   &__grid {
-    max-width: 900px;
-
-    margin: 0 auto;
+    width: 100%;
 
     border-top: 1px solid $border;
   }
@@ -117,9 +115,6 @@
       font-size: 1.5rem;
     }
 
-    .btn {
-      padding: 10px 20px;
-    }
   }
 }
 

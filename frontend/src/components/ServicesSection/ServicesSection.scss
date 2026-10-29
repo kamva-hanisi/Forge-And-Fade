@@ -15,7 +15,7 @@
     grid-template-columns:
       repeat(2, 1fr);
 
-    gap: 20px;
+    gap: 24px;
   }
 
   &__footer {
@@ -24,7 +24,7 @@
 }
 
 .service-card {
-  padding: 28px;
+  padding: $card-padding;
 
   display: flex;
 
@@ -39,7 +39,7 @@
   h3 {
     font-family: $font-heading;
 
-    font-size: 1.4rem;
+    font-size: 1.5rem;
 
     font-weight: 500;
   }
@@ -55,7 +55,7 @@
   }
 
   &__bottom {
-    min-width: 80px;
+    min-width: 110px;
 
     display: flex;
 
@@ -73,17 +73,7 @@
       font-size: 1.3rem;
     }
 
-    a {
-      color: $black;
-
-      font-size: 0.75rem;
-
-      font-weight: 700;
-
-      text-transform: uppercase;
-
-      border-bottom: 1px solid $black;
-    }
+    .btn { margin-top: 16px; }
   }
 }
 
@@ -97,6 +87,7 @@
 
 @media (max-width: 500px) {
   .service-card {
+    padding: 24px;
     flex-direction: column;
 
     &__bottom {

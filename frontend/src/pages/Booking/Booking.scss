@@ -1,10 +1,10 @@
 @use "../../styles/variables" as *;
 
 .booking-page {
-  padding-top: 76px;
+  padding-top: $header-height;
 
   &__header {
-    padding: 70px 0;
+    padding: $section-space 0;
 
     background: $cream;
 
@@ -18,16 +18,17 @@
   &__grid {
     display: grid;
 
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: minmax(0, 1fr) 320px;
 
     align-items: start;
 
-    gap: 60px;
+    gap: 48px;
   }
 }
 
 .booking-form {
-  max-width: 720px;
+  width: 100%;
+  min-width: 0;
 
   &__row {
     display: grid;
@@ -49,9 +50,9 @@
     label {
       color: $black;
 
-      font-size: 0.8rem;
+      font-size: $font-small;
 
-      font-weight: 700;
+      font-weight: 600;
     }
 
     input,
@@ -66,8 +67,6 @@
       color: $black;
 
       border: 1px solid $border;
-
-      outline: none;
 
       &:focus {
         border-color: $gold;
@@ -93,17 +92,17 @@
     font-size: 0.85rem;
 
     &--success {
-      background: #eef8ef;
+      background: $success-bg;
 
-      color: #256c2e;
+      color: $success-text;
 
       border: 1px solid #bcdcbc;
     }
 
     &--error {
-      background: #fff0f0;
+      background: $error-bg;
 
-      color: #9d2b2b;
+      color: $error-text;
 
       border: 1px solid #e2b8b8;
     }
@@ -111,7 +110,7 @@
 }
 
 .booking-info {
-  padding: 28px;
+  padding: $card-padding;
 
   background: $cream;
 
@@ -157,7 +156,7 @@
 .calendar-options {
   margin: 25px 0;
 
-  padding: 22px;
+  padding: 24px;
 
   background: $cream;
 
@@ -191,6 +190,7 @@
 }
 
 @media (max-width: 550px) {
+  .booking-info { padding: 24px; }
   .calendar-options {
     &__buttons {
       flex-direction: column;

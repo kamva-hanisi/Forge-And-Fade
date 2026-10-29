@@ -8,7 +8,22 @@ body {
   font-family: $font-body;
 
   line-height: 1.6;
+  font-size: 1rem;
+  -webkit-font-smoothing: antialiased;
 }
+
+:root { --header-height: #{$header-height}; }
+html { scroll-padding-top: calc(var(--header-height) + 24px); scrollbar-gutter: stable; }
+h1, h2, h3, h4 { font-family: $font-heading; font-weight: 500; line-height: 1.2; }
+input, select, textarea { font-family: $font-body; font-size: 1rem; font-weight: 400; color: $text; border-radius: 0; }
+input:not([type="checkbox"]):not([type="radio"]), select { min-height: $control-height; height: $control-height; line-height: 1.25; }
+textarea { min-height: 140px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: $text-light; opacity: 1; }
+input:autofill { box-shadow: 0 0 0 1000px $white inset; -webkit-text-fill-color: $text; }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:is(a, button, input, select, textarea):focus-visible { outline: 2px solid $gold; outline-offset: 3px; }
+button:disabled, .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+.icon-button { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; background: transparent; color: $text; }
 
 #root {
   min-height: 100vh;
@@ -20,7 +35,7 @@ body {
 }
 
 section {
-  padding: 80px 0;
+  padding: $section-space 0;
 }
 
 .section-label {
@@ -28,9 +43,9 @@ section {
 
   margin-bottom: 10px;
 
-  color: $gold;
+  color: $gold-text;
 
-  font-size: 0.75rem;
+  font-size: $font-label;
   font-weight: 700;
 
   letter-spacing: 2px;
@@ -41,7 +56,7 @@ section {
 .section-title {
   font-family: $font-heading;
 
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: $font-title;
 
   line-height: 1.15;
 }
@@ -61,6 +76,12 @@ section {
   justify-content: center;
 
   padding: 13px 24px;
+  min-height: $control-height;
+  gap: 10px;
+  border-radius: 0;
+  line-height: 1.25;
+  font-family: $font-body;
+  text-align: center;
 
   border: 1px solid transparent;
 
@@ -79,8 +100,9 @@ section {
 
   color: $white;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: $gold;
+    color: $black;
   }
 }
 
@@ -91,7 +113,7 @@ section {
 
   border-color: $black;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: $black;
 
     color: $white;
@@ -106,6 +128,11 @@ section {
 
 @media (max-width: 768px) {
   section {
-    padding: 60px 0;
+    padding: $section-space-mobile 0;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
