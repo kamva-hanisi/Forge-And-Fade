@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminMessageController;
 use App\Http\Controllers\Api\AdminRecoveryController;
 use App\Http\Controllers\Api\AdminRegistrationController;
 use App\Http\Controllers\Api\AdminSettingsController;
@@ -23,6 +24,8 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::patch('/shop', [ShopRegistrationController::class, 'update']);
     Route::get('/dashboard', [AdminSettingsController::class, 'dashboard']);
+    Route::get('/messages', [AdminMessageController::class, 'index']);
+    Route::patch('/messages/{message}', [AdminMessageController::class, 'update'])->whereNumber('message')->middleware('throttle:30,1');
     Route::get('/profile', [AdminSettingsController::class, 'profile']);
     Route::patch('/profile', [AdminSettingsController::class, 'updateProfile']);
     Route::put('/password', [AdminSettingsController::class, 'password'])->middleware('throttle:5,1');

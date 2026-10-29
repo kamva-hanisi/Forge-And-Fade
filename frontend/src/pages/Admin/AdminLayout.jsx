@@ -12,6 +12,7 @@ import {
   X,
   ArrowUpRight,
   ChevronDown,
+  Mail,
 } from "lucide-react";
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
@@ -21,6 +22,7 @@ import "./AdminWorkspace.scss";
 const items = [
   ["/admin", "Dashboard", LayoutDashboard],
   ["/admin/appointments", "Appointments", CalendarDays],
+  ["/admin/inbox", "Contact inbox", Mail],
 ];
 const settings = [
   ["/admin/settings/profile", "My profile", UserRound],
@@ -87,7 +89,12 @@ export default function AdminLayout() {
           <span className="section-label">Administration</span>
         </div>
         <nav aria-label="Admin sidebar">
-          {items.map(renderLink)}
+          {items
+            .filter(
+              ([path]) =>
+                path !== "/admin/inbox" || session.user.permissions?.includes("messages.manage"),
+            )
+            .map(renderLink)}
           <div className="staff-settings">
             <button
               type="button"

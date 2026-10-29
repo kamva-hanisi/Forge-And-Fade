@@ -13,8 +13,8 @@ class ShopAccess
     public static function permissions(string $role): array
     {
         return match ($role) {
-            'owner', 'platform_admin' => ['bookings.read', 'bookings.write', 'members.invite', 'shop.write'],
-            'manager' => ['bookings.read', 'bookings.write'],
+            'owner', 'platform_admin' => ['bookings.read', 'bookings.write', 'members.invite', 'shop.write', 'messages.manage', 'reports.read'],
+            'manager' => ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read'],
             'barber' => ['bookings.read'],
             default => [],
         };

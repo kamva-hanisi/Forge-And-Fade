@@ -23,20 +23,42 @@ class AdminSettingsController extends Controller
     public function dashboard(Request $request)
     {
         $this->authorizeAdmin($request);
-        $today = now()->toDateString();
+        $input = $request->validate(['days' => ['nullable', 'integer', Rule::in([7, 30, 90])]]);
+        $days = (int) ($input['days'] ?? 30);
+        $shop = $request->attributes->get('shop');
+        $clock = now($shop->timezone);
+        $today = $clock->toDateString();
+        $time = $clock->format('H:i:s');
+        $from = $clock->copy()->subDays($days - 1)->toDateString();
+        $period = ShopAccess::bookings($request)->whereBetween('booking_date', [$from, $today]);
+        $confirmed = (clone $period)->where('status', 'confirmed');
+        $canReport = in_array('reports.read', ShopAccess::permissions($request->attributes->get('shop_role')), true);
+        $statistics = [
+            'days' => $days, 'from' => $from, 'to' => $today,
+            'confirmed_count' => (clone $confirmed)->count(),
+            'cancelled_count' => (clone $period)->where('status', 'cancelled')->count(),
+            'booked_values' => $canReport ? (clone $confirmed)->whereNotNull('price')->whereNotNull('currency')
+                ->selectRaw('currency, SUM(price) as amount, COUNT(*) as booking_count')->groupBy('currency')->orderBy('currency')->toBase()->get() : null,
+            'unpriced_count' => $canReport ? (clone $confirmed)->where(fn ($query) => $query->whereNull('price')->orWhereNull('currency'))->count() : null,
+        ];
 
         return response()->json([
             'today' => $today,
+            'timezone' => $shop->timezone,
+            'statistics' => $statistics,
+            'past_count' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today, $time) {
+                $query->where('booking_date', '<', $today)->orWhere(fn ($query) => $query->whereDate('booking_date', $today)->where('booking_time', '<', $time));
+            })->count(),
             'today_count' => ShopAccess::bookings($request)->whereDate('booking_date', $today)->where('status', 'confirmed')->count(),
-            'upcoming_count' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today) {
-                $query->where('booking_date', '>', $today)->orWhere(function ($current) use ($today) {
-                    $current->whereDate('booking_date', $today)->where('booking_time', '>=', now()->format('H:i:s'));
+            'upcoming_count' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today, $time) {
+                $query->where('booking_date', '>', $today)->orWhere(function ($current) use ($today, $time) {
+                    $current->whereDate('booking_date', $today)->where('booking_time', '>=', $time);
                 });
             })->count(),
             'cancelled_count' => ShopAccess::bookings($request)->where('status', 'cancelled')->count(),
-            'next' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today) {
-                $query->where('booking_date', '>', $today)->orWhere(function ($current) use ($today) {
-                    $current->whereDate('booking_date', $today)->where('booking_time', '>=', now()->format('H:i:s'));
+            'next' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today, $time) {
+                $query->where('booking_date', '>', $today)->orWhere(function ($current) use ($today, $time) {
+                    $current->whereDate('booking_date', $today)->where('booking_time', '>=', $time);
                 });
             })->orderBy('booking_date')->orderBy('booking_time')->limit(5)->get(),
         ])->header('Cache-Control', 'no-store');

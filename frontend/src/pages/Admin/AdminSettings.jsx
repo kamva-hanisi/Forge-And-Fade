@@ -31,6 +31,7 @@ export default function AdminSettings({ page = "dashboard" }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [days, setDays] = useState(30);
   const client = useMemo(
     () =>
       axios.create({
@@ -46,7 +47,10 @@ export default function AdminSettings({ page = "dashboard" }) {
     const endpoint =
       page === "dashboard" ? "/dashboard" : page === "invite" ? "/invitations" : "/profile";
     client
-      .get(endpoint, { signal: controller.signal })
+      .get(endpoint, {
+        signal: controller.signal,
+        params: page === "dashboard" ? { days } : undefined,
+      })
       .then(({ data: response }) => {
         setData(response);
         if (page === "profile") setName(response.name);
@@ -57,7 +61,7 @@ export default function AdminSettings({ page = "dashboard" }) {
         else setError(describeError(err));
       });
     return () => controller.abort();
-  }, [client, page, refresh, setSession, canInvite]);
+  }, [client, page, refresh, setSession, canInvite, days]);
   const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
@@ -152,6 +156,82 @@ export default function AdminSettings({ page = "dashboard" }) {
               </section>
             ))}
           </div>
+          {data.statistics && (
+            <section className="staff-card staff-report">
+              <div className="staff-card-heading">
+                <div>
+                  <h2>Booking activity</h2>
+                  <p>
+                    Appointments scheduled from {data.statistics.from} to {data.statistics.to},
+                    inclusive.
+                  </p>
+                </div>
+                <label htmlFor="report-days">
+                  Reporting period
+                  <select
+                    id="report-days"
+                    value={days}
+                    onChange={(event) => {
+                      setError("");
+                      setData(null);
+                      setDays(Number(event.target.value));
+                    }}
+                  >
+                    <option value={7}>Last 7 days</option>
+                    <option value={30}>Last 30 days</option>
+                    <option value={90}>Last 90 days</option>
+                  </select>
+                </label>
+              </div>
+              <div className="staff-report__counts">
+                <p>
+                  <strong>{data.statistics.confirmed_count}</strong> confirmed in period
+                </p>
+                <p>
+                  <strong>{data.statistics.cancelled_count}</strong> cancelled in period
+                </p>
+                <p>
+                  <strong>{data.past_count}</strong> earlier confirmed appointments · all time
+                </p>
+              </div>
+              {data.statistics.booked_values !== null && (
+                <div className="staff-report__value">
+                  <h3>Confirmed booked value</h3>
+                  {data.statistics.booked_values.length ? (
+                    data.statistics.booked_values.map((value) => (
+                      <p key={value.currency}>
+                        <strong>
+                          {new Intl.NumberFormat("en-ZA", {
+                            style: "currency",
+                            currency: value.currency,
+                          }).format(Number(value.amount))}
+                        </strong>{" "}
+                        · {value.booking_count} priced{" "}
+                        {value.booking_count === 1 ? "appointment" : "appointments"}
+                      </p>
+                    ))
+                  ) : (
+                    <p>No priced confirmed appointments in this period.</p>
+                  )}
+                  <p>
+                    Saved booking prices only; cancelled appointments are excluded. This is not
+                    collected revenue or proof of completed services.
+                  </p>
+                  {data.statistics.unpriced_count > 0 && (
+                    <p role="status">
+                      {data.statistics.unpriced_count} confirmed{" "}
+                      {data.statistics.unpriced_count === 1
+                        ? "appointment has"
+                        : "appointments have"}{" "}
+                      unknown historical pricing and{" "}
+                      {data.statistics.unpriced_count === 1 ? "is" : "are"} excluded from these
+                      amounts.
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
           <section className="staff-card">
             <div className="staff-card-heading">
               <div>
