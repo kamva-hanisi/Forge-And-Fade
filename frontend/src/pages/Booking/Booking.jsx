@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, ShieldCheck } from 
 import axios from "axios";
 import { barbers as barberProfiles } from "../../data/barbers";
 import { openGoogleCalendar, downloadAppleCalendar } from "../../utils/calendar";
+import FormGuard from "../../components/FormGuard/FormGuard";
+import { formError as errorText } from "../../utils/formError";
 import "./Booking.scss";
 
 const steps = ["Service", "Barber", "Date & time", "Your details"];
@@ -14,13 +16,8 @@ const emptyDetails = {
   email: "",
   phone: "",
   notes: "",
+  website: "",
 };
-const errorText = (error) =>
-  Object.values(error.response?.data?.errors || {})
-    .flat()
-    .join(" ") ||
-  error.response?.data?.message ||
-  "Unable to connect. Please try again.";
 const displayDate = (date) =>
   date
     ? new Intl.DateTimeFormat("en-ZA", {
@@ -167,21 +164,34 @@ export default function Booking() {
     try {
       const { data } = await axios.post(
         apiUrl + "/bookings",
-        { ...formData, service_id: selectedService.id, barber_id: selectedBarber.id },
+        {
+          ...formData,
+          service_id: selectedService.id,
+          barber_id: selectedBarber.id,
+          quoted_price: selectedService.price,
+        },
         { timeout: 20000 },
       );
-      setConfirmedBooking({ ...data.booking, price: selectedService.price });
+      setConfirmedBooking(data.booking);
       focusHeading();
     } catch (err) {
       const fields = err.response?.data?.errors || {};
       if (
         err.response?.status === 409 ||
         (err.response?.status === 422 &&
-          (fields.booking_time || fields.booking_date || fields.service_id || fields.barber_id))
+          (fields.booking_time ||
+            fields.booking_date ||
+            fields.service_id ||
+            fields.barber_id ||
+            fields.quoted_price))
       ) {
         setFormData((previous) => ({ ...previous, booking_time: "" }));
         setRefresh((previous) => previous + 1);
-        setStep(fields.service_id ? 0 : fields.barber_id ? 1 : 2);
+        setStep(fields.service_id || fields.quoted_price ? 0 : fields.barber_id ? 1 : 2);
+        if (fields.quoted_price || fields.service_id) {
+          setCatalog(null);
+          setCatalogRefresh((previous) => previous + 1);
+        }
         focusHeading();
       }
       setError(
@@ -224,6 +234,10 @@ export default function Booking() {
                 Your appointment is confirmed. Save these details or add the visit to your calendar.
               </p>
               <dl className="booking-confirmation__details">
+                <div>
+                  <dt>Booking reference</dt>
+                  <dd className="booking-reference">{confirmedBooking.reference}</dd>
+                </div>
                 <div>
                   <dt>Service</dt>
                   <dd>
@@ -355,6 +369,10 @@ export default function Booking() {
                   {catalog && (
                     <form className="booking-form" onSubmit={submit}>
                       <fieldset disabled={loading}>
+                        <FormGuard
+                          value={formData.website}
+                          onChange={(value) => change("website", value)}
+                        />
                         {step === 0 && (
                           <fieldset className="booking-choices">
                             <legend className="booking-sr-only">Select a service</legend>

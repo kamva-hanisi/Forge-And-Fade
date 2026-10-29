@@ -8,6 +8,7 @@ use App\Services\BookingSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -23,6 +24,7 @@ class BookingController extends Controller
                 'email' => 'required|email|max:150',
                 'phone' => 'required|string|max:30',
                 'notes' => 'nullable|string|max:1000',
+                'quoted_price' => 'sometimes|numeric|min:0|max:99999999.99',
             ] : []),
         ]);
     }
@@ -40,6 +42,10 @@ class BookingController extends Controller
     {
         $validated = $this->validateAppointment($request, true);
         $service = config('booking.services')[$validated['service_id']];
+        if (isset($validated['quoted_price']) && (int) round((float) $validated['quoted_price'] * 100) !== (int) round($service['price'] * 100)) {
+            throw ValidationException::withMessages(['quoted_price' => 'The service price has changed. Review the updated price before booking.']);
+        }
+        unset($validated['quoted_price']);
 
         return DB::transaction(function () use ($validated, $service, $schedule) {
             $schedule->lockDay($validated['barber_id'], $validated['booking_date']);
@@ -53,9 +59,12 @@ class BookingController extends Controller
                 'duration' => $service['duration'],
                 'barber_name' => config('booking.barbers')[$validated['barber_id']],
                 'status' => 'confirmed',
+                'price' => $service['price'],
+                'currency' => 'ZAR',
             ]);
 
-            return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking], 201);
+            return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking->fresh()], 201)
+                ->header('Cache-Control', 'no-store');
         }, 5);
     }
 

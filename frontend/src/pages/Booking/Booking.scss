@@ -1,5 +1,11 @@
 @use "../../styles/variables" as *;
 
+.booking-reference {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
 .booking-page {
   padding-top: $header-height;
   &__header {

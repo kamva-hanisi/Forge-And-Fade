@@ -45,7 +45,7 @@ class BookingSchedule
         $start = Carbon::parse("{$date} {$time}", config('app.timezone'));
         $hours = config('booking.hours')[$start->dayOfWeekIso] ?? null;
         $minute = $this->minutes($time);
-        if (! $hours || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
+        if (! $hours || in_array($date, config('booking.closed_dates', []), true) || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
             || $minute < $this->minutes($hours[0]) || $minute + $duration > $this->minutes($hours[1])) {
             return false;
         }
