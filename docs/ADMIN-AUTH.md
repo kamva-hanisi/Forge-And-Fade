@@ -1,5 +1,7 @@
 # Admin sign-in and sign-up correction
 
+Historical delivery notes: see [Phase 2 accounts](PHASE2-ACCOUNTS.md) for current shop ownership, membership roles and invitation permissions.
+
 The requested authentication pages are for administrators, not customers.
 
 ## Pages
@@ -29,4 +31,4 @@ Run `php artisan migrate` to create admin_registration and admin_invitations. Th
 
 The full MySQL suite passes 29 tests with 212 assertions, including registration, invitations, role access, admin booking actions and the existing public booking races. React production build and lint pass. Browser checks use the isolated preview database on port 5176 before syncing to port 5173. They verify first-owner sign-up reaching appointments, separate admin sign-in, sign-out and mobile layout. The synthetic preview administrator is disabled after testing; no real administrator is created automatically in the user's active database.
 
-Screenshots: docs/admin-signup.png and docs/admin-signin.png. Earlier Phase 1/admin reports describe prior implementation snapshots; this document supersedes their account-registration instructions. The corrected source archive omits the removed customer-account code and screenshots.
+Screenshots: admin-signup.png and admin-signin.png. Earlier Phase 1/admin reports describe prior implementation snapshots; this document supersedes their account-registration instructions. The corrected source archive omits the removed customer-account code and screenshots.

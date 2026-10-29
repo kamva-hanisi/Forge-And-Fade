@@ -8,6 +8,7 @@ use App\Services\BookingSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -23,16 +24,18 @@ class BookingController extends Controller
                 'email' => 'required|email|max:150',
                 'phone' => 'required|string|max:30',
                 'notes' => 'nullable|string|max:1000',
+                'quoted_price' => 'sometimes|numeric|min:0|max:99999999.99',
             ] : []),
         ]);
     }
 
-    public function catalog()
+    public function catalog(Request $request)
     {
         return response()->json([
             'services' => collect(config('booking.services'))->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
             'barbers' => collect(config('booking.barbers'))->map(fn ($name, $id) => ['id' => $id, 'name' => $name])->values(),
-            'timezone' => config('app.timezone'),
+            'timezone' => $request->attributes->get('shop')->timezone,
+            'shop' => $request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone']),
         ]);
     }
 
@@ -40,8 +43,12 @@ class BookingController extends Controller
     {
         $validated = $this->validateAppointment($request, true);
         $service = config('booking.services')[$validated['service_id']];
+        if (isset($validated['quoted_price']) && (int) round((float) $validated['quoted_price'] * 100) !== (int) round($service['price'] * 100)) {
+            throw ValidationException::withMessages(['quoted_price' => 'The service price has changed. Review the updated price before booking.']);
+        }
+        unset($validated['quoted_price']);
 
-        return DB::transaction(function () use ($validated, $service, $schedule) {
+        return DB::transaction(function () use ($validated, $service, $schedule, $request) {
             $schedule->lockDay($validated['barber_id'], $validated['booking_date']);
             $schedule->validateTime($validated['booking_date'], $validated['booking_time'], $service['duration']);
             if ($schedule->overlaps($validated['booking_time'], $service['duration'], $schedule->bookings($validated['barber_id'], $validated['booking_date'], true))) {
@@ -53,9 +60,14 @@ class BookingController extends Controller
                 'duration' => $service['duration'],
                 'barber_name' => config('booking.barbers')[$validated['barber_id']],
                 'status' => 'confirmed',
+                'price' => $service['price'],
+                'currency' => 'ZAR',
+                'shop_id' => $request->attributes->get('shop')->id,
             ]);
 
-            return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking], 201);
+            return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking->fresh(),
+                'shop' => $request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone'])], 201)
+                ->header('Cache-Control', 'no-store');
         }, 5);
     }
 
@@ -72,6 +84,6 @@ class BookingController extends Controller
             }
         }
 
-        return response()->json(['available_times' => $available, 'timezone' => config('app.timezone')]);
+        return response()->json(['available_times' => $available, 'timezone' => $request->attributes->get('shop')->timezone]);
     }
 }

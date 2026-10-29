@@ -40,10 +40,24 @@ jobs:
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
-          if [ -z "$VITE_API_URL" ]; then
-            echo "Set the repository variable VITE_API_URL before deploying."
-            exit 1
-          fi
+          node --input-type=module <<'NODE'
+          try {
+            const api = new URL(process.env.VITE_API_URL);
+            if (api.protocol !== "https:" || ["localhost", "127.0.0.1", "[::1]"].includes(api.hostname) || api.username || api.password) {
+              throw new Error("A public HTTPS API URL is required.");
+            }
+          } catch {
+            console.error("Set VITE_API_URL to your public HTTPS Laravel API URL before deploying.");
+            process.exit(1);
+          }
+          NODE
+
+      - name: Check frontend
+        working-directory: frontend
+        run: |
+          npm run format:check
+          npm run lint
+          npm test
 
       - name: Build frontend
         working-directory: frontend

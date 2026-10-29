@@ -16,7 +16,7 @@ class AdminSettingsTest extends TestCase
     private function admin(): User
     {
         $user = User::factory()->create(['password' => 'Original-Password-123']);
-        $user->forceFill(['is_admin' => true])->save();
+        $this->grantShopRole($user);
         $this->withToken($user->createToken('test', ['admin'])->plainTextToken);
 
         return $user;

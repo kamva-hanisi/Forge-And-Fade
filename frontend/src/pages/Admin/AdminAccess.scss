@@ -1,6 +1,19 @@
 @use "../../styles/variables" as *;
 
-.admin-shell { min-height: 100vh; padding-top: $header-height; background: $cream; }
+.shop-signup-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 24px;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  padding-top: $header-height;
+  background: $cream;
+}
 .admin-access {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -8,39 +21,158 @@
   gap: 64px;
   padding: 64px 0;
   min-height: calc(100dvh - #{$header-height});
-  &__intro { padding-top: $card-padding; h1 { margin: 20px 0 24px; } > p { max-width: 400px; color: $text-light; } }
-  &__staff { display: flex; gap: 12px; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid $border; font-size: $font-small; color: $text-light; svg { color: $gold; flex-shrink: 0; } }
+  &__intro {
+    padding-top: $card-padding;
+    h1 {
+      margin: 20px 0 24px;
+    }
+    > p {
+      max-width: 400px;
+      color: $text-light;
+    }
+  }
+  &__staff {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid $border;
+    font-size: $font-small;
+    color: $text-light;
+    svg {
+      color: $gold;
+      flex-shrink: 0;
+    }
+  }
   &__card {
     padding: $card-padding;
     border: 1px solid $border;
     background: $white;
     min-width: 0;
-    nav { display: flex; gap: 24px; margin-bottom: 32px; border-bottom: 1px solid $border;
-      a { display: inline-flex; align-items: center; min-height: 44px; padding-bottom: 12px; color: $text-light; font-size: $font-small; }
-      a[aria-current="page"] { border-bottom: 2px solid $gold; color: $black; font-weight: 600; }
+    nav {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid $border;
+      a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding-bottom: 12px;
+        color: $text-light;
+        font-size: $font-small;
+      }
+      a[aria-current="page"] {
+        border-bottom: 2px solid $gold;
+        color: $black;
+        font-weight: 600;
+      }
     }
-    h2 { font-size: clamp(1.6rem, 3vw, 2rem); }
-    > p { margin-top: 12px; font-size: $font-small; color: $text-light; }
-    form { display: grid; gap: 24px; margin-top: 24px; }
-    label, .admin-access__field { display: grid; gap: 8px; }
-    label { font-size: $font-small; font-weight: 600; }
-    input { width: 100%; min-width: 0; border: 1px solid $border; padding: 12px 14px; background: $white; }
-    small { font-size: $font-label; font-weight: 400; color: $text-light; }
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2rem);
+    }
+    > p {
+      margin-top: 12px;
+      font-size: $font-small;
+      color: $text-light;
+    }
+    form {
+      display: grid;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    label,
+    .admin-access__field {
+      display: grid;
+      gap: 8px;
+    }
+    label {
+      font-size: $font-small;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid $border;
+      padding: 12px 14px;
+      background: $white;
+    }
+    small {
+      font-size: $font-label;
+      font-weight: 400;
+      color: $text-light;
+    }
   }
-  &__password { position: relative; input { padding-right: 52px; } button { position: absolute; top: 2px; right: 2px; bottom: 2px; width: 44px; min-height: 44px; display: grid; place-items: center; background: transparent; color: $text-light; } }
-  &__submit { width: 100%; }
-  &__error { background: $error-bg; color: $error-text; padding: 16px; margin-top: 20px; font-size: $font-small; border: 1px solid rgba($error-text, .2); }
-  &__switch { text-align: center; a { color: $text; text-decoration: underline; text-underline-offset: 3px; } }
-  &__back { display: block; text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid $border; font-size: $font-small; color: $text-light; }
+  &__password {
+    position: relative;
+    input {
+      padding-right: 52px;
+    }
+    button {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      bottom: 2px;
+      width: 44px;
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      color: $text-light;
+    }
+  }
+  &__submit {
+    width: 100%;
+  }
+  &__error {
+    background: $error-bg;
+    color: $error-text;
+    padding: 16px;
+    margin-top: 20px;
+    font-size: $font-small;
+    border: 1px solid rgba($error-text, 0.2);
+  }
+  &__switch {
+    text-align: center;
+    a {
+      color: $text;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+  &__back {
+    display: block;
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid $border;
+    font-size: $font-small;
+    color: $text-light;
+  }
 }
 
 @media (max-width: 850px) {
-  .admin-access { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 40px 0;
-    &__intro { padding-top: 0; }
-    &__intro h1 br { display: none; }
-    &__staff { display: none; }
+  .admin-access {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding: 40px 0;
+    &__intro {
+      padding-top: 0;
+    }
+    &__intro h1 br {
+      display: none;
+    }
+    &__staff {
+      display: none;
+    }
   }
 }
 @media (max-width: 550px) {
-  .admin-access__card { padding: 24px; nav { gap: 20px; } }
+  .admin-access__card {
+    padding: 24px;
+    nav {
+      gap: 20px;
+    }
+  }
 }

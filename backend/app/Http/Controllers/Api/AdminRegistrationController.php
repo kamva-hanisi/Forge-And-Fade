@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ShopAccess;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class AdminRegistrationController extends Controller
         ]);
         try {
             return DB::transaction(function () use ($input) {
+                $invitation = null;
                 $registration = DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
                 abort_unless($registration, 503, 'Admin registration is not configured.');
                 if ($registration->claimed || User::where('is_admin', true)->exists()) {
@@ -43,10 +45,14 @@ class AdminRegistrationController extends Controller
                 $user = new User(['name' => $input['name'], 'email' => $input['email'], 'password' => $input['password']]);
                 $user->is_admin = true;
                 $user->save();
+                DB::table('shop_memberships')->insert(['shop_id' => $invitation->shop_id ?? 1, 'user_id' => $user->id,
+                    'role' => $invitation->role ?? 'owner', 'barber_id' => $invitation->barber_id ?? null, 'created_at' => now(), 'updated_at' => now()]);
+                DB::table('audit_events')->insert(['shop_id' => $invitation->shop_id ?? 1, 'user_id' => $user->id,
+                    'action' => 'membership.joined', 'subject_id' => $user->id, 'created_at' => now()]);
                 DB::table('admin_registration')->where('id', 1)->update(['claimed' => true]);
 
                 return response()->json([
-                    'user' => ['name' => $user->name, 'email' => $user->email],
+                    'user' => ShopAccess::identity($user),
                     'token' => $user->createToken('admin-dashboard', ['admin'], now()->addHours(8))->plainTextToken,
                 ], 201)->header('Cache-Control', 'no-store');
             }, 5);

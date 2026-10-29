@@ -1,12 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  Camera,
-  Clock3,
-  Mail,
-  MapPin,
-  Phone,
-  UsersRound,
-} from "lucide-react";
+import { Camera, Clock3, Mail, MapPin, Phone, UsersRound } from "lucide-react";
 
 import "./Footer.scss";
 import Brand from "../Brand/Brand";
@@ -16,17 +9,13 @@ const Footer = () => {
 
   return (
     <footer className="footer">
-
       <div className="container footer__grid">
-
         {/* BRAND */}
         <div className="footer__brand">
-
           <Brand dark />
 
           <p>
-            Professional cuts, clean fades and beard
-            grooming in a comfortable modern barbershop.
+            Professional cuts, clean fades and beard grooming in a comfortable modern barbershop.
           </p>
 
           <div className="footer__socials">
@@ -50,53 +39,33 @@ const Footer = () => {
               <UsersRound aria-hidden="true" />
             </a>
           </div>
-
         </div>
 
         {/* NAVIGATION */}
         <div className="footer__column">
-
           <h3>Quick Links</h3>
 
-          <Link to="/">
-            Home
-          </Link>
+          <Link to="/">Home</Link>
 
-          <Link to="/services">
-            Services
-          </Link>
+          <Link to="/services">Services</Link>
 
-          <Link to="/about">
-            About
-          </Link>
+          <Link to="/about">About</Link>
 
-          <Link to="/contact">
-            Contact
-          </Link>
+          <Link to="/contact">Contact</Link>
 
-          <Link to="/booking">
-            Book Appointment
-          </Link>
-
+          <Link to="/booking">Book Appointment</Link>
         </div>
 
         {/* CONTACT */}
         <div className="footer__column">
-
           <h3>Contact</h3>
 
-          <a
-            href="tel:+27651360694"
-            className="footer__detail"
-          >
+          <a href="tel:+27651360694" className="footer__detail">
             <Phone aria-hidden="true" />
             +27 65 136 0694
           </a>
 
-          <a
-            href="mailto:kamva@forgeandfade.co.za"
-            className="footer__detail"
-          >
+          <a href="mailto:kamva@forgeandfade.co.za" className="footer__detail">
             <Mail aria-hidden="true" />
             kamva@forgeandfade.co.za
           </a>
@@ -109,12 +78,10 @@ const Footer = () => {
               South Africa
             </p>
           </div>
-
         </div>
 
         {/* HOURS */}
         <div className="footer__column">
-
           <h3>Opening Hours</h3>
 
           <div className="footer__detail footer__detail--hours">
@@ -133,34 +100,20 @@ const Footer = () => {
             <CalendarDays aria-hidden="true" />
             Book Now
           </Link> */}
-
         </div>
-
       </div>
 
       <div className="footer__bottom">
-
         <div className="container footer__bottom-content">
-
-          <p>
-            © {currentYear} Forge & Fade.
-            All rights reserved.
-          </p>
+          <p>© {currentYear} Forge & Fade. All rights reserved.</p>
 
           <div>
-            <Link to="/terms">
-              Terms & Conditions
-            </Link>
+            <Link to="/terms">Terms & Conditions</Link>
 
-            <Link to="/contact">
-              Contact
-            </Link>
+            <Link to="/contact">Contact</Link>
           </div>
-
         </div>
-
       </div>
-
     </footer>
   );
 };

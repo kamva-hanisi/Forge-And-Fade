@@ -12,5 +12,6 @@ class ContactMessage extends Model
         'phone',
         'message',
         'status',
+        'shop_id',
     ];
 }

@@ -29,7 +29,7 @@ class AdminApiTest extends TestCase
     private function admin(): User
     {
         $user = User::factory()->create(['password' => 'Admin-Testing-Password-123']);
-        $user->forceFill(['is_admin' => true])->save();
+        $this->grantShopRole($user);
 
         return $user;
     }

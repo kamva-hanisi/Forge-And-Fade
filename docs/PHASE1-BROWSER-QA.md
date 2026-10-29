@@ -40,8 +40,8 @@ Completed 28 October 2026 using the in-app Chromium browser against the updated 
 
 ## Evidence
 
-- `docs/phase1-mobile-confirmation.png`: narrow mobile booking confirmation after recovery.
-- `docs/phase1-desktop-closed-day.png`: desktop closed-day state.
+- `phase1-mobile-confirmation.png`: narrow mobile booking confirmation after recovery.
+- `phase1-desktop-closed-day.png`: desktop closed-day state.
 
 ## Limits
 

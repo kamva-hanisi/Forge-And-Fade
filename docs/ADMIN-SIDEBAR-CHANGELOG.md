@@ -1,5 +1,7 @@
 # Admin sidebar and settings — 29 October 2026
 
+Historical delivery notes: see [Phase 2 accounts](PHASE2-ACCOUNTS.md) for current role-based navigation and owner-only invitations.
+
 ## Navigation and design
 
 - Authenticated admin pages now use a responsive Forge & Fade sidebar with the original logo, black/cream/gold palette, shared fonts, controls and spacing.

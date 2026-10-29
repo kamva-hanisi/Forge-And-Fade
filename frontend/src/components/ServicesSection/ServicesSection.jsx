@@ -8,7 +8,6 @@ const ServicesSection = () => {
   return (
     <section className="services-section">
       <div className="container">
-
         <div className="services-section__header">
           <span className="section-label">Our Services</span>
 
@@ -25,10 +24,7 @@ const ServicesSection = () => {
 
         <div className="services-section__grid">
           {services.slice(0, 4).map((service) => (
-            <div
-              className="service-card"
-              key={service.id}
-            >
+            <div className="service-card" key={service.id}>
               <div>
                 <h3>{service.name}</h3>
 
@@ -47,14 +43,10 @@ const ServicesSection = () => {
         </div>
 
         <div className="services-section__footer">
-          <Link
-            to="/services"
-            className="btn btn-outline"
-          >
+          <Link to="/services" className="btn btn-outline">
             View All Services
           </Link>
         </div>
-
       </div>
     </section>
   );

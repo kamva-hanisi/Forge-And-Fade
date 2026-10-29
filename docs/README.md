@@ -2,7 +2,7 @@
 
 Forge & Fade is a modern full-stack barbershop website built to make discovering services and booking an appointment simple. The experience combines a polished, responsive React interface with a Laravel API for live availability, appointment management, and customer enquiries.
 
-![Forge & Fade homepage](docs/forge-and-fade-homepage.png)
+![Forge & Fade homepage](forge-and-fade-homepage.png)
 
 ## Features
 
@@ -35,8 +35,8 @@ Forge-And-Fade/
 
 Set up and run each application separately:
 
-- [Frontend setup](frontend/README.md)
-- [Backend setup](backend/README.md)
+- [Frontend setup](FRONTEND-SETUP.md)
+- [Backend setup](BACKEND-SETUP.md)
 
 The frontend expects the API at `http://127.0.0.1:8000/api` by default. You can change it with the `VITE_API_URL` value in `frontend/.env`.
 

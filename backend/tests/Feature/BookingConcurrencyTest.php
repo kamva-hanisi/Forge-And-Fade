@@ -30,6 +30,7 @@ class BookingConcurrencyTest extends TestCase
         $date = '2099-11-03';
         DB::table('bookings')->where('booking_date', $date)->delete();
         DB::table('booking_day_locks')->where('booking_date', $date)->delete();
+        DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
         $processes = [];
         $barrier = tempnam(sys_get_temp_dir(), 'booking-race-');
         unlink($barrier);
@@ -70,6 +71,7 @@ class BookingConcurrencyTest extends TestCase
             }
             DB::table('bookings')->where('booking_date', $date)->delete();
             DB::table('booking_day_locks')->where('booking_date', $date)->delete();
+            DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
         }
     }
 }

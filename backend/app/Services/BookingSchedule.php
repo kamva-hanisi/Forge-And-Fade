@@ -11,8 +11,9 @@ class BookingSchedule
 {
     public function lockDay(int $barber, string $date): void
     {
-        DB::table('booking_day_locks')->insertOrIgnore(['barber_id' => $barber, 'booking_date' => $date]);
-        DB::table('booking_day_locks')->where('barber_id', $barber)->where('booking_date', $date)->lockForUpdate()->first();
+        $shop = request()->attributes->get('shop')->id;
+        DB::table('shop_booking_day_locks')->insertOrIgnore(['shop_id' => $shop, 'barber_id' => $barber, 'booking_date' => $date]);
+        DB::table('shop_booking_day_locks')->where('shop_id', $shop)->where('barber_id', $barber)->where('booking_date', $date)->lockForUpdate()->first();
     }
 
     private function minutes(string $time): int
@@ -22,7 +23,7 @@ class BookingSchedule
 
     public function bookings(int $barber, string $date, bool $lock = false)
     {
-        $query = Booking::where('barber_id', $barber)->where('booking_date', $date)->where('status', '!=', 'cancelled');
+        $query = Booking::where('shop_id', request()->attributes->get('shop')->id)->where('barber_id', $barber)->where('booking_date', $date)->where('status', '!=', 'cancelled');
 
         return ($lock ? $query->lockForUpdate() : $query)->get();
     }
@@ -42,14 +43,16 @@ class BookingSchedule
 
     public function allowed(string $date, string $time, int $duration): bool
     {
-        $start = Carbon::parse("{$date} {$time}", config('app.timezone'));
-        $hours = config('booking.hours')[$start->dayOfWeekIso] ?? null;
+        $shop = request()->attributes->get('shop');
+        $start = Carbon::parse("{$date} {$time}", $shop?->timezone ?? config('app.timezone'));
+        $settings = $shop?->settings ?? [];
+        $hours = ($settings['hours'] ?? config('booking.hours'))[$start->dayOfWeekIso] ?? null;
         $minute = $this->minutes($time);
-        if (! $hours || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
+        if (! $hours || in_array($date, $settings['closed_dates'] ?? config('booking.closed_dates', []), true) || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
             || $minute < $this->minutes($hours[0]) || $minute + $duration > $this->minutes($hours[1])) {
             return false;
         }
-        foreach (config('booking.breaks') as [$breakStart, $breakEnd]) {
+        foreach ($settings['breaks'] ?? config('booking.breaks') as [$breakStart, $breakEnd]) {
             if ($minute < $this->minutes($breakEnd) && $minute + $duration > $this->minutes($breakStart)) {
                 return false;
             }

@@ -7,20 +7,12 @@ const AboutSection = () => {
   return (
     <section className="about-section">
       <div className="container about-section__container">
-
         <div className="about-section__image">
-          <img
-            src={barbersTeam}
-            alt="Barber team inside a classic barbershop"
-            loading="lazy"
-          />
+          <img src={barbersTeam} alt="Barber team inside a classic barbershop" loading="lazy" />
         </div>
 
         <div className="about-section__content">
-
-          <span className="section-label">
-            About Forge & Fade
-          </span>
+          <span className="section-label">About Forge & Fade</span>
 
           <h2 className="section-title">
             Good Hair.
@@ -29,18 +21,16 @@ const AboutSection = () => {
           </h2>
 
           <p>
-            Forge & Fade is a modern barbershop focused on
-            quality cuts, clean fades and professional grooming.
+            Forge & Fade is a modern barbershop focused on quality cuts, clean fades and
+            professional grooming.
           </p>
 
           <p>
-            Our goal is simple: provide every customer with
-            a comfortable experience and a haircut they feel
-            confident wearing.
+            Our goal is simple: provide every customer with a comfortable experience and a haircut
+            they feel confident wearing.
           </p>
 
           <div className="about-section__points">
-
             <div>
               <strong>Quality</strong>
               <span>Professional barbering</span>
@@ -55,18 +45,12 @@ const AboutSection = () => {
               <strong>Convenience</strong>
               <span>Easy online booking</span>
             </div>
-
           </div>
 
-          <Link
-            to="/about"
-            className="btn btn-primary"
-          >
+          <Link to="/about" className="btn btn-primary">
             Learn More
           </Link>
-
         </div>
-
       </div>
     </section>
   );

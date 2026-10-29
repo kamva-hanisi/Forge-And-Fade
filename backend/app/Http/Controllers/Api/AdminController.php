@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\User;
 use App\Services\BookingSchedule;
+use App\Services\ShopAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,26 +17,34 @@ class AdminController extends Controller
 {
     public function login(Request $request)
     {
+        $request->merge(['email' => is_string($request->email) ? strtolower(trim($request->email)) : $request->email]);
         $input = $request->validate(['email' => 'required|email', 'password' => 'required|string|max:200']);
         $user = User::where('email', $input['email'])->first();
         $matches = Hash::check($input['password'], $user?->password ?? '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
         if (! $matches || ! $user?->is_admin) {
             throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
         }
+        $identity = ShopAccess::identity($user);
+        if (! $identity['permissions'] || (! $identity['shop'] && ! $user->is_platform_admin)) {
+            throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
+        }
+        DB::table('audit_events')->insert(['shop_id' => $identity['shop']['id'] ?? null,
+            'user_id' => $user->id, 'action' => 'auth.login', 'created_at' => now()]);
 
         return response()->json([
             'token' => $user->createToken('admin-dashboard', ['admin'], now()->addHours(8))->plainTextToken,
-            'user' => ['name' => $user->name, 'email' => $user->email],
+            'user' => $identity,
         ])->header('Cache-Control', 'no-store');
     }
 
     private function authorizeAdmin(Request $request): void
     {
-        abort_unless($request->user()->is_admin && $request->user()->tokenCan('admin'), 403);
+        ShopAccess::authorize($request, 'bookings.read');
     }
 
     public function logout(Request $request)
     {
+        ShopAccess::audit($request, 'auth.logout');
         $request->user()->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Signed out.']);
@@ -52,7 +61,7 @@ class AdminController extends Controller
             'search' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
         ]);
-        $query = Booking::query();
+        $query = ShopAccess::bookings($request);
         foreach (['barber_id', 'status'] as $field) {
             if (! empty($input[$field])) {
                 $query->where($field, $input[$field]);
@@ -77,7 +86,8 @@ class AdminController extends Controller
 
     public function update(Request $request, Booking $booking, BookingSchedule $schedule)
     {
-        $this->authorizeAdmin($request);
+        $shop = ShopAccess::authorize($request, 'bookings.write');
+        abort_unless($booking->shop_id === $shop->id, 404);
         $input = $request->validate([
             'action' => ['required', Rule::in(['cancel', 'reschedule'])],
             'barber_id' => ['required_if:action,reschedule', 'integer', Rule::in(array_keys(config('booking.barbers')))],
@@ -86,7 +96,7 @@ class AdminController extends Controller
             'revision' => 'required|integer|min:0',
         ]);
 
-        return DB::transaction(function () use ($booking, $input, $schedule) {
+        return DB::transaction(function () use ($booking, $input, $schedule, $request, $shop) {
             $days = [[$booking->barber_id, $booking->booking_date->toDateString()]];
             if ($input['action'] === 'reschedule') {
                 $days[] = [(int) $input['barber_id'], $input['booking_date']];
@@ -95,7 +105,7 @@ class AdminController extends Controller
             foreach (array_unique($days, SORT_REGULAR) as [$barber, $date]) {
                 $schedule->lockDay($barber, $date);
             }
-            $current = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $current = Booking::where('shop_id', $shop->id)->whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ((int) $current->revision !== (int) $input['revision']
                 || $current->barber_id !== $booking->barber_id
                 || $current->booking_date->toDateString() !== $booking->booking_date->toDateString()) {
@@ -120,6 +130,8 @@ class AdminController extends Controller
                     'booking_time' => $input['booking_time'],
                 ]);
             }
+
+            ShopAccess::audit($request, 'booking.'.$input['action'], $current->id);
 
             return response()->json(['message' => 'Appointment updated.', 'booking' => $current->fresh()]);
         }, 5);

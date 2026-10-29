@@ -23,11 +23,11 @@ class ContactController extends Controller
         $contactMessage = ContactMessage::create([
             ...$validated,
             'status' => 'new',
+            'shop_id' => $request->attributes->get('shop')->id,
         ]);
 
         return response()->json([
-            'message' =>
-                'Thank you. Your message has been sent successfully.',
+            'message' => 'Thank you. Your message has been sent successfully.',
 
             'contact' => $contactMessage,
         ], 201);

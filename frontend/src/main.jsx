@@ -9,7 +9,9 @@ import "./styles/global.scss";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <HashRouter>
-      <AdminProvider><App /></AdminProvider>
+      <AdminProvider>
+        <App />
+      </AdminProvider>
     </HashRouter>
   </StrictMode>,
 );
