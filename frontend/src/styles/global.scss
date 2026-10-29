@@ -12,18 +12,74 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-:root { --header-height: #{$header-height}; }
-html { scroll-padding-top: calc(var(--header-height) + 24px); scrollbar-gutter: stable; }
-h1, h2, h3, h4 { font-family: $font-heading; font-weight: 500; line-height: 1.2; }
-input, select, textarea { font-family: $font-body; font-size: 1rem; font-weight: 400; color: $text; border-radius: 0; }
-input:not([type="checkbox"]):not([type="radio"]), select { min-height: $control-height; height: $control-height; line-height: 1.25; }
-textarea { min-height: 140px; resize: vertical; }
-input::placeholder, textarea::placeholder { color: $text-light; opacity: 1; }
-input:autofill { box-shadow: 0 0 0 1000px $white inset; -webkit-text-fill-color: $text; }
-a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-:is(a, button, input, select, textarea):focus-visible { outline: 2px solid $gold; outline-offset: 3px; }
-button:disabled, .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
-.icon-button { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; background: transparent; color: $text; }
+:root {
+  --header-height: #{$header-height};
+}
+html {
+  scroll-padding-top: calc(var(--header-height) + 24px);
+  scrollbar-gutter: stable;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: $font-heading;
+  font-weight: 500;
+  line-height: 1.2;
+}
+input,
+select,
+textarea {
+  font-family: $font-body;
+  font-size: 1rem;
+  font-weight: 400;
+  color: $text;
+  border-radius: 0;
+}
+input:not([type="checkbox"]):not([type="radio"]),
+select {
+  min-height: $control-height;
+  height: $control-height;
+  line-height: 1.25;
+}
+textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+input::placeholder,
+textarea::placeholder {
+  color: $text-light;
+  opacity: 1;
+}
+input:autofill {
+  box-shadow: 0 0 0 1000px $white inset;
+  -webkit-text-fill-color: $text;
+}
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+:is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid $gold;
+  outline-offset: 3px;
+}
+button:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  color: $text;
+}
 
 #root {
   min-height: 100vh;
@@ -133,6 +189,13 @@ section {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

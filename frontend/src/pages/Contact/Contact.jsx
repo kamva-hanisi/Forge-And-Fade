@@ -17,9 +17,7 @@ const Contact = () => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const apiUrl =
-    import.meta.env.VITE_API_URL ||
-    "http://127.0.0.1:8000/api";
+  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -39,10 +37,7 @@ const Contact = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        `${apiUrl}/contact`,
-        formData
-      );
+      const response = await axios.post(`${apiUrl}/contact`, formData);
 
       setSuccess(response.data.message);
 
@@ -53,10 +48,7 @@ const Contact = () => {
         message: "",
       });
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to send your message. Please try again."
-      );
+      setError(err.response?.data?.message || "Unable to send your message. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -64,57 +56,39 @@ const Contact = () => {
 
   return (
     <main className="contact-page">
-
       <section className="contact-page__header">
         <div className="container">
+          <span className="section-label">Contact Us</span>
 
-          <span className="section-label">
-            Contact Us
-          </span>
-
-          <h1 className="section-title">
-            Get In Touch.
-          </h1>
+          <h1 className="section-title">Get In Touch.</h1>
 
           <p className="section-text">
-            Have a question about our services or your
-            appointment? Get in touch with Forge & Fade.
+            Have a question about our services or your appointment? Get in touch with Forge & Fade.
           </p>
-
         </div>
       </section>
 
       <section className="contact-page__content">
         <div className="container contact-page__grid">
-
           <div className="contact-info">
-
-            <h2>
-              Visit Forge & Fade
-            </h2>
+            <h2>Visit Forge & Fade</h2>
 
             <div className="contact-info__item">
               <span>Phone</span>
 
-              <a href="tel:+27 65 136 0694">
-                +27 65 136 0694
-              </a>
+              <a href="tel:+27 65 136 0694">+27 65 136 0694</a>
             </div>
 
             <div className="contact-info__item">
               <span>Email</span>
 
-              <a href="mailto:kamva@forgeandfade.co.za">
-                kamva@forgeandfade.co.za
-              </a>
+              <a href="mailto:kamva@forgeandfade.co.za">kamva@forgeandfade.co.za</a>
             </div>
 
             <div className="contact-info__item">
               <span>Location</span>
 
-              <p>
-                Cape Town, South Africa
-              </p>
+              <p>Cape Town, South Africa</p>
             </div>
 
             <div className="contact-info__item">
@@ -126,29 +100,17 @@ const Contact = () => {
                 08:00 – 18:00
               </p>
 
-              <p>
-                Sunday: Closed
-              </p>
+              <p>Sunday: Closed</p>
             </div>
 
-            <Link
-              to="/booking"
-              className="btn btn-primary"
-            >
+            <Link to="/booking" className="btn btn-primary">
               Book Appointment
             </Link>
-
           </div>
 
-          <form
-            className="contact-form"
-            onSubmit={handleSubmit}
-          >
-
+          <form className="contact-form" onSubmit={handleSubmit}>
             <div className="contact-form__group">
-              <label htmlFor="name">
-                Full Name *
-              </label>
+              <label htmlFor="name">Full Name *</label>
 
               <input
                 type="text"
@@ -162,9 +124,7 @@ const Contact = () => {
             </div>
 
             <div className="contact-form__group">
-              <label htmlFor="email">
-                Email *
-              </label>
+              <label htmlFor="email">Email *</label>
 
               <input
                 type="email"
@@ -178,9 +138,7 @@ const Contact = () => {
             </div>
 
             <div className="contact-form__group">
-              <label htmlFor="phone">
-                Phone
-              </label>
+              <label htmlFor="phone">Phone</label>
 
               <input
                 type="tel"
@@ -193,9 +151,7 @@ const Contact = () => {
             </div>
 
             <div className="contact-form__group">
-              <label htmlFor="message">
-                Message *
-              </label>
+              <label htmlFor="message">Message *</label>
 
               <textarea
                 id="message"
@@ -220,21 +176,12 @@ const Contact = () => {
               </div>
             )}
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading
-                ? "Sending..."
-                : "Send Message"}
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? "Sending..." : "Send Message"}
             </button>
-
           </form>
-
         </div>
       </section>
-
     </main>
   );
 };

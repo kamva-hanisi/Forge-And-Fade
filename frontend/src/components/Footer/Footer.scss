@@ -193,8 +193,7 @@
 @media (max-width: 900px) {
   .footer {
     &__grid {
-      grid-template-columns:
-        repeat(2, 1fr);
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 }

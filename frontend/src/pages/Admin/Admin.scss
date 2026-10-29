@@ -3,39 +3,187 @@
 .admin-page {
   padding: 48px 0 64px;
   min-height: calc(100dvh - #{$header-height});
-  label { display: flex; flex-direction: column; gap: 8px; font-weight: 600; font-size: $font-small; min-width: 0; }
-  input, select { width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid $border; background: $white; }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 600;
+    font-size: $font-small;
+    min-width: 0;
+  }
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid $border;
+    background: $white;
+  }
 }
-.admin-heading, .admin-toolbar, .admin-appointment header, .admin-pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-.admin-heading { margin-bottom: 32px; }
-.admin-user { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; p { color: $text-light; font-size: $font-small; } }
-.admin-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 24px; padding: $card-padding; border: 1px solid $border; background: $white; margin-bottom: 24px; }
-.admin-filter-actions { display: flex; gap: 12px; flex-wrap: wrap; .btn { flex: 1 1 120px; } }
-.admin-toolbar { margin: 24px 0; p { color: $text-light; font-size: $font-small; } }
-.admin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
-.admin-appointment { padding: $card-padding; border: 1px solid $border; background: $white; min-width: 0; overflow-wrap: anywhere;
-  header { margin-bottom: 20px; align-items: flex-start; }
-  h2 { font-size: 1.5rem; }
-  p { margin-bottom: 12px; font-size: $font-small; }
-  a { text-decoration: underline; text-underline-offset: 3px; }
+.admin-heading,
+.admin-toolbar,
+.admin-appointment header,
+.admin-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.admin-actions, .admin-confirm { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
-.admin-confirm { padding: 20px; background: $cream; border: 1px solid $border; p { flex-basis: 100%; } }
-.admin-schedule { display: grid; gap: 20px; margin-top: 24px; padding-top: 24px; border-top: 1px solid $border; }
-.admin-badge { padding: 5px 12px; background: $success-bg; color: $success-text; text-transform: capitalize; font-size: .75rem; font-weight: 600; }
-.admin-badge--cancelled { background: $error-bg; color: $error-text; }
-.admin-error, .admin-success { padding: 16px; margin-bottom: 24px; font-size: $font-small; border: 1px solid; }
-.admin-error { background: $error-bg; color: $error-text; border-color: rgba($error-text, .2); }
-.admin-success { background: $success-bg; color: $success-text; border-color: rgba($success-text, .2); }
-.admin-notes { white-space: pre-wrap; color: $text-light; }
-.admin-pagination { margin-top: 32px; font-size: $font-small; }
-@media (max-width: 1100px) { .admin-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 850px) { .admin-list { grid-template-columns: minmax(0, 1fr); } }
+.admin-heading {
+  margin-bottom: 32px;
+}
+.admin-user {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  p {
+    color: $text-light;
+    font-size: $font-small;
+  }
+}
+.admin-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 24px;
+  padding: $card-padding;
+  border: 1px solid $border;
+  background: $white;
+  margin-bottom: 24px;
+}
+.admin-filter-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  .btn {
+    flex: 1 1 120px;
+  }
+}
+.admin-toolbar {
+  margin: 24px 0;
+  p {
+    color: $text-light;
+    font-size: $font-small;
+  }
+}
+.admin-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+.admin-appointment {
+  padding: $card-padding;
+  border: 1px solid $border;
+  background: $white;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  header {
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  p {
+    margin-bottom: 12px;
+    font-size: $font-small;
+  }
+  a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+.admin-actions,
+.admin-confirm {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.admin-confirm {
+  padding: 20px;
+  background: $cream;
+  border: 1px solid $border;
+  p {
+    flex-basis: 100%;
+  }
+}
+.admin-schedule {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid $border;
+}
+.admin-badge {
+  padding: 5px 12px;
+  background: $success-bg;
+  color: $success-text;
+  text-transform: capitalize;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.admin-badge--cancelled {
+  background: $error-bg;
+  color: $error-text;
+}
+.admin-error,
+.admin-success {
+  padding: 16px;
+  margin-bottom: 24px;
+  font-size: $font-small;
+  border: 1px solid;
+}
+.admin-error {
+  background: $error-bg;
+  color: $error-text;
+  border-color: rgba($error-text, 0.2);
+}
+.admin-success {
+  background: $success-bg;
+  color: $success-text;
+  border-color: rgba($success-text, 0.2);
+}
+.admin-notes {
+  white-space: pre-wrap;
+  color: $text-light;
+}
+.admin-pagination {
+  margin-top: 32px;
+  font-size: $font-small;
+}
+@media (max-width: 1100px) {
+  .admin-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 850px) {
+  .admin-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @media (max-width: 550px) {
-  .admin-page { padding-top: 32px; }
-  .admin-filters { grid-template-columns: minmax(0, 1fr); padding: 24px; }
-  .admin-appointment { padding: 24px; }
-  .admin-heading { align-items: flex-start; }
-  .admin-user { width: 100%; justify-content: space-between; }
-  .admin-actions .btn { flex: 1 1 140px; }
+  .admin-page {
+    padding-top: 32px;
+  }
+  .admin-filters {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 24px;
+  }
+  .admin-appointment {
+    padding: 24px;
+  }
+  .admin-heading {
+    align-items: flex-start;
+  }
+  .admin-user {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .admin-actions .btn {
+    flex: 1 1 140px;
+  }
 }

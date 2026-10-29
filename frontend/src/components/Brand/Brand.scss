@@ -6,10 +6,19 @@
   flex-shrink: 0;
   width: 200px;
   height: 72px;
-  img { width: 100%; height: 100%; object-fit: contain; }
-  &--dark { background: $white; }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  &--dark {
+    background: $white;
+  }
 }
 
 @media (max-width: 600px) {
-  .brand { width: 172px; height: 62px; }
+  .brand {
+    width: 172px;
+    height: 62px;
+  }
 }

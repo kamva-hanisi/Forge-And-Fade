@@ -84,8 +84,7 @@ export const downloadAppleCalendar = (booking) => {
   const { start, end } = createAppointmentDates(booking);
 
   const description =
-    `Appointment with ${booking.barber_name}. ` +
-    `Service: ${booking.service_name}.`;
+    `Appointment with ${booking.barber_name}. ` + `Service: ${booking.service_name}.`;
 
   const icsContent = [
     "BEGIN:VCALENDAR",

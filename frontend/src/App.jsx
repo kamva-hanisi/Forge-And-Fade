@@ -24,27 +24,29 @@ function App() {
       <ScrollToTop />
       {(!adminPage || adminAccess) && <Navbar key={pathname} admin={adminPage} />}
       <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/services" element={<Services />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/booking" element={<Booking />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminSettings key="dashboard" />} />
-        <Route path="appointments" element={<Admin />} />
-        <Route path="settings/profile" element={<AdminSettings key="profile" page="profile" />} />
-        <Route path="settings/security" element={<AdminSettings key="security" page="security" />} />
-        <Route path="settings/invite" element={<AdminSettings key="invite" page="invite" />} />
-        <Route path="*" element={<Navigate to="/admin" replace />} />
-      </Route>
-      <Route path="/admin/signin" element={<AdminAccess key="admin-signin" />} />
-      <Route path="/admin/signup" element={<AdminAccess key="admin-signup" signup />} />
-      <Route path="/signin" element={<Navigate to="/admin/signin" replace />} />
-      <Route path="/signup" element={<Navigate to="/admin/signup" replace />} />
-      <Route path="/account" element={<Navigate to="/admin/signin" replace />} />
-      
-    </Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminSettings key="dashboard" />} />
+          <Route path="appointments" element={<Admin />} />
+          <Route path="settings/profile" element={<AdminSettings key="profile" page="profile" />} />
+          <Route
+            path="settings/security"
+            element={<AdminSettings key="security" page="security" />}
+          />
+          <Route path="settings/invite" element={<AdminSettings key="invite" page="invite" />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Route>
+        <Route path="/admin/signin" element={<AdminAccess key="admin-signin" />} />
+        <Route path="/admin/signup" element={<AdminAccess key="admin-signup" signup />} />
+        <Route path="/signin" element={<Navigate to="/admin/signin" replace />} />
+        <Route path="/signup" element={<Navigate to="/admin/signup" replace />} />
+        <Route path="/account" element={<Navigate to="/admin/signin" replace />} />
+      </Routes>
       {!adminPage && <Footer />}
     </div>
   );
