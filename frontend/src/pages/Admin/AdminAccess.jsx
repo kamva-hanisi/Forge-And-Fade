@@ -233,6 +233,11 @@ export default function AdminAccess({ signup = false }) {
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>
+        {!signup && (
+          <p>
+            <Link to="/admin/forgot-password">Forgot your password?</Link>
+          </p>
+        )}
         <p className="admin-access__switch">
           {signup ? "Already an administrator?" : "Need an admin account?"}{" "}
           <Link to={signup ? "/admin/signin" : "/admin/signup"}>

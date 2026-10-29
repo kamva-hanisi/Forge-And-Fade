@@ -19,22 +19,25 @@ class AdminController extends Controller
     {
         $request->merge(['email' => is_string($request->email) ? strtolower(trim($request->email)) : $request->email]);
         $input = $request->validate(['email' => 'required|email', 'password' => 'required|string|max:200']);
-        $user = User::where('email', $input['email'])->first();
-        $matches = Hash::check($input['password'], $user?->password ?? '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
-        if (! $matches || ! $user?->is_admin) {
-            throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
-        }
-        $identity = ShopAccess::identity($user);
-        if (! $identity['permissions'] || (! $identity['shop'] && ! $user->is_platform_admin)) {
-            throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
-        }
-        DB::table('audit_events')->insert(['shop_id' => $identity['shop']['id'] ?? null,
-            'user_id' => $user->id, 'action' => 'auth.login', 'created_at' => now()]);
 
-        return response()->json([
-            'token' => $user->createToken('admin-dashboard', ['admin'], now()->addHours(8))->plainTextToken,
-            'user' => $identity,
-        ])->header('Cache-Control', 'no-store');
+        return DB::transaction(function () use ($input) {
+            $user = User::where('email', $input['email'])->lockForUpdate()->first();
+            $matches = Hash::check($input['password'], $user?->password ?? '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
+            if (! $matches || ! $user?->is_admin) {
+                throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
+            }
+            $identity = ShopAccess::identity($user);
+            if (! $identity['permissions'] || (! $identity['shop'] && ! $user->is_platform_admin)) {
+                throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
+            }
+            DB::table('audit_events')->insert(['shop_id' => $identity['shop']['id'] ?? null,
+                'user_id' => $user->id, 'action' => 'auth.login', 'created_at' => now()]);
+
+            return response()->json([
+                'token' => $user->createToken('admin-dashboard', ['admin'], now()->addHours(8))->plainTextToken,
+                'user' => $identity,
+            ])->header('Cache-Control', 'no-store');
+        });
     }
 
     private function authorizeAdmin(Request $request): void

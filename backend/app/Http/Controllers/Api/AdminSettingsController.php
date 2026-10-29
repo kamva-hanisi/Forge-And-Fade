@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -70,6 +71,7 @@ class AdminSettingsController extends Controller
             }
             $user->update(['password' => $input['password']]);
             $user->tokens()->delete();
+            Password::broker('users')->deleteToken($user);
             ShopAccess::audit($request, 'password.changed');
         });
 

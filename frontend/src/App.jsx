@@ -15,11 +15,18 @@ import AdminAccess from "./pages/Admin/AdminAccess";
 import AdminLayout from "./pages/Admin/AdminLayout";
 import AdminSettings from "./pages/Admin/AdminSettings";
 import ShopSignup from "./pages/Admin/ShopSignup";
+import AdminRecovery from "./pages/Admin/AdminRecovery";
 
 function App() {
   const { pathname } = useLocation();
   const adminPage = pathname === "/admin" || pathname.startsWith("/admin/");
-  const adminAccess = ["/admin/signin", "/admin/signup", "/admin/register-shop"].includes(pathname);
+  const adminAccess = [
+    "/admin/signin",
+    "/admin/signup",
+    "/admin/register-shop",
+    "/admin/forgot-password",
+    "/admin/reset-password",
+  ].includes(pathname);
   return (
     <div className={adminAccess ? "admin-shell" : undefined}>
       <ScrollToTop />
@@ -45,6 +52,8 @@ function App() {
         <Route path="/admin/signin" element={<AdminAccess key="admin-signin" />} />
         <Route path="/admin/signup" element={<AdminAccess key="admin-signup" signup />} />
         <Route path="/admin/register-shop" element={<ShopSignup />} />
+        <Route path="/admin/forgot-password" element={<AdminRecovery key="forgot" />} />
+        <Route path="/admin/reset-password" element={<AdminRecovery key="reset" reset />} />
         <Route path="/signin" element={<Navigate to="/admin/signin" replace />} />
         <Route path="/signup" element={<Navigate to="/admin/signup" replace />} />
         <Route path="/account" element={<Navigate to="/admin/signin" replace />} />

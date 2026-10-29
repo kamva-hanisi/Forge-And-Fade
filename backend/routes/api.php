@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminRecoveryController;
 use App\Http\Controllers\Api\AdminRegistrationController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\BookingController;
@@ -14,6 +15,8 @@ Route::get('/admin/registration', [AdminRegistrationController::class, 'status']
 Route::post('/admin/register', [AdminRegistrationController::class, 'store'])->middleware('throttle:3,1');
 
 Route::post('/admin/login', [AdminController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/admin/forgot-password', [AdminRecoveryController::class, 'requestLink'])->middleware('throttle:admin-recovery');
+Route::post('/admin/reset-password', [AdminRecoveryController::class, 'reset'])->middleware('throttle:5,1');
 Route::post('/admin/register-shop', [ShopRegistrationController::class, 'store'])->middleware(['throttle:3,1', ProtectPublicForm::class]);
 Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {

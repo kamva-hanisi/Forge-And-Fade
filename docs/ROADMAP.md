@@ -20,14 +20,14 @@ Evidence: `PHASE1-COMPLETION.md`, the Laravel booking/concurrency/receipt tests,
 
 ## Phase 2 — Barbershop accounts and security
 
-In progress. Shop registration, scoped memberships and role enforcement now exist. This phase is not complete: account recovery/password reset and further security/business onboarding remain pending. See `PHASE2-ACCOUNTS.md` for the delivered scope and limits.
+In progress. Shop registration, scoped memberships, role enforcement and password recovery are implemented. Real recovery-email delivery and owner acceptance remain pending SMTP setup; further security/business onboarding remains subject to release review. See `PHASE2-ACCOUNTS.md` and `ADMIN-RECOVERY.md` for scope and limits.
 
 - [x] Create shop registration and login
 - [x] Implement secure Laravel authentication for the shop-account model
 - [x] Add shop owner, manager, barber and platform admin roles (platform privilege is trusted-console-only; platform UI is later)
 - [x] Create basic shop profiles and location details (name/address/phone; schedule editing remains later work)
 - [x] Add shop-specific permissions and data isolation for current booking/message/invitation resources
-- [ ] Implement password reset, logout and account recovery
+- [ ] Implement password reset, logout and account recovery (code and tests delivered; real email delivery/acceptance pending)
 - [x] Add login rate limits, API protection and initial audit logging for the shop-account model
 
 ## Phase 3 — Owner and staff dashboards

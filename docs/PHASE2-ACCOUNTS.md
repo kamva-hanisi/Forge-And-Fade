@@ -1,6 +1,6 @@
 # Phase 2 — Shop-account foundation
 
-This is the first Phase 2 delivery, not completion of the whole phase. Password reset/account recovery and the remaining business onboarding work still need implementation. Gmail remains unconnected.
+This records the first Phase 2 delivery, not completion of the whole phase. Password reset/account recovery has since been implemented; see `ADMIN-RECOVERY.md`. Actual SMTP delivery and owner acceptance remain pending. Gmail remains unconnected.
 
 ## What works
 
