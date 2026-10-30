@@ -45,8 +45,8 @@ Implementation and local verification complete for the listed basic owner/staff 
 
 ## Phase 4 — Customer booking experience
 
-- [x] Load shop services and barbers from the API (current single shop)
-- [ ] Add each barbershop's own public booking page
+- [x] Load shop services and barbers from the API (shop-scoped catalog)
+- [x] Add each barbershop's own public booking page (dedicated booking and management routes, shop branding and contacts)
 - [x] Show real-time available time slots (API snapshots; final save rechecks availability)
 - [x] Allow customers to choose a barber or any available barber (server-side assignment and capacity recheck)
 - [x] Add customer booking lookup and cancellation (private reference + booking email, shop-scoped, before start time)
@@ -59,7 +59,7 @@ Implementation and local verification complete for the listed basic owner/staff 
 - [ ] Create shops, memberships and shop settings tables
 - [ ] Add shop ownership to bookings, services, barbers and messages
 - [ ] Scope every API query to the correct shop
-- [ ] Build onboarding for new barbershops
+- [ ] Build onboarding for new barbershops (first-catalog checklist delivered; full business setup remains pending)
 - [ ] Add shop branding, logos, addresses and opening hours
 - [ ] Create platform super-admin dashboard
 - [ ] Add account suspension and shop lifecycle controls
@@ -67,7 +67,7 @@ Implementation and local verification complete for the listed basic owner/staff 
 
 Phase 2's shop accounts and isolation require some underlying schema groundwork; full SaaS onboarding and platform operations remain in Phase 5.
 
-That groundwork now includes shops, memberships, basic settings storage, tenant IDs on bookings/messages/invitations and scoped booking locks. Services/barbers remain shared templates, and a complete tenant lifecycle/onboarding system is not yet delivered.
+That groundwork now includes shops, memberships, basic settings storage, tenant IDs on bookings/messages/invitations and scoped booking locks. Existing service/barber catalogs are now snapshotted per shop in JSON settings; new shops start empty with a first-catalog setup checklist. Dedicated catalog/settings tables and a complete tenant lifecycle/onboarding system are not yet delivered. See PHASE5-CATALOG-ONBOARDING.md.
 
 ## Phase 6 — Subscriptions and billing
 

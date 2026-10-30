@@ -8,6 +8,7 @@ import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
 import Booking from "./pages/Booking/Booking";
 import ManageBooking from "./pages/Booking/ManageBooking";
+import PublicShop from "./pages/Booking/PublicShop";
 import Terms from "./pages/Terms/Terms";
 import Contact from "./pages/Contact/Contact";
 import Footer from "./components/Footer/Footer";
@@ -24,6 +25,7 @@ import ShopManagement from "./pages/Admin/ShopManagement";
 function App() {
   const { pathname } = useLocation();
   const adminPage = pathname === "/admin" || pathname.startsWith("/admin/");
+  const publicShopPage = pathname.startsWith("/shops/");
   const adminAccess = [
     "/admin/signin",
     "/admin/signup",
@@ -34,7 +36,9 @@ function App() {
   return (
     <div className={adminAccess ? "admin-shell" : undefined}>
       <ScrollToTop />
-      {(!adminPage || adminAccess) && <Navbar key={pathname} admin={adminPage} />}
+      {!publicShopPage && (!adminPage || adminAccess) && (
+        <Navbar key={pathname} admin={adminPage} />
+      )}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
@@ -42,6 +46,17 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/booking/manage" element={<ManageBooking />} />
+        <Route path="/shops/:slug/book" element={<PublicShop />} />
+        <Route path="/shops/:slug/manage" element={<PublicShop manage />} />
+        <Route
+          path="/shops/*"
+          element={
+            <main className="public-shop__loading container">
+              <h1>Booking page not found</h1>
+              <p>Check the link with your barbershop.</p>
+            </main>
+          }
+        />
         <Route path="/terms" element={<Terms />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminSettings key="dashboard" />} />
@@ -66,7 +81,7 @@ function App() {
         <Route path="/signup" element={<Navigate to="/admin/signup" replace />} />
         <Route path="/account" element={<Navigate to="/admin/signin" replace />} />
       </Routes>
-      {!adminPage && <Footer />}
+      {!adminPage && !publicShopPage && <Footer />}
     </div>
   );
 }

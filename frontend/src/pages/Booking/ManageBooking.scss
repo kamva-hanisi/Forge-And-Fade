@@ -1,0 +1,40 @@
+.manage-booking {
+  padding-block: 7rem 4rem;
+  max-width: 760px;
+  min-height: 75vh;
+  p {
+    margin-block: 1rem;
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 2rem;
+    min-width: 0;
+  }
+  input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid #bbb;
+    font: inherit;
+  }
+  button {
+    margin: 0.5rem 0.75rem 0.5rem 0;
+    white-space: normal;
+  }
+  &__result {
+    border: 1px solid #ddd;
+    padding: 1.5rem;
+    margin-block: 2rem;
+  }
+  dt {
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+  dd {
+    margin: 0.25rem 0 0;
+    overflow-wrap: anywhere;
+  }
+}

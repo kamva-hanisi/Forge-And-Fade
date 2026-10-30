@@ -75,7 +75,9 @@ class ManualBookingTest extends TestCase
 
     public function test_managers_cannot_create_in_another_shop_or_override_its_schedule(): void
     {
-        $shop = Shop::create(['name' => 'Private Shop', 'slug' => 'private-manual', 'timezone' => 'Africa/Johannesburg', 'settings' => ['closed_dates' => ['2026-11-03']]]);
+        $shop = Shop::create(['name' => 'Private Shop', 'slug' => 'private-manual', 'timezone' => 'Africa/Johannesburg',
+            'settings' => ['closed_dates' => ['2026-11-03'], 'services' => config('booking.services'),
+                'barbers' => array_map(fn ($name) => ['name' => $name, 'active' => true], config('booking.barbers'))]]);
         $this->member('manager', $shop->id);
         $this->getJson('/api/admin/bookings/catalog?shop=forge-and-fade')->assertOk()->assertJsonPath('shop.slug', 'private-manual');
         $this->postJson('/api/admin/bookings', $this->input(['shop' => 'forge-and-fade', 'shop_id' => 1]))->assertUnprocessable();

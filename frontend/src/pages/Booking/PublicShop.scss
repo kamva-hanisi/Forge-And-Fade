@@ -1,0 +1,44 @@
+.public-shop {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-block: 1.5rem;
+  }
+  &__brand {
+    font-family: Georgia, serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  nav [aria-current="page"] {
+    text-decoration: underline;
+    text-underline-offset: 0.4rem;
+  }
+  .booking-page {
+    padding-top: 0;
+  }
+  .manage-booking {
+    padding-top: 3rem;
+  }
+  &__footer {
+    padding-block: 2rem;
+    border-top: 1px solid #ddd;
+    overflow-wrap: anywhere;
+  }
+  &__footer p {
+    margin-block: 0.75rem;
+  }
+  &__loading {
+    padding-block: 4rem;
+    min-height: 70vh;
+  }
+}

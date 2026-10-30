@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAdmin } from "../../context/AdminContext";
+import { shopPath } from "../../utils/shopLinks";
 
 export default function ShopProfile({ client }) {
   const { setSession } = useAdmin();
@@ -84,6 +85,10 @@ export default function ShopProfile({ client }) {
             Shop identifier: {fields.slug}
             <br />
             Business timezone: {fields.timezone}
+            <br />
+            <a href={`#${shopPath(fields.slug)}`} target="_blank" rel="noreferrer">
+              Open your public booking page
+            </a>
           </p>
           <div className="staff-form-actions">
             <button className="btn btn-primary" disabled={busy}>

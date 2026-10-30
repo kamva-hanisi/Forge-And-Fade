@@ -7,6 +7,7 @@ import { openGoogleCalendar, downloadAppleCalendar } from "../../utils/calendar"
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError as errorText } from "../../utils/formError";
 import "./Booking.scss";
+import { resolveShopSlug, shopPath } from "../../utils/shopLinks";
 
 const steps = ["Service", "Barber", "Date & time", "Your details"];
 const emptyDetails = {
@@ -35,16 +36,16 @@ const money = (price) =>
     maximumFractionDigits: 2,
   }).format(price);
 
-export default function Booking() {
+export default function Booking({ shop, dedicated = false, initialCatalog = null }) {
   const [searchParams] = useSearchParams();
-  const shopSlug = searchParams.get("shop") || "forge-and-fade";
+  const shopSlug = resolveShopSlug(shop, searchParams.get("shop"));
   const [formData, setFormData] = useState({
     ...emptyDetails,
     service_id: searchParams.get("service") || "",
     barber_id: searchParams.get("barber") || "",
   });
   const [step, setStep] = useState(0);
-  const [catalog, setCatalog] = useState(null);
+  const [catalog, setCatalog] = useState(initialCatalog);
   const [catalogError, setCatalogError] = useState("");
   const [catalogRefresh, setCatalogRefresh] = useState(0);
   const [availability, setAvailability] = useState({ key: "", times: [], error: "" });
@@ -83,6 +84,7 @@ export default function Booking() {
   }).format(new Date());
 
   useEffect(() => {
+    if (initialCatalog && catalogRefresh === 0) return;
     const controller = new AbortController();
     axios
       .get(apiUrl + "/bookings/catalog", {
@@ -98,7 +100,7 @@ export default function Booking() {
           );
       });
     return () => controller.abort();
-  }, [apiUrl, catalogRefresh, shopSlug]);
+  }, [apiUrl, catalogRefresh, shopSlug, initialCatalog]);
 
   useEffect(() => {
     if (!readyForTimes) return;
@@ -282,8 +284,9 @@ export default function Booking() {
                 </div>
               </dl>
               <p className="booking-hint">
-                All appointment times are South Africa time. No online payment has been taken. Need
-                to change your visit? Contact {confirmedBooking.shop?.name || "your shop"}
+                All appointment times are {confirmedBooking.timezone}. No online payment has been
+                taken. Need to change your visit? Contact{" "}
+                {confirmedBooking.shop?.name || "your shop"}
                 {confirmedBooking.shop?.phone && (
                   <>
                     {" "}
@@ -303,7 +306,11 @@ export default function Booking() {
               <div className="booking-confirmation__actions">
                 <Link
                   className="btn btn-outline"
-                  to={`/booking/manage?shop=${encodeURIComponent(shopSlug)}`}
+                  to={
+                    dedicated
+                      ? shopPath(shopSlug, true)
+                      : `/booking/manage?shop=${encodeURIComponent(shopSlug)}`
+                  }
                 >
                   Manage booking
                 </Link>
@@ -323,8 +330,8 @@ export default function Booking() {
                 </button>
               </div>
               <div className="booking-confirmation__footer">
-                <Link to="/" className="btn btn-outline">
-                  Back to home
+                <Link to={dedicated ? shopPath(shopSlug) : "/"} className="btn btn-outline">
+                  {dedicated ? "Shop booking page" : "Back to home"}
                 </Link>
                 <button className="btn btn-outline" type="button" onClick={startAgain}>
                   Book another appointment
@@ -523,8 +530,8 @@ export default function Booking() {
                                 required
                               />
                               <p className="booking-hint">
-                                Monday–Saturday, 08:00–18:00. Closed Sundays. Break: 13:00–14:00.
-                                South Africa time.
+                                Available times respect this shop’s opening hours, staff schedules
+                                and breaks. Times shown in {catalog.timezone}.
                               </p>
                             </div>
                             {checkingTimes && <p role="status">Checking available times…</p>}
@@ -718,7 +725,9 @@ export default function Booking() {
                       <dd>
                         {displayDate(formData.booking_date)}
                         {formData.booking_time && (
-                          <small>{formData.booking_time} · South Africa time</small>
+                          <small>
+                            {formData.booking_time} · {catalog?.timezone || "Africa/Johannesburg"}
+                          </small>
                         )}
                       </dd>
                     </div>

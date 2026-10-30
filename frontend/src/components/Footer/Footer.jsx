@@ -54,6 +54,7 @@ const Footer = () => {
           <Link to="/contact">Contact</Link>
 
           <Link to="/booking">Book Appointment</Link>
+          <Link to="/booking/manage">Manage Booking</Link>
         </div>
 
         {/* CONTACT */}

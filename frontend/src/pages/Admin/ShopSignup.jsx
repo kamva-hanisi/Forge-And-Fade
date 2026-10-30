@@ -17,7 +17,13 @@ export default function ShopSignup() {
     website: "",
   });
   const [error, setError] = useState("");
-  if (session) return <Navigate to="/admin" replace />;
+  if (session)
+    return (
+      <Navigate
+        to={session.user.permissions?.includes("shop.manage") ? "/admin/management" : "/admin"}
+        replace
+      />
+    );
   const change = (event) => {
     setFields((previous) => ({ ...previous, [event.target.name]: event.target.value }));
     setError("");

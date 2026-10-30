@@ -76,7 +76,7 @@ class ShopManagementTest extends TestCase
             ->assertJsonPath('booking.price', '275.50')->assertJsonPath('booking.duration', 60)->assertJsonPath('booking.service_name', 'Updated Service');
         $this->assertDatabaseHas('bookings', ['id' => $old['id'], 'price' => '250.00', 'duration' => 50, 'service_name' => 'Skin Fade']);
         Shop::create(['name' => 'Independent', 'slug' => 'independent-catalog', 'timezone' => 'Africa/Johannesburg']);
-        $this->getJson('/api/bookings/catalog?shop=independent-catalog')->assertOk()->assertJsonPath('services.1.price', 250);
+        $this->getJson('/api/bookings/catalog?shop=independent-catalog')->assertOk()->assertJsonCount(0, 'services')->assertJsonCount(0, 'barbers');
     }
 
     public function test_catalog_creation_deactivation_validation_and_stale_writes(): void

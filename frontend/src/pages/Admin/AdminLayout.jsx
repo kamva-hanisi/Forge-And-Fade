@@ -18,6 +18,7 @@ import {
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
 import { useAdmin } from "../../context/AdminContext";
+import { shopPath } from "../../utils/shopLinks";
 import "./AdminWorkspace.scss";
 
 const items = [
@@ -126,7 +127,7 @@ export default function AdminLayout() {
         </nav>
         <div className="staff-sidebar-bottom">
           <Link
-            to={`/booking?shop=${encodeURIComponent(session.user.shop?.slug || "forge-and-fade")}`}
+            to={shopPath(session.user.shop?.slug || "forge-and-fade")}
             className="staff-site-link"
           >
             View website <ArrowUpRight size={16} aria-hidden="true" />

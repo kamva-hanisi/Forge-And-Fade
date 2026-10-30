@@ -1,6 +1,19 @@
 @use "../../styles/variables" as *;
 
 .shop-management {
+  &__setup {
+    margin-bottom: 24px;
+    > p {
+      margin-block: 12px;
+    }
+    .staff-form-actions {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .staff-form-actions .btn {
+      flex: 1 1 180px;
+    }
+  }
   &__tabs {
     display: flex;
     flex-wrap: wrap;

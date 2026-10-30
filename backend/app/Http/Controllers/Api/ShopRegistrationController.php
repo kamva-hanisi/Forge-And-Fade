@@ -23,7 +23,10 @@ class ShopRegistrationController extends Controller
         try {
             return DB::transaction(function () use ($input) {
                 $shop = Shop::create(['name' => $input['shop_name'], 'slug' => $input['shop_slug'],
-                    'timezone' => 'Africa/Johannesburg']);
+                    'timezone' => 'Africa/Johannesburg', 'settings' => [
+                        'services' => [], 'barbers' => [], 'hours' => config('booking.hours'),
+                        'breaks' => config('booking.breaks'), 'closed_dates' => [],
+                    ]]);
                 $user = new User(['name' => $input['name'], 'email' => $input['email'], 'password' => $input['password']]);
                 $user->is_admin = true;
                 $user->save();

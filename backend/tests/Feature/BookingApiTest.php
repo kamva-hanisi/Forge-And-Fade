@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\Shop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -187,6 +188,38 @@ class BookingApiTest extends TestCase
         $this->getJson('/api/bookings/availability?service_id=2&barber_id=1&booking_date=2026-11-08')->assertOk()->assertJsonPath('available_times', []);
         $this->getJson('/api/bookings/availability?service_id=999&barber_id=1&booking_date=2026-11-03')->assertUnprocessable();
         $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonCount(6, 'services')->assertJsonCount(3, 'barbers');
+    }
+
+    public function test_any_barber_uses_remaining_capacity_and_cancelled_slots(): void
+    {
+        $payload = [...$this->validBookingPayload(), 'barber_id' => 'any'];
+        foreach ([1, 2, 3] as $barber) {
+            $this->postJson('/api/bookings', $payload)->assertCreated()->assertJsonPath('booking.barber_id', $barber);
+        }
+        $this->postJson('/api/bookings', $payload)->assertConflict();
+        $this->assertNotContains('10:00', $this->getJson('/api/bookings/availability?service_id=2&barber_id=any&booking_date=2026-11-03')->assertOk()->json('available_times'));
+        Booking::where('barber_id', 2)->update(['status' => 'cancelled']);
+        $this->assertContains('10:00', $this->getJson('/api/bookings/availability?service_id=2&barber_id=any&booking_date=2026-11-03')->assertOk()->json('available_times'));
+        $this->postJson('/api/bookings', $payload)->assertCreated()->assertJsonPath('booking.barber_id', 2);
+    }
+
+    public function test_any_barber_respects_staff_days_off_and_inactive_barbers(): void
+    {
+        Shop::findOrFail(1)->update(['settings' => [
+            'barbers' => [1 => ['name' => 'Unavailable', 'active' => false], 2 => ['name' => 'Off duty', 'active' => true], 3 => ['name' => 'Available', 'active' => true]],
+            'staff_schedules' => [2 => ['hours' => [], 'breaks' => [], 'closed_dates' => []]],
+        ]]);
+        $this->postJson('/api/bookings', [...$this->validBookingPayload(), 'barber_id' => 'any'])
+            ->assertCreated()->assertJsonPath('booking.barber_id', 3)->assertJsonPath('booking.barber_name', 'Available');
+    }
+
+    public function test_any_barber_rejects_closed_times_and_empty_catalog(): void
+    {
+        $payload = [...$this->validBookingPayload(), 'barber_id' => 'any', 'booking_time' => '03:00'];
+        $this->postJson('/api/bookings', $payload)->assertConflict();
+        $this->postJson('/api/bookings', [...$payload, 'barber_id' => 'anyone'])->assertUnprocessable();
+        Shop::findOrFail(1)->update(['settings' => ['barbers' => []]]);
+        $this->postJson('/api/bookings', $payload)->assertUnprocessable()->assertJsonValidationErrors('barber_id');
     }
 
     private function validBookingPayload(): array

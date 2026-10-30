@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,12 @@ class BookingReceiptTest extends TestCase
     {
         Carbon::setTestNow();
         parent::tearDown();
+    }
+
+    private function updateShopSettings(array $changes): void
+    {
+        $shop = Shop::findOrFail(1);
+        $shop->update(['settings' => array_replace_recursive($shop->settings ?? [], $changes)]);
     }
 
     private function payload(array $changes = []): array
@@ -52,7 +59,7 @@ class BookingReceiptTest extends TestCase
 
     public function test_outdated_quote_is_rejected_before_creating_a_booking(): void
     {
-        config(['booking.services.2.price' => 260]);
+        $this->updateShopSettings(['services' => [2 => ['price' => 260]]]);
         $this->postJson('/api/bookings', $this->payload(['quoted_price' => 250]))->assertUnprocessable()->assertJsonValidationErrors('quoted_price');
         $this->assertDatabaseCount('bookings', 0);
         $this->postJson('/api/bookings', $this->payload(['quoted_price' => 260]))->assertCreated()->assertJsonPath('booking.price', '260.00');
@@ -62,7 +69,7 @@ class BookingReceiptTest extends TestCase
     {
         $created = $this->postJson('/api/bookings', $this->payload())->assertCreated();
         $booking = Booking::firstOrFail();
-        config(['booking.services.2.price' => 999, 'booking.services.2.duration' => 90]);
+        $this->updateShopSettings(['services' => [2 => ['price' => 999, 'duration' => 90]]]);
         $admin = User::factory()->create();
         $this->grantShopRole($admin);
         $this->withToken($admin->createToken('test', ['admin'])->plainTextToken)
@@ -79,7 +86,7 @@ class BookingReceiptTest extends TestCase
 
     public function test_configured_days_off_are_unavailable_in_both_endpoints(): void
     {
-        config(['booking.closed_dates' => ['2026-11-03']]);
+        $this->updateShopSettings(['closed_dates' => ['2026-11-03']]);
         $this->getJson('/api/bookings/availability?service_id=2&barber_id=1&booking_date=2026-11-03')
             ->assertOk()->assertJsonPath('available_times', []);
         $this->postJson('/api/bookings', $this->payload())->assertUnprocessable()->assertJsonValidationErrors('booking_time');

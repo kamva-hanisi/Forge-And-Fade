@@ -14,7 +14,8 @@ class ShopIsolationTest extends TestCase
 
     private function shop(string $slug = 'second-shop'): Shop
     {
-        return Shop::create(['name' => 'Second Shop', 'slug' => $slug, 'timezone' => 'Africa/Johannesburg']);
+        return Shop::create(['name' => 'Second Shop', 'slug' => $slug, 'timezone' => 'Africa/Johannesburg',
+            'settings' => ['services' => config('booking.services'), 'barbers' => array_map(fn ($name) => ['name' => $name, 'active' => true], config('booking.barbers'))]]);
     }
 
     private function authenticate(int $shop = 1, string $role = 'owner', ?int $barber = null): User
@@ -78,6 +79,19 @@ class ShopIsolationTest extends TestCase
         $this->assertContains('10:00', $other);
         $this->getJson('/api/bookings/catalog?shop=missing-shop')->assertNotFound();
         $this->getJson('/api/bookings/catalog?shop[]=forge-and-fade')->assertUnprocessable();
+    }
+
+    public function test_public_catalog_uses_the_requested_shops_branding_and_active_catalog(): void
+    {
+        $shop = $this->shop();
+        $shop->update(['name' => 'Cape Cuts', 'address' => 'Test shop address', 'phone' => '0712345678',
+            'settings' => ['services' => [7 => ['name' => 'Shop haircut', 'duration' => 30, 'price' => 190, 'active' => true]],
+                'barbers' => [8 => ['name' => 'Shop barber', 'active' => true]]]]);
+        $this->getJson('/api/bookings/catalog?shop=second-shop')->assertOk()
+            ->assertJsonPath('shop.name', 'Cape Cuts')->assertJsonPath('shop.address', 'Test shop address')
+            ->assertJsonCount(1, 'services')->assertJsonPath('services.0.id', 7)->assertJsonPath('barbers.0.id', 8)
+            ->assertJsonMissingPath('shop.settings');
+        $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonPath('shop.slug', 'forge-and-fade')->assertJsonCount(6, 'services');
     }
 
     public function test_owner_cannot_read_count_modify_or_select_another_shops_data(): void

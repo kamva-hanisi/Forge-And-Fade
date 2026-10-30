@@ -4,6 +4,8 @@ import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
 import { useAdmin } from "../../context/AdminContext";
 import { formError } from "../../utils/formError";
+import { catalogReadiness } from "../../utils/shopOnboarding";
+import { shopPath } from "../../utils/shopLinks";
 import "./ShopManagement.scss";
 
 function CatalogEditor({ item, type, busy, save }) {
@@ -345,6 +347,7 @@ export default function ShopManagement() {
     }
   };
   if (!allowed) return <Navigate to="/admin" replace />;
+  const readiness = data ? catalogReadiness(data.services, data.barbers) : null;
   return (
     <main className="staff-page shop-management">
       <header className="staff-page-heading">
@@ -355,6 +358,49 @@ export default function ShopManagement() {
           shop.
         </p>
       </header>
+      {readiness && !readiness.ready && (
+        <section className="staff-card shop-management__setup" aria-labelledby="shop-setup-title">
+          <h2 id="shop-setup-title">Get your shop ready</h2>
+          <p>
+            Your shop starts without demo services or barbers. Add your real catalog before sharing
+            your booking page.
+          </p>
+          <p>
+            {readiness.serviceCount} active services · {readiness.barberCount} active barber
+            profiles
+          </p>
+          <div className="staff-form-actions">
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={busy}
+              onClick={() => setTab("services")}
+            >
+              Add your services
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={busy}
+              onClick={() => setTab("staff")}
+            >
+              Add barber profiles
+            </button>
+            <Link className="btn btn-outline" to="/admin/settings/profile">
+              Review shop details
+            </Link>
+          </div>
+          <p>
+            Review your shop details and each barber’s schedule before taking bookings. New shops
+            start with the default business hours.
+          </p>
+        </section>
+      )}
+      {data && (
+        <p>
+          <Link to={shopPath(session.user.shop.slug)}>Preview your public booking page</Link>
+        </p>
+      )}
       <nav className="shop-management__tabs" aria-label="Shop management sections">
         {[
           ["staff", "Staff"],
