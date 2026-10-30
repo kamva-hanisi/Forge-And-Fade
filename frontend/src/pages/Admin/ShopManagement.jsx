@@ -171,9 +171,9 @@ function MemberEditor({ member, barbers, busy, save }) {
   );
 }
 
-function ScheduleEditor({ data, busy, save }) {
+function ScheduleEditor({ data, busy, save, business = false }) {
   const [barber, setBarber] = useState(String(data.barbers[0]?.id || ""));
-  const [draft, setDraft] = useState(data.schedules[barber]);
+  const [draft, setDraft] = useState(business ? data.business_schedule : data.schedules[barber]);
   const [breaks, setBreaks] = useState(
     (draft?.breaks || []).map((range) => range.join("-")).join(", "),
   );
@@ -192,7 +192,7 @@ function ScheduleEditor({ data, busy, save }) {
       className="staff-card staff-form"
       onSubmit={(event) => {
         event.preventDefault();
-        save(`/management/barbers/${barber}/schedule`, {
+        save(business ? "/management/business-hours" : `/management/barbers/${barber}/schedule`, {
           hours: draft.hours,
           breaks: breaks.trim()
             ? breaks.split(",").map((range) =>
@@ -206,23 +206,27 @@ function ScheduleEditor({ data, busy, save }) {
         });
       }}
     >
-      <h2>Weekly availability</h2>
+      <h2>{business ? "Shop opening hours" : "Weekly availability"}</h2>
       <p>
-        Barber hours are limited by the shop's business hours and breaks. Existing future
-        appointments must remain valid.
+        {business
+          ? "These hours, breaks and closed dates apply to every barber in your shop."
+          : "Barber hours are limited by the shop's business hours and breaks."}{" "}
+        Upcoming and in-progress appointments must remain valid. Times use {data.timezone}.
       </p>
       <fieldset className="staff-booking-fields" disabled={busy}>
-        <label>
-          Barber profile
-          <select value={barber} onChange={(event) => choose(event.target.value)}>
-            {data.barbers.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-                {!item.active ? " (inactive)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!business && (
+          <label>
+            Barber profile
+            <select value={barber} onChange={(event) => choose(event.target.value)}>
+              {data.barbers.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                  {!item.active ? " (inactive)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
           (name, index) => {
             const day = index + 1;
@@ -266,17 +270,21 @@ function ScheduleEditor({ data, busy, save }) {
           },
         )}
         <label>
-          Additional daily breaks
+          {business ? "Shop-wide daily breaks" : "Additional daily breaks"}
           <input
             value={breaks}
             onChange={(event) => setBreaks(event.target.value)}
             placeholder="13:00-14:00, 16:00-16:15"
             maxLength={150}
           />
-          <small>Separate ranges with commas. Shop-wide breaks still apply.</small>
+          <small>
+            {business
+              ? "Separate ranges with commas. These breaks apply every open day."
+              : "Separate ranges with commas. Shop-wide breaks still apply."}
+          </small>
         </label>
         <label>
-          Days off
+          {business ? "Shop closed dates" : "Days off"}
           <input
             value={closed}
             onChange={(event) => setClosed(event.target.value)}
@@ -285,7 +293,9 @@ function ScheduleEditor({ data, busy, save }) {
           />
           <small>Use YYYY-MM-DD dates separated by commas.</small>
         </label>
-        <button className="btn btn-primary">Save barber schedule</button>
+        <button className="btn btn-primary">
+          {business ? "Save shop hours" : "Save barber schedule"}
+        </button>
       </fieldset>
     </form>
   );
@@ -389,6 +399,14 @@ export default function ShopManagement() {
             <Link className="btn btn-outline" to="/admin/settings/profile">
               Review shop details
             </Link>
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={busy}
+              onClick={() => setTab("hours")}
+            >
+              Review business hours
+            </button>
           </div>
           <p>
             Review your shop details and each barber’s schedule before taking bookings. New shops
@@ -405,6 +423,7 @@ export default function ShopManagement() {
         {[
           ["staff", "Staff"],
           ["services", "Services"],
+          ["hours", "Business hours"],
           ["schedules", "Barber schedules"],
         ].map(([value, label]) => (
           <button
@@ -511,7 +530,18 @@ export default function ShopManagement() {
               </div>
             </>
           )}
-          {tab === "schedules" && <ScheduleEditor data={data} busy={busy} save={save} />}
+          {tab === "hours" && (
+            <ScheduleEditor
+              key={`${data.version}-business`}
+              data={data}
+              busy={busy}
+              save={save}
+              business
+            />
+          )}
+          {tab === "schedules" && (
+            <ScheduleEditor key={`${data.version}-barber`} data={data} busy={busy} save={save} />
+          )}
         </div>
       )}
     </main>

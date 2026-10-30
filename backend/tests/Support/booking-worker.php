@@ -35,7 +35,8 @@ $editing = getenv('BOOKING_SCHEDULE_EDIT') === '1';
 if ($editing) {
     $payload = ['version' => 0, 'hours' => array_fill(1, 7, ['10:00', '11:00']), 'breaks' => [], 'closed_dates' => []];
 }
-$request = Request::create($editing ? '/api/admin/management/barbers/1/schedule' : ($staffToken ? '/api/admin/bookings' : '/api/bookings'), $editing ? 'PUT' : 'POST', $payload, [], [], $headers);
+$editPath = getenv('BOOKING_BUSINESS_EDIT') === '1' ? '/api/admin/management/business-hours' : '/api/admin/management/barbers/1/schedule';
+$request = Request::create($editing ? $editPath : ($staffToken ? '/api/admin/bookings' : '/api/bookings'), $editing ? 'PUT' : 'POST', $payload, [], [], $headers);
 $response = $kernel->handle($request);
 echo 'STATUS:'.$response->getStatusCode()."\n";
 $kernel->terminate($request, $response);

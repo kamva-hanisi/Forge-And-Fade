@@ -26,6 +26,7 @@ Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('au
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);
+    Route::put('/management/business-hours', [ShopManagementController::class, 'businessHours'])->middleware('throttle:30,1');
     Route::post('/management/services', [ShopManagementController::class, 'service']);
     Route::put('/management/services/{service}', [ShopManagementController::class, 'service'])->whereNumber('service');
     Route::post('/management/barbers', [ShopManagementController::class, 'barber']);

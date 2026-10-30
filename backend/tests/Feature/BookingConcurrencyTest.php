@@ -24,6 +24,8 @@ class BookingConcurrencyTest extends TestCase
             'staff and staff overlapping' => [['10:00', '10:20'], 'staff'],
             'schedule edit and public booking' => [['10:20', '10:20'], 'schedule_public'],
             'schedule edit and staff booking' => [['10:20', '10:20'], 'schedule_staff'],
+            'business hours edit and public booking' => [['10:20', '10:20'], 'business_public'],
+            'business hours edit and staff booking' => [['10:20', '10:20'], 'business_staff'],
         ];
     }
 
@@ -42,7 +44,7 @@ class BookingConcurrencyTest extends TestCase
         DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
         $processes = [];
         $user = null;
-        $scheduling = str_starts_with($mode, 'schedule_');
+        $scheduling = str_starts_with($mode, 'schedule_') || str_starts_with($mode, 'business_');
         $originalSettings = DB::table('shops')->where('id', 1)->value('settings');
         $barrier = tempnam(sys_get_temp_dir(), 'booking-race-');
         unlink($barrier);
@@ -57,8 +59,8 @@ class BookingConcurrencyTest extends TestCase
             }
             foreach ($times as $index => $time) {
                 $editing = $scheduling && $index === 0;
-                $staff = $editing || $mode === 'staff' || ($mode === 'mixed' && $index === 0) || ($mode === 'schedule_staff' && $index === 1);
-                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path(), ['BOOKING_STAFF_TOKEN' => $staff ? $token : '', 'BOOKING_SCHEDULE_EDIT' => $editing ? '1' : '', 'BOOKING_ANY_BARBER' => $mode === 'any' || ($mode === 'specific_any' && $index === 1) ? '1' : '']);
+                $staff = $editing || $mode === 'staff' || ($mode === 'mixed' && $index === 0) || (in_array($mode, ['schedule_staff', 'business_staff'], true) && $index === 1);
+                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path(), ['BOOKING_STAFF_TOKEN' => $staff ? $token : '', 'BOOKING_SCHEDULE_EDIT' => $editing ? '1' : '', 'BOOKING_BUSINESS_EDIT' => $editing && str_starts_with($mode, 'business_') ? '1' : '', 'BOOKING_ANY_BARBER' => $mode === 'any' || ($mode === 'specific_any' && $index === 1) ? '1' : '']);
                 $process->setTimeout(120);
                 $process->start();
                 $processes[] = $process;

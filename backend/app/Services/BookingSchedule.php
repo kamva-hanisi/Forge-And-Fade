@@ -41,7 +41,7 @@ class BookingSchedule
         return false;
     }
 
-    public function allowed(string $date, string $time, int $duration, ?int $barber = null): bool
+    public function allowed(string $date, string $time, int $duration, ?int $barber = null, bool $allowStarted = false): bool
     {
         $shop = request()->attributes->get('shop');
         $start = Carbon::parse("{$date} {$time}", $shop?->timezone ?? config('app.timezone'));
@@ -50,7 +50,7 @@ class BookingSchedule
         $staff = $settings['staff_schedules'][$barber] ?? null;
         $hours = ($settings['hours'] ?? config('booking.hours'))[$start->dayOfWeekIso] ?? null;
         $minute = $this->minutes($time);
-        if (! $hours || in_array($date, $settings['closed_dates'] ?? config('booking.closed_dates', []), true) || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
+        if (! $hours || in_array($date, $settings['closed_dates'] ?? config('booking.closed_dates', []), true) || (! $allowStarted && $start->lte(Carbon::now())) || $minute % config('booking.interval') !== 0
             || $minute < $this->minutes($hours[0]) || $minute + $duration > $this->minutes($hours[1])) {
             return false;
         }

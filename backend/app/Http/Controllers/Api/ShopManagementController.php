@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Services\BookingSchedule;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
@@ -32,6 +33,12 @@ class ShopManagementController extends Controller
             'services' => collect(ShopCatalog::services($shop, true))->map(fn ($item, $id) => ['id' => $id, 'active' => true, ...$item])->values(),
             'barbers' => collect(ShopCatalog::barbers($shop, true))->map(fn ($item, $id) => ['id' => $id, ...$item])->values(),
             'schedules' => $schedules,
+            'timezone' => $shop->timezone,
+            'business_schedule' => [
+                'hours' => array_replace(array_fill(1, 7, null), $settings['hours'] ?? config('booking.hours')),
+                'breaks' => $settings['breaks'] ?? config('booking.breaks'),
+                'closed_dates' => $settings['closed_dates'] ?? config('booking.closed_dates', []),
+            ],
             'members' => DB::table('shop_memberships')->join('users', 'users.id', '=', 'shop_memberships.user_id')
                 ->where('shop_memberships.shop_id', $shop->id)->orderBy('shop_memberships.id')
                 ->get(['shop_memberships.id', 'users.name', 'users.email', 'users.is_platform_admin', 'shop_memberships.role', 'shop_memberships.barber_id']),
@@ -86,30 +93,57 @@ class ShopManagementController extends Controller
         });
     }
 
+    private function scheduleInput(Request $request): array
+    {
+        $input = $request->validate([
+            'hours' => ['required', 'array:1,2,3,4,5,6,7', 'required_array_keys:1,2,3,4,5,6,7'],
+            'hours.*' => 'nullable|array:0,1|size:2|required_array_keys:0,1', 'hours.*.*' => 'required|date_format:H:i',
+            'breaks' => 'present|array|max:10', 'breaks.*' => 'required|array:0,1|size:2|required_array_keys:0,1', 'breaks.*.*' => 'required|date_format:H:i',
+            'closed_dates' => 'present|array|max:365', 'closed_dates.*' => 'required|date_format:Y-m-d|distinct',
+        ]);
+        foreach ([...array_values($input['hours']), ...$input['breaks']] as $range) {
+            if ($range !== null && $range[0] >= $range[1]) {
+                throw ValidationException::withMessages(['hours' => 'Every opening/break end must be later than its start. Overnight shifts are not supported.']);
+            }
+        }
+
+        return $input;
+    }
+
+    private function protectAppointments(Shop $shop, BookingSchedule $schedule, ?int $barber = null): void
+    {
+        $clock = now($shop->timezone);
+        $bookings = Booking::where('shop_id', $shop->id)->where('status', 'confirmed')
+            ->whereDate('booking_date', '>=', $clock->toDateString());
+        if ($barber !== null) {
+            $bookings->where('barber_id', $barber);
+        }
+        foreach ($bookings->cursor() as $booking) {
+            if (Carbon::parse($booking->ends_at)->gt($clock)
+                && ! $schedule->allowed($booking->booking_date->toDateString(), substr($booking->booking_time, 0, 5), $booking->duration, $booking->barber_id, true)) {
+                throw ValidationException::withMessages(['hours' => 'This schedule conflicts with an upcoming or in-progress appointment. Reschedule or cancel that appointment first.']);
+            }
+        }
+    }
+
+    public function businessHours(Request $request, BookingSchedule $schedule)
+    {
+        return $this->change($request, function ($shop, &$settings) use ($request, $schedule) {
+            $settings = array_replace($settings, $this->scheduleInput($request));
+            $shop->settings = $settings;
+            $this->protectAppointments($shop, $schedule);
+            ShopAccess::audit($request, 'shop.business_hours_saved', $shop->id);
+        });
+    }
+
     public function schedule(Request $request, int $barber, BookingSchedule $schedule)
     {
         return $this->change($request, function ($shop, &$settings) use ($request, $barber, $schedule) {
             abort_unless(isset(ShopCatalog::barbers($shop, true)[$barber]), 404);
-            $input = $request->validate([
-                'hours' => ['required', 'array:1,2,3,4,5,6,7', 'required_array_keys:1,2,3,4,5,6,7'],
-                'hours.*' => 'nullable|array:0,1|size:2|required_array_keys:0,1', 'hours.*.*' => 'required|date_format:H:i',
-                'breaks' => 'present|array|max:10', 'breaks.*' => 'required|array:0,1|size:2|required_array_keys:0,1', 'breaks.*.*' => 'required|date_format:H:i',
-                'closed_dates' => 'present|array|max:365', 'closed_dates.*' => 'required|date_format:Y-m-d|distinct',
-            ]);
-            foreach ([...array_values($input['hours']), ...$input['breaks']] as $range) {
-                if ($range !== null && $range[0] >= $range[1]) {
-                    throw ValidationException::withMessages(['hours' => 'Every opening/break end must be later than its start. Overnight shifts are not supported.']);
-                }
-            }
+            $input = $this->scheduleInput($request);
             $settings['staff_schedules'][$barber] = $input;
             $shop->settings = $settings;
-            $clock = now($shop->timezone);
-            foreach (Booking::where('shop_id', $shop->id)->where('barber_id', $barber)->where('status', 'confirmed')
-                ->whereDate('booking_date', '>=', $clock->toDateString())->cursor() as $booking) {
-                if (Carbon::parse($booking->starts_at)->gt($clock) && ! $schedule->allowed($booking->booking_date->toDateString(), substr($booking->booking_time, 0, 5), $booking->duration, $barber)) {
-                    throw ValidationException::withMessages(['hours' => 'This schedule conflicts with an existing future appointment. Reschedule or cancel that appointment first.']);
-                }
-            }
+            $this->protectAppointments($shop, $schedule, $barber);
             ShopAccess::audit($request, 'barber.schedule_saved', $barber);
         });
     }
