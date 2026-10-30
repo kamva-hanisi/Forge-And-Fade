@@ -7,6 +7,7 @@ import Home from "./pages/Home/Home";
 import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
 import Booking from "./pages/Booking/Booking";
+import ManageBooking from "./pages/Booking/ManageBooking";
 import Terms from "./pages/Terms/Terms";
 import Contact from "./pages/Contact/Contact";
 import Footer from "./components/Footer/Footer";
@@ -18,6 +19,7 @@ import ShopSignup from "./pages/Admin/ShopSignup";
 import AdminRecovery from "./pages/Admin/AdminRecovery";
 import AdminInbox from "./pages/Admin/AdminInbox";
 import AdminBooking from "./pages/Admin/AdminBooking";
+import ShopManagement from "./pages/Admin/ShopManagement";
 
 function App() {
   const { pathname } = useLocation();
@@ -39,12 +41,14 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/booking" element={<Booking />} />
+        <Route path="/booking/manage" element={<ManageBooking />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminSettings key="dashboard" />} />
           <Route path="appointments" element={<Admin />} />
           <Route path="appointments/new" element={<AdminBooking />} />
           <Route path="inbox" element={<AdminInbox />} />
+          <Route path="management" element={<ShopManagement />} />
           <Route path="settings/profile" element={<AdminSettings key="profile" page="profile" />} />
           <Route
             path="settings/security"

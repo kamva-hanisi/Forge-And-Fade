@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
+import { adminHeaders } from "../../utils/adminHeaders";
 import { useAdmin } from "../../context/AdminContext";
 import { formError } from "../../utils/formError";
 import "./AdminInbox.scss";
@@ -22,10 +23,10 @@ export default function AdminInbox() {
     () =>
       axios.create({
         baseURL: `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/admin`,
-        headers: { Authorization: `Bearer ${session.token}`, Accept: "application/json" },
+        headers: adminHeaders(session),
         timeout: 20000,
       }),
-    [session.token],
+    [session],
   );
 
   useEffect(() => {

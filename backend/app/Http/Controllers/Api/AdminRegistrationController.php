@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Shop;
 use App\Models\User;
 use App\Services\ShopAccess;
+use App\Services\ShopCatalog;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +41,9 @@ class AdminRegistrationController extends Controller
                         ->where('email', $input['email'])->whereNull('used_at')->where('expires_at', '>', now())->lockForUpdate()->first();
                     if (! $invitation) {
                         throw ValidationException::withMessages(['invitation' => 'A valid, unused invitation for this email is required. Ask the shop owner for a code.']);
+                    }
+                    if ($invitation->role === 'barber' && ! isset(ShopCatalog::barbers(Shop::findOrFail($invitation->shop_id))[$invitation->barber_id])) {
+                        throw ValidationException::withMessages(['invitation' => 'This barber assignment is no longer available. Ask the owner for a new invitation.']);
                     }
                     DB::table('admin_invitations')->where('id', $invitation->id)->update(['used_at' => now()]);
                 }

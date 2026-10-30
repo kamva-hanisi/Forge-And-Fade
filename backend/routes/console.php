@@ -2,11 +2,15 @@
 
 use App\Models\Shop;
 use App\Models\User;
+use App\Services\ShopCatalog;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+
+Schedule::command('bookings:notify')->everyMinute()->withoutOverlapping(10)->when(fn () => config('booking_mail.enabled'));
 
 Artisan::command('admin:create {email} {--name=Administrator}', function () {
     $password = $this->secret('Choose a password (at least 12 characters)');
@@ -43,7 +47,7 @@ Artisan::command('admin:invite {email} {--shop=forge-and-fade} {--role=manager} 
     $shop = Shop::where('slug', $this->option('shop'))->first();
     $role = $this->option('role');
     if (! $shop || ! in_array($role, ['manager', 'barber'], true)
-        || ($role === 'barber' && ! array_key_exists((int) $this->option('barber'), config('booking.barbers')))) {
+        || ($role === 'barber' && ! array_key_exists((int) $this->option('barber'), ShopCatalog::barbers($shop)))) {
         $this->error('Choose an existing shop, a manager/barber role, and a valid barber assignment when needed.');
 
         return 1;

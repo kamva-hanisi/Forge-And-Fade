@@ -13,8 +13,8 @@ class ShopAccess
     public static function permissions(string $role): array
     {
         return match ($role) {
-            'owner', 'platform_admin' => ['bookings.read', 'bookings.write', 'members.invite', 'shop.write', 'messages.manage', 'reports.read'],
-            'manager' => ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read'],
+            'owner', 'platform_admin' => ['bookings.read', 'bookings.write', 'members.invite', 'shop.write', 'messages.manage', 'reports.read', 'shop.manage', 'payments.record'],
+            'manager' => ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read', 'payments.record'],
             'barber' => ['bookings.read'],
             default => [],
         };
@@ -42,6 +42,7 @@ class ShopAccess
     public static function identity(User $user, ?int $shopId = null): array
     {
         $membership = DB::table('shop_memberships')->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'manager', 'barber'])
             ->when($shopId, fn ($query) => $query->where('shop_id', $shopId))->orderBy('id')->first();
         $shop = $membership ? Shop::find($membership->shop_id) : ($user->is_platform_admin ? Shop::find($shopId ?? 1) : null);
         $role = $user->is_platform_admin ? 'platform_admin' : ($membership->role ?? '');

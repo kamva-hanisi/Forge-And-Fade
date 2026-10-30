@@ -1,0 +1,45 @@
+@use "../../styles/variables" as *;
+
+.shop-management {
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  &__content {
+    display: grid;
+    gap: 24px;
+  }
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  &__email {
+    overflow-wrap: anywhere;
+  }
+  &__day {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: end;
+    padding-bottom: 16px;
+    border-bottom: 1px solid $border;
+  }
+  .staff-form {
+    margin-top: 0;
+  }
+  .staff-card h2 {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 850px) {
+    &__grid,
+    &__day {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &__tabs .btn {
+      width: 100%;
+    }
+  }
+}

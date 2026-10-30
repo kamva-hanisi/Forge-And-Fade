@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 
 import "./ServicesSection.scss";
 
-import { services } from "../../data/services";
+import useShopServices from "../../hooks/useShopServices";
 
 const ServicesSection = () => {
+  const { services, loading, error, shop, retry } = useShopServices();
   return (
     <section className="services-section">
       <div className="container">
@@ -23,6 +24,18 @@ const ServicesSection = () => {
         </div>
 
         <div className="services-section__grid">
+          {loading && <p role="status">Loading current services…</p>}
+          {error && (
+            <div role="alert">
+              {error}
+              <button type="button" className="btn btn-outline" onClick={retry}>
+                Retry services
+              </button>
+            </div>
+          )}
+          {!loading && !error && services.length === 0 && (
+            <p>No services are currently available.</p>
+          )}
           {services.slice(0, 4).map((service) => (
             <div className="service-card" key={service.id}>
               <div>
@@ -34,7 +47,10 @@ const ServicesSection = () => {
               <div className="service-card__bottom">
                 <span>R{service.price}</span>
 
-                <Link to={`/booking?service=${service.id}`} className="btn btn-outline">
+                <Link
+                  to={`/booking?shop=${encodeURIComponent(shop)}&service=${service.id}`}
+                  className="btn btn-outline"
+                >
                   Book
                 </Link>
               </div>

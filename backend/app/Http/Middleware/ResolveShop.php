@@ -15,7 +15,7 @@ class ResolveShop
     {
         if ($mode === 'admin') {
             abort_unless($request->user()?->is_admin && $request->user()->tokenCan('admin'), 403);
-            $memberships = DB::table('shop_memberships')->where('user_id', $request->user()->id);
+            $memberships = DB::table('shop_memberships')->where('user_id', $request->user()->id)->whereIn('role', ['owner', 'manager', 'barber']);
             $requested = $request->header('X-Shop-Id');
             if ($requested !== null) {
                 abort_unless(ctype_digit((string) $requested), 403);

@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { adminHeaders } from "../../utils/adminHeaders";
 import { Link, Navigate } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import "./Admin.scss";
+import PaymentPanel from "./PaymentPanel";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-const emptyFilters = { date_from: "", date_to: "", barber_id: "", status: "", search: "" };
+const emptyFilters = {
+  date_from: "",
+  date_to: "",
+  barber_id: "",
+  status: "",
+  search: "",
+  view: "all",
+};
 const errorText = (error) =>
   Object.values(error.response?.data?.errors || {})
     .flat()
@@ -13,7 +22,7 @@ const errorText = (error) =>
   error.response?.data?.message ||
   "Unable to reach the server. Please try again.";
 
-function Appointment({ booking, barbers, busy, onUpdate }) {
+function Appointment({ booking, barbers, busy, onUpdate, client, onPaymentSaved }) {
   const [editing, setEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [schedule, setSchedule] = useState({
@@ -39,6 +48,7 @@ function Appointment({ booking, barbers, busy, onUpdate }) {
         <a href={`tel:${booking.phone}`}>{booking.phone}</a>
       </p>
       {booking.notes && <p className="admin-notes">{booking.notes}</p>}
+      <PaymentPanel booking={booking} client={client} onSaved={onPaymentSaved} />
       {booking.status === "confirmed" && (
         <div className="admin-actions">
           <button
@@ -67,6 +77,9 @@ function Appointment({ booking, barbers, busy, onUpdate }) {
       )}
       {confirmCancel && (
         <div className="admin-confirm" role="group" aria-label="Confirm cancellation">
+          {booking.active_payment && (
+            <p>A receipt is recorded. Cancelling does not refund money or void that receipt.</p>
+          )}
           <p>Cancel this appointment? Its time will become available for another customer.</p>
           <button
             type="button"
@@ -156,12 +169,10 @@ export default function Admin() {
     () =>
       axios.create({
         baseURL: apiUrl,
-        headers: token
-          ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
-          : { Accept: "application/json" },
+        headers: token ? adminHeaders(session) : { Accept: "application/json" },
         timeout: 20000,
       }),
-    [token],
+    [token, session],
   );
 
   useEffect(() => {
@@ -174,7 +185,7 @@ export default function Admin() {
       try {
         const [bookings, catalog] = await Promise.all([
           client.get("/admin/bookings", { params: query, signal: controller.signal }),
-          client.get("/bookings/catalog", { signal: controller.signal }),
+          client.get("/admin/bookings/catalog", { signal: controller.signal }),
         ]);
         setResult(bookings.data);
         setBarbers(catalog.data.barbers);
@@ -251,6 +262,18 @@ export default function Admin() {
             setQuery({ ...filters, page: 1 });
           }}
         >
+          <label>
+            Appointments
+            <select
+              value={filters.view}
+              onChange={(event) => setFilters({ ...filters, view: event.target.value })}
+            >
+              <option value="all">All appointments</option>
+              <option value="today">Today</option>
+              <option value="upcoming">Upcoming confirmed</option>
+              <option value="past">Past confirmed starts</option>
+            </select>
+          </label>
           <label>
             From
             <input
@@ -345,6 +368,13 @@ export default function Admin() {
               barbers={barbers}
               busy={busy || loading}
               onUpdate={update}
+              client={client}
+              onPaymentSaved={() => {
+                setMessage(
+                  "Payment receipt updated. No money was charged or refunded by this website.",
+                );
+                setRefresh((value) => value + 1);
+              }}
             />
           ))}
         </div>

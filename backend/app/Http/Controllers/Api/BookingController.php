@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Services\BookingEmails;
 use App\Services\BookingSchedule;
+use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -15,8 +17,10 @@ class BookingController extends Controller
     private function validateAppointment(Request $request, bool $creating): array
     {
         return $request->validate([
-            'service_id' => ['required', 'integer', Rule::in(array_keys(config('booking.services')))],
-            'barber_id' => ['required', 'integer', Rule::in(array_keys(config('booking.barbers')))],
+            'service_id' => ['required', 'integer', Rule::in(array_keys(ShopCatalog::services()))],
+            'barber_id' => $request->input('barber_id') === 'any'
+                ? ['required', Rule::in(ShopCatalog::barbers() ? ['any'] : [])]
+                : ['required', 'integer', Rule::in(array_keys(ShopCatalog::barbers()))],
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             ...($creating ? [
                 'booking_time' => 'required|date_format:H:i',
@@ -32,8 +36,8 @@ class BookingController extends Controller
     public function catalog(Request $request)
     {
         return response()->json([
-            'services' => collect(config('booking.services'))->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
-            'barbers' => collect(config('booking.barbers'))->map(fn ($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            'services' => collect(ShopCatalog::services())->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
+            'barbers' => collect(ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
             'timezone' => $request->attributes->get('shop')->timezone,
             'shop' => $request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone']),
         ]);
@@ -41,16 +45,34 @@ class BookingController extends Controller
 
     public function store(Request $request, BookingSchedule $schedule)
     {
-        $validated = $this->validateAppointment($request, true);
-        $service = config('booking.services')[$validated['service_id']];
-        if (isset($validated['quoted_price']) && (int) round((float) $validated['quoted_price'] * 100) !== (int) round($service['price'] * 100)) {
-            throw ValidationException::withMessages(['quoted_price' => 'The service price has changed. Review the updated price before booking.']);
-        }
-        unset($validated['quoted_price']);
+        return DB::transaction(function () use ($schedule, $request) {
+            ShopCatalog::lock($request);
+            $validated = $this->validateAppointment($request, true);
+            $service = ShopCatalog::services()[$validated['service_id']];
+            if (isset($validated['quoted_price']) && (int) round((float) $validated['quoted_price'] * 100) !== (int) round($service['price'] * 100)) {
+                throw ValidationException::withMessages(['quoted_price' => 'The service price has changed. Review the updated price before booking.']);
+            }
+            unset($validated['quoted_price']);
 
-        return DB::transaction(function () use ($validated, $service, $schedule, $request) {
+            if ($validated['barber_id'] === 'any') {
+                $assigned = null;
+                $barbers = array_keys(ShopCatalog::barbers());
+                sort($barbers, SORT_NUMERIC);
+                foreach ($barbers as $barber) {
+                    $schedule->lockDay($barber, $validated['booking_date']);
+                    if ($schedule->allowed($validated['booking_date'], $validated['booking_time'], $service['duration'], $barber)
+                        && ! $schedule->overlaps($validated['booking_time'], $service['duration'], $schedule->bookings($barber, $validated['booking_date'], true))) {
+                        $assigned = $barber;
+                        break;
+                    }
+                }
+                if ($assigned === null) {
+                    return response()->json(['message' => 'No barber is available at that time. Please choose another time.'], 409);
+                }
+                $validated['barber_id'] = $assigned;
+            }
             $schedule->lockDay($validated['barber_id'], $validated['booking_date']);
-            $schedule->validateTime($validated['booking_date'], $validated['booking_time'], $service['duration']);
+            $schedule->validateTime($validated['booking_date'], $validated['booking_time'], $service['duration'], $validated['barber_id']);
             if ($schedule->overlaps($validated['booking_time'], $service['duration'], $schedule->bookings($validated['barber_id'], $validated['booking_date'], true))) {
                 return response()->json(['message' => 'That time is already booked. Please choose another time.'], 409);
             }
@@ -58,7 +80,7 @@ class BookingController extends Controller
                 ...$validated,
                 'service_name' => $service['name'],
                 'duration' => $service['duration'],
-                'barber_name' => config('booking.barbers')[$validated['barber_id']],
+                'barber_name' => ShopCatalog::barbers()[$validated['barber_id']]['name'],
                 'status' => 'confirmed',
                 'price' => $service['price'],
                 'currency' => 'ZAR',
@@ -66,6 +88,7 @@ class BookingController extends Controller
             ]);
 
             return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking->fresh(),
+                'email_notification' => BookingEmails::ready() ? 'pending' : 'not_configured',
                 'shop' => $request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone'])], 201)
                 ->header('Cache-Control', 'no-store');
         }, 5);
@@ -74,13 +97,20 @@ class BookingController extends Controller
     public function availability(Request $request, BookingSchedule $schedule)
     {
         $validated = $this->validateAppointment($request, false);
-        $duration = config('booking.services')[$validated['service_id']]['duration'];
-        $bookings = $schedule->bookings($validated['barber_id'], $validated['booking_date']);
+        $duration = ShopCatalog::services()[$validated['service_id']]['duration'];
+        $barbers = $validated['barber_id'] === 'any' ? array_keys(ShopCatalog::barbers()) : [$validated['barber_id']];
+        $bookings = [];
+        foreach ($barbers as $barber) {
+            $bookings[$barber] = $schedule->bookings($barber, $validated['booking_date']);
+        }
         $available = [];
         for ($minute = 0; $minute < 1440; $minute += config('booking.interval')) {
             $time = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60);
-            if ($schedule->allowed($validated['booking_date'], $time, $duration) && ! $schedule->overlaps($time, $duration, $bookings)) {
-                $available[] = $time;
+            foreach ($barbers as $barber) {
+                if ($schedule->allowed($validated['booking_date'], $time, $duration, $barber) && ! $schedule->overlaps($time, $duration, $bookings[$barber])) {
+                    $available[] = $time;
+                    break;
+                }
             }
         }
 

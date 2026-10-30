@@ -1,5 +1,7 @@
 # Phase 2 — Shop-account foundation
 
+Catalog/staff/schedule limitations in this original delivery are superseded by `PHASE3-COMPLETION.md`. Shops now customize their catalog and schedules in database-backed shop settings.
+
 This records the first Phase 2 delivery, not completion of the whole phase. Password reset/account recovery has since been implemented; see `ADMIN-RECOVERY.md`. Actual SMTP delivery and owner acceptance remain pending. Gmail remains unconnected.
 
 ## What works

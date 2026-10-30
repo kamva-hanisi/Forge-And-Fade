@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
+import { adminHeaders } from "../../utils/adminHeaders";
 import { CalendarDays, Clock3, Ban, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
 import { useAdmin } from "../../context/AdminContext";
 import ShopProfile from "./ShopProfile";
@@ -36,10 +37,10 @@ export default function AdminSettings({ page = "dashboard" }) {
     () =>
       axios.create({
         baseURL: `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/admin`,
-        headers: { Authorization: `Bearer ${session.token}`, Accept: "application/json" },
+        headers: adminHeaders(session),
         timeout: 20000,
       }),
-    [session.token],
+    [session],
   );
   useEffect(() => {
     if (page === "invite" && !canInvite) return;
@@ -228,6 +229,32 @@ export default function AdminSettings({ page = "dashboard" }) {
                       amounts.
                     </p>
                   )}
+                </div>
+              )}
+              {data.statistics.recorded_receipts !== null && (
+                <div className="staff-report__value">
+                  <h3>Recorded payment receipts</h3>
+                  {data.statistics.recorded_receipts?.length ? (
+                    data.statistics.recorded_receipts.map((value) => (
+                      <p key={value.currency}>
+                        <strong>
+                          {new Intl.NumberFormat("en-ZA", {
+                            style: "currency",
+                            currency: value.currency,
+                          }).format(Number(value.amount))}
+                        </strong>{" "}
+                        · {value.receipt_count} recorded{" "}
+                        {Number(value.receipt_count) === 1 ? "receipt" : "receipts"}
+                      </p>
+                    ))
+                  ) : (
+                    <p>No received-payment records for this period.</p>
+                  )}
+                  <p>
+                    Grouped by the received date declared by staff. Voided records are excluded.
+                    These are manual receipt records, not bank-verified transactions; this website
+                    does not charge or refund customers.
+                  </p>
                 </div>
               )}
             </section>

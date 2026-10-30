@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ShopAccess;
+use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -40,6 +41,9 @@ class AdminSettingsController extends Controller
             'booked_values' => $canReport ? (clone $confirmed)->whereNotNull('price')->whereNotNull('currency')
                 ->selectRaw('currency, SUM(price) as amount, COUNT(*) as booking_count')->groupBy('currency')->orderBy('currency')->toBase()->get() : null,
             'unpriced_count' => $canReport ? (clone $confirmed)->where(fn ($query) => $query->whereNull('price')->orWhereNull('currency'))->count() : null,
+            'recorded_receipts' => $canReport ? DB::table('booking_payments')->where('shop_id', $shop->id)->whereNull('voided_at')
+                ->whereBetween('received_on', [$from, $today])->selectRaw('currency, SUM(amount) as amount, COUNT(*) as receipt_count')
+                ->groupBy('currency')->orderBy('currency')->get() : null,
         ];
 
         return response()->json([
@@ -108,7 +112,7 @@ class AdminSettingsController extends Controller
             'email_ready' => config('mail.default') === 'smtp' && (bool) config('mail.mailers.smtp.username') && (bool) config('mail.mailers.smtp.password'),
             'invitations' => DB::table('admin_invitations')->where('shop_id', $shop->id)->select('id', 'email', 'role', 'barber_id', 'expires_at', 'used_at')->orderByDesc('id')->limit(50)->get(),
             'now' => now()->toIso8601String(),
-            'barbers' => collect(config('booking.barbers'))->map(fn ($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            'barbers' => collect(ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -117,7 +121,7 @@ class AdminSettingsController extends Controller
         $shop = ShopAccess::authorize($request, 'members.invite');
         $request->merge(['email' => is_string($request->email) ? strtolower(trim($request->email)) : $request->email]);
         $input = $request->validate(['email' => 'required|email|max:150|unique:users,email', 'send_email' => 'required|boolean',
-            'role' => 'sometimes|in:manager,barber', 'barber_id' => ['required_if:role,barber', 'nullable', 'integer', Rule::in(array_keys(config('booking.barbers')))]]);
+            'role' => 'sometimes|in:manager,barber', 'barber_id' => ['required_if:role,barber', 'nullable', 'integer', Rule::in(array_keys(ShopCatalog::barbers()))]]);
         if ($input['send_email'] && (config('mail.default') !== 'smtp' || ! config('mail.mailers.smtp.username') || ! config('mail.mailers.smtp.password'))) {
             return response()->json(['message' => 'Email is not connected yet. Create a private invitation link instead, or configure SMTP first.'], 503);
         }

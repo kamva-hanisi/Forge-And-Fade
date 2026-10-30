@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
+import { adminHeaders } from "../../utils/adminHeaders";
 import { useAdmin } from "../../context/AdminContext";
 import { formError } from "../../utils/formError";
 
@@ -35,10 +36,10 @@ export default function AdminBooking() {
     () =>
       axios.create({
         baseURL: `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/admin`,
-        headers: { Authorization: `Bearer ${session.token}`, Accept: "application/json" },
+        headers: adminHeaders(session),
         timeout: 20000,
       }),
-    [session.token],
+    [session],
   );
   const service = catalog?.services.find((item) => item.id === Number(fields.service_id));
   const ready = Boolean(catalog && service && fields.barber_id && fields.booking_date);

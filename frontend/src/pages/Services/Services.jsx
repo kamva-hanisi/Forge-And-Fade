@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 
-import { services } from "../../data/services";
+import useShopServices from "../../hooks/useShopServices";
 
 import "./Services.scss";
 
 const Services = () => {
+  const { services, error, loading, shop, retry } = useShopServices();
   return (
     <main className="services-page">
       <section className="services-page__header">
@@ -22,6 +23,18 @@ const Services = () => {
       <section className="services-page__services">
         <div className="container">
           <div className="services-page__grid">
+            {loading && <p role="status">Loading current services…</p>}
+            {error && (
+              <div role="alert">
+                {error}
+                <button type="button" className="btn btn-outline" onClick={retry}>
+                  Retry services
+                </button>
+              </div>
+            )}
+            {!loading && !error && services.length === 0 && (
+              <p>No services are currently available.</p>
+            )}
             {services.map((service) => (
               <article className="full-service-card" key={service.id}>
                 <div className="full-service-card__content">
@@ -35,7 +48,10 @@ const Services = () => {
                 <div className="full-service-card__action">
                   <strong>R{service.price}</strong>
 
-                  <Link to={`/booking?service=${service.id}`} className="btn btn-primary">
+                  <Link
+                    to={`/booking?shop=${encodeURIComponent(shop)}&service=${service.id}`}
+                    className="btn btn-primary"
+                  >
                     Book
                   </Link>
                 </div>

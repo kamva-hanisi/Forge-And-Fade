@@ -31,7 +31,8 @@ const money = (price) =>
   new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(price);
 
 export default function Booking() {
@@ -56,9 +57,10 @@ export default function Booking() {
   const selectedService = catalog?.services.find(
     (service) => service.id === Number(formData.service_id),
   );
-  const selectedBarber = catalog?.barbers.find(
-    (barber) => barber.id === Number(formData.barber_id),
-  );
+  const selectedBarber =
+    formData.barber_id === "any" && catalog?.barbers.length
+      ? { id: "any", name: "Any available barber" }
+      : catalog?.barbers.find((barber) => barber.id === Number(formData.barber_id));
   const availabilityKey = [
     shopSlug,
     formData.service_id,
@@ -183,7 +185,11 @@ export default function Booking() {
         },
         { timeout: 20000 },
       );
-      setConfirmedBooking({ ...data.booking, shop: data.shop });
+      setConfirmedBooking({
+        ...data.booking,
+        shop: data.shop,
+        email_notification: data.email_notification,
+      });
       focusHeading();
     } catch (err) {
       const fields = err.response?.data?.errors || {};
@@ -289,7 +295,18 @@ export default function Booking() {
                 )}
                 .
               </p>
+              <p role="status">
+                {confirmedBooking.email_notification === "pending"
+                  ? "Your confirmation email is pending delivery. Keep your booking reference in case the email is delayed."
+                  : "Email confirmation is not currently available. Keep your booking reference to manage your appointment."}
+              </p>
               <div className="booking-confirmation__actions">
+                <Link
+                  className="btn btn-outline"
+                  to={`/booking/manage?shop=${encodeURIComponent(shopSlug)}`}
+                >
+                  Manage booking
+                </Link>
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -379,6 +396,12 @@ export default function Booking() {
                     </div>
                   )}
                   {!catalog && !catalogError && <p role="status">Loading services and barbers…</p>}
+                  {catalog && (!catalog.services.length || !catalog.barbers.length) && (
+                    <p role="status">
+                      Online booking is temporarily unavailable because no active services or
+                      barbers are listed. Please contact the shop.
+                    </p>
+                  )}
                   {error && (
                     <div
                       role="alert"
@@ -430,6 +453,28 @@ export default function Booking() {
                         {step === 1 && (
                           <fieldset className="booking-choices">
                             <legend className="booking-sr-only">Select a barber</legend>
+                            <label
+                              className={
+                                "booking-choice booking-choice--barber" +
+                                (formData.barber_id === "any" ? " is-selected" : "")
+                              }
+                            >
+                              <input
+                                type="radio"
+                                name="barber_id"
+                                value="any"
+                                checked={formData.barber_id === "any"}
+                                onChange={(event) => change(event.target.name, event.target.value)}
+                                required
+                              />
+                              <span className="booking-choice__content">
+                                <span className="booking-choice__title">Any available barber</span>
+                                <span className="booking-choice__meta">
+                                  Show all available times. Your barber is assigned when you
+                                  confirm.
+                                </span>
+                              </span>
+                            </label>
                             {catalog.barbers.map((barber) => {
                               const profile = barberProfiles.find(
                                 (item) => item.id === barber.id && item.name === barber.name,

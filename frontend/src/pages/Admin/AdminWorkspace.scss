@@ -40,6 +40,16 @@
   min-height: 100dvh;
   background: $cream;
 }
+.staff-payment {
+  margin: 20px 0;
+  padding-top: 20px;
+  border-top: 1px solid $border;
+  overflow-wrap: anywhere;
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
 .staff-sidebar {
   position: fixed;
   inset: 0 auto 0 0;

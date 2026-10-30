@@ -1,5 +1,7 @@
 # Phase 3 — Dashboard booking statistics
 
+Historical delivery snapshot. Receipt recording and current owner tools are described in `PHASE3-COMPLETION.md`.
+
 ## Delivered
 
 - Dashboard activity summaries for the last 7, 30 or 90 calendar days, including today. The API validates the period and returns exact inclusive dates.

@@ -1,5 +1,7 @@
 # Phase 3 — Contact inbox
 
+Historical delivery snapshot. See `PHASE3-COMPLETION.md` for current Phase 3 status.
+
 This is one Phase 3 delivery, not completion of the phase.
 
 ## Delivered

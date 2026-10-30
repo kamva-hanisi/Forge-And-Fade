@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\BookingEmails;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class Booking extends Model
@@ -36,8 +38,21 @@ class Booking extends Model
 
     protected $appends = ['starts_at', 'ends_at'];
 
+    public function activePayment(): HasOne
+    {
+        return $this->hasOne(BookingPayment::class)->whereNull('voided_at');
+    }
+
     protected static function booted(): void
     {
+        static::created(function (Booking $booking) {
+            BookingEmails::record($booking, 'confirmation');
+        });
+        static::updated(function (Booking $booking) {
+            if ($booking->wasChanged(['status', 'booking_date', 'booking_time', 'barber_id'])) {
+                BookingEmails::record($booking, $booking->status === 'cancelled' ? 'cancelled' : 'changed');
+            }
+        });
         static::creating(function (Booking $booking) {
             $booking->reference = 'FF-'.Str::upper(Str::random(16));
             $booking->shop_id ??= request()->attributes->get('shop')?->id ?? 1;

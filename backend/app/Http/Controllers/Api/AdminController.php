@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\User;
 use App\Services\BookingSchedule;
 use App\Services\ShopAccess;
+use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -71,14 +72,26 @@ class AdminController extends Controller
     {
         $this->authorizeAdmin($request);
         $input = $request->validate([
+            'view' => ['nullable', Rule::in(['all', 'today', 'upcoming', 'past'])],
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])],
-            'barber_id' => ['nullable', 'integer', Rule::in(array_keys(config('booking.barbers')))],
+            'barber_id' => ['nullable', 'integer', Rule::in(array_keys(ShopCatalog::barbers(all: true)))],
             'status' => ['nullable', Rule::in(['confirmed', 'cancelled'])],
             'search' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
         ]);
         $query = ShopAccess::bookings($request);
+        if (in_array('reports.read', ShopAccess::permissions($request->attributes->get('shop_role')), true)) {
+            $query->with('activePayment');
+        }
+        $clock = now($request->attributes->get('shop')->timezone);
+        if (($input['view'] ?? '') === 'today') {
+            $query->whereDate('booking_date', $clock->toDateString());
+        } elseif (in_array($input['view'] ?? '', ['upcoming', 'past'], true)) {
+            $operator = $input['view'] === 'past' ? '<' : '>';
+            $query->where('status', 'confirmed')->where(fn ($query) => $query->where('booking_date', $operator, $clock->toDateString())
+                ->orWhere(fn ($query) => $query->whereDate('booking_date', $clock->toDateString())->where('booking_time', $operator.($operator === '>' ? '=' : ''), $clock->format('H:i:s'))));
+        }
         foreach (['barber_id', 'status'] as $field) {
             if (! empty($input[$field])) {
                 $query->where($field, $input[$field]);
@@ -105,15 +118,17 @@ class AdminController extends Controller
     {
         $shop = ShopAccess::authorize($request, 'bookings.write');
         abort_unless($booking->shop_id === $shop->id, 404);
-        $input = $request->validate([
-            'action' => ['required', Rule::in(['cancel', 'reschedule'])],
-            'barber_id' => ['required_if:action,reschedule', 'integer', Rule::in(array_keys(config('booking.barbers')))],
-            'booking_date' => 'required_if:action,reschedule|date_format:Y-m-d|after_or_equal:today',
-            'booking_time' => 'required_if:action,reschedule|date_format:H:i',
-            'revision' => 'required|integer|min:0',
-        ]);
 
-        return DB::transaction(function () use ($booking, $input, $schedule, $request, $shop) {
+        return DB::transaction(function () use ($booking, $schedule, $request, $shop) {
+            ShopCatalog::lock($request);
+            $input = $request->validate([
+                'action' => ['required', Rule::in(['cancel', 'reschedule'])],
+                'barber_id' => ['required_if:action,reschedule', 'integer', Rule::in(array_keys(ShopCatalog::barbers()))],
+                'booking_date' => 'required_if:action,reschedule|date_format:Y-m-d|after_or_equal:today',
+                'booking_time' => 'required_if:action,reschedule|date_format:H:i',
+                'revision' => 'required|integer|min:0',
+            ]);
+
             $days = [[$booking->barber_id, $booking->booking_date->toDateString()]];
             if ($input['action'] === 'reschedule') {
                 $days[] = [(int) $input['barber_id'], $input['booking_date']];
@@ -142,7 +157,7 @@ class AdminController extends Controller
                 }
                 $current->update([
                     'barber_id' => $input['barber_id'],
-                    'barber_name' => config('booking.barbers')[$input['barber_id']],
+                    'barber_name' => ShopCatalog::barbers()[$input['barber_id']]['name'],
                     'booking_date' => $input['booking_date'],
                     'booking_time' => $input['booking_time'],
                 ]);

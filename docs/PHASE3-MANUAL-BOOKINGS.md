@@ -1,5 +1,7 @@
 # Phase 3 — Staff-created appointments
 
+Historical delivery snapshot. See `PHASE3-COMPLETION.md` for completed functionality and release limits.
+
 ## Delivered
 
 - Owners/managers can choose **Add appointment** from Appointments. The private form at `/#/admin/appointments/new` loads services, prices, durations, barbers and available times from authenticated shop-scoped endpoints.

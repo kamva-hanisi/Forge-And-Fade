@@ -32,25 +32,25 @@ In progress. Shop registration, scoped memberships, role enforcement and passwor
 
 ## Phase 3 — Owner and staff dashboards
 
-In progress. The admin overview, filters, rescheduling, cancellation and manual bookings respect shop memberships. The owner/manager contact inbox and basic booking activity/booked-value statistics are delivered; editable catalog/schedules, fuller staff management and actual collected-revenue reporting remain pending. See `PHASE3-INBOX.md`, `PHASE3-STATISTICS.md` and `PHASE3-MANUAL-BOOKINGS.md`.
+Implementation and local verification complete for the listed basic owner/staff functionality. Revenue uses staff-recorded external receipts, not bank-verified payments or a payment gateway. Owner acceptance and release checks remain later work. See `PHASE3-COMPLETION.md` for scope and limits.
 
-- [ ] Create barbershop owner dashboard
-- [ ] Show today's, upcoming and past bookings
-- [ ] Add booking search, filters and status updates
+- [x] Create barbershop owner dashboard
+- [x] Show today's, upcoming and past bookings (past starts do not imply completed services)
+- [x] Add booking search, filters and status updates
 - [x] Allow rescheduling, cancellation and manual bookings (owner/manager access with shared booking protections)
-- [ ] Add staff management and barber schedules
-- [ ] Allow owners to edit services, prices and durations
+- [x] Add staff management and barber schedules
+- [x] Allow owners to edit services, prices and durations
 - [x] Create contact message inbox (shop-scoped owner/manager access, search, status filters and updates)
-- [ ] Show basic booking and revenue statistics (booking activity and saved booked value delivered; collected revenue awaits payment records)
+- [x] Show basic booking and revenue statistics (booked value and separately recorded external receipts; no payment processing)
 
 ## Phase 4 — Customer booking experience
 
 - [x] Load shop services and barbers from the API (current single shop)
 - [ ] Add each barbershop's own public booking page
 - [x] Show real-time available time slots (API snapshots; final save rechecks availability)
-- [ ] Allow customers to choose a barber or any available barber
-- [ ] Add customer booking lookup and cancellation
-- [ ] Send booking confirmations and reminders
+- [x] Allow customers to choose a barber or any available barber (server-side assignment and capacity recheck)
+- [x] Add customer booking lookup and cancellation (private reference + booking email, shop-scoped, before start time)
+- [ ] Send booking confirmations and reminders (outbox, scheduler and retry tests implemented; real SMTP/scheduler setup and acceptance pending — see PHASE4-BOOKING-EMAILS.md)
 - [x] Add clear success, failure and empty states
 - [x] Improve mobile forms and accessibility (browser viewport/keyboard checks, not a full accessibility audit)
 

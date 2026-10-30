@@ -41,11 +41,13 @@ class BookingSchedule
         return false;
     }
 
-    public function allowed(string $date, string $time, int $duration): bool
+    public function allowed(string $date, string $time, int $duration, ?int $barber = null): bool
     {
         $shop = request()->attributes->get('shop');
         $start = Carbon::parse("{$date} {$time}", $shop?->timezone ?? config('app.timezone'));
         $settings = $shop?->settings ?? [];
+        $barber ??= request()->integer('barber_id');
+        $staff = $settings['staff_schedules'][$barber] ?? null;
         $hours = ($settings['hours'] ?? config('booking.hours'))[$start->dayOfWeekIso] ?? null;
         $minute = $this->minutes($time);
         if (! $hours || in_array($date, $settings['closed_dates'] ?? config('booking.closed_dates', []), true) || $start->lte(Carbon::now()) || $minute % config('booking.interval') !== 0
@@ -57,13 +59,25 @@ class BookingSchedule
                 return false;
             }
         }
+        if ($staff !== null) {
+            $staffHours = $staff['hours'][$start->dayOfWeekIso] ?? null;
+            if (! $staffHours || in_array($date, $staff['closed_dates'] ?? [], true)
+                || $minute < $this->minutes($staffHours[0]) || $minute + $duration > $this->minutes($staffHours[1])) {
+                return false;
+            }
+            foreach ($staff['breaks'] ?? [] as [$breakStart, $breakEnd]) {
+                if ($minute < $this->minutes($breakEnd) && $minute + $duration > $this->minutes($breakStart)) {
+                    return false;
+                }
+            }
+        }
 
         return true;
     }
 
-    public function validateTime(string $date, string $time, int $duration): void
+    public function validateTime(string $date, string $time, int $duration, ?int $barber = null): void
     {
-        if (! $this->allowed($date, $time, $duration)) {
+        if (! $this->allowed($date, $time, $duration, $barber)) {
             throw ValidationException::withMessages(['booking_time' => 'Choose a future available time within opening hours, outside breaks, with enough time for the full service.']);
         }
     }

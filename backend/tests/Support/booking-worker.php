@@ -22,15 +22,20 @@ $headers = ['HTTP_ACCEPT' => 'application/json'];
 if ($staffToken) {
     $headers['HTTP_AUTHORIZATION'] = 'Bearer '.$staffToken;
 }
-$request = Request::create($staffToken ? '/api/admin/bookings' : '/api/bookings', 'POST', [
+$payload = [
     'service_id' => 2,
-    'barber_id' => 1,
+    'barber_id' => getenv('BOOKING_ANY_BARBER') === '1' ? 'any' : 1,
     'booking_date' => '2099-11-03',
     'booking_time' => $argv[1],
     'customer_name' => 'Concurrency test',
     'email' => 'concurrency@example.com',
     'phone' => '0712345678',
-], [], [], $headers);
+];
+$editing = getenv('BOOKING_SCHEDULE_EDIT') === '1';
+if ($editing) {
+    $payload = ['version' => 0, 'hours' => array_fill(1, 7, ['10:00', '11:00']), 'breaks' => [], 'closed_dates' => []];
+}
+$request = Request::create($editing ? '/api/admin/management/barbers/1/schedule' : ($staffToken ? '/api/admin/bookings' : '/api/bookings'), $editing ? 'PUT' : 'POST', $payload, [], [], $headers);
 $response = $kernel->handle($request);
 echo 'STATUS:'.$response->getStatusCode()."\n";
 $kernel->terminate($request, $response);
