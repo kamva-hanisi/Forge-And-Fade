@@ -18,7 +18,7 @@ Forge & Fade is a modern full-stack barbershop website built to make discovering
 
 | Application | Technologies |
 | --- | --- |
-| Frontend | React 19, Vite, React Router, Axios, Sass, Lucide React |
+| Frontend | HTML, CSS, JavaScript, React 19, Vite, React Router, Axios, Sass, Lucide React |
 | Backend | PHP 8.2+, Laravel 12, Laravel Sanctum |
 | Database | MySQL, PostgreSQL, or SQLite through Laravel Eloquent |
 
