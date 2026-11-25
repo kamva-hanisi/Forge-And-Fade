@@ -78,11 +78,17 @@ class AdminController extends Controller
             'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])],
             'barber_id' => ['nullable', 'integer', Rule::in(array_keys(ShopCatalog::barbers(all: true)))],
             'status' => ['nullable', Rule::in(['confirmed', 'cancelled'])],
+            'email_status' => ['nullable', Rule::in(['failed'])],
             'search' => 'nullable|string|max:100',
             'page' => 'nullable|integer|min:1',
         ]);
         $query = ShopAccess::bookings($request);
         $permissions = ShopAccess::permissions($request->attributes->get('shop_role'));
+        $canManageBookings = in_array('bookings.write', $permissions, true);
+        if (($input['email_status'] ?? null) === 'failed') {
+            abort_unless($canManageBookings, 403);
+            BookingEmails::filterFailed($query);
+        }
         if (in_array('reports.read', $permissions, true)) {
             $query->with('activePayment');
         }
@@ -112,7 +118,7 @@ class AdminController extends Controller
         }
 
         $page = $query->orderBy('booking_date')->orderBy('booking_time')->orderBy('id')->paginate(20);
-        if ($page->count() && in_array('bookings.write', $permissions, true)) {
+        if ($page->count() && $canManageBookings) {
             $deliveries = BookingEmails::latestForBookings($page->getCollection(), $shop->status === 'active');
             $page->through(fn (Booking $booking) => $booking->setAttribute('email_deliveries', $deliveries->get($booking->id, [])));
         }

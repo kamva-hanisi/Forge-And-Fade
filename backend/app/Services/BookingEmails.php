@@ -6,6 +6,8 @@ use App\Mail\BookingEmail;
 use App\Models\Booking;
 use App\Models\Shop;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,20 @@ class BookingEmails
     public const DASHBOARD_KINDS = ['confirmation', 'cancelled', 'reminder'];
 
     public const MAX_ATTEMPTS = 3;
+
+    public static function filterFailed(Builder $bookings): void
+    {
+        $bookings->whereExists(function (QueryBuilder $email) {
+            $email->selectRaw('1')->from('booking_emails as notice')
+                ->whereColumn('notice.booking_id', 'bookings.id')
+                ->whereIn('notice.kind', self::DASHBOARD_KINDS)
+                ->where('notice.status', 'failed')
+                ->whereNotExists(fn (QueryBuilder $newer) => $newer->selectRaw('1')->from('booking_emails as newer')
+                    ->whereColumn('newer.booking_id', 'notice.booking_id')
+                    ->whereColumn('newer.kind', 'notice.kind')
+                    ->whereColumn('newer.revision', '>', 'notice.revision'));
+        });
+    }
 
     public static function latestForBookings(Collection $bookings, bool $shopActive): Collection
     {

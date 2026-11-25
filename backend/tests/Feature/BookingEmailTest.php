@@ -212,12 +212,14 @@ class BookingEmailTest extends TestCase
         $this->getJson('/api/admin/bookings')->assertOk()
             ->assertJsonPath('data.0.email_deliveries.0.can_retry', true)
             ->assertJsonPath('data.0.email_deliveries.0.automatic_retry_scheduled', false);
+        $this->getJson('/api/admin/bookings?email_status=failed')->assertOk()->assertJsonPath('total', 1);
         config(['booking_mail.enabled' => false]);
         $this->postJson($path, ['revision' => 0])->assertServiceUnavailable();
         $this->assertDatabaseHas('booking_emails', ['id' => $notice->id, 'status' => 'failed', 'attempts' => 3]);
         config(['booking_mail.enabled' => true]);
         $this->postJson($path, ['revision' => 0])->assertAccepted();
         $this->assertDatabaseHas('booking_emails', ['id' => $notice->id, 'status' => 'pending', 'attempts' => 0]);
+        $this->getJson('/api/admin/bookings?email_status=failed')->assertOk()->assertJsonPath('total', 0);
         $this->assertDatabaseHas('audit_events', ['action' => 'booking_email.retry_requested', 'user_id' => $manager->id, 'subject_id' => $notice->id]);
         $this->postJson($path, ['revision' => 0])->assertConflict();
         Mail::assertNothingSent();
@@ -237,6 +239,47 @@ class BookingEmailTest extends TestCase
             ->assertJsonPath('data.0.email_deliveries.0.can_retry', false)
             ->assertJsonPath('data.0.email_deliveries.0.automatic_retry_scheduled', false);
         $this->postJson($path, ['revision' => 0])->assertConflict();
+    }
+
+    public function test_failed_email_filter_searches_before_pagination_and_uses_the_latest_record(): void
+    {
+        $failed = Booking::findOrFail($this->book()['id']);
+        DB::table('booking_emails')->where('booking_id', $failed->id)->update(['status' => 'failed', 'attempts' => 3]);
+
+        for ($day = 1; $day <= 21; $day++) {
+            $failed->replicate()->forceFill(['booking_date' => sprintf('2026-10-%02d', $day)])->save();
+        }
+
+        $rescheduled = $failed->replicate()->forceFill(['booking_date' => '2026-11-04']);
+        $rescheduled->save();
+        BookingEmails::record($rescheduled, 'reminder');
+        DB::table('booking_emails')->where('booking_id', $rescheduled->id)->where('kind', 'reminder')
+            ->update(['status' => 'failed', 'attempts' => 3]);
+        $rescheduled->forceFill(['revision' => 1, 'booking_time' => '11:00'])->save();
+        BookingEmails::record($rescheduled, 'reminder');
+        DB::table('booking_emails')->where('booking_id', $rescheduled->id)->where('kind', 'reminder')->where('revision', 1)
+            ->update(['status' => 'sent', 'attempts' => 1, 'sent_at' => now()]);
+
+        $otherShop = Shop::create(['name' => 'Other Shop', 'slug' => 'failed-email-other', 'timezone' => 'Africa/Johannesburg']);
+        $otherBooking = $failed->replicate()->forceFill(['shop_id' => $otherShop->id]);
+        $otherBooking->save();
+        DB::table('booking_emails')->where('booking_id', $otherBooking->id)->update(['status' => 'failed', 'attempts' => 3]);
+
+        $manager = User::factory()->create();
+        $this->grantShopRole($manager, 'manager');
+        Sanctum::actingAs($manager, ['admin']);
+        $this->getJson('/api/admin/bookings')->assertOk()->assertJsonCount(20, 'data')
+            ->assertJsonMissing(['reference' => $failed->reference]);
+        $this->getJson('/api/admin/bookings?email_status=failed')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('data.0.reference', $failed->reference)
+            ->assertJsonPath('data.0.email_deliveries.0.can_retry', true);
+        $this->getJson('/api/admin/bookings?email_status=failed&status=cancelled')->assertOk()
+            ->assertJsonPath('total', 0);
+
+        $barber = User::factory()->create();
+        $this->grantShopRole($barber, 'barber', 1, $failed->barber_id);
+        Sanctum::actingAs($barber, ['admin']);
+        $this->getJson('/api/admin/bookings?email_status=failed')->assertForbidden();
     }
 
     public function test_short_notice_bookings_do_not_get_an_immediate_reminder(): void

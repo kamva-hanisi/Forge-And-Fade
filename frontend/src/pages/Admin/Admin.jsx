@@ -12,6 +12,7 @@ const emptyFilters = {
   date_to: "",
   barber_id: "",
   status: "",
+  email_status: "",
   search: "",
   view: "all",
 };
@@ -262,6 +263,11 @@ export default function Admin() {
           client.get("/admin/bookings", { params: query, signal: controller.signal }),
           client.get("/admin/bookings/catalog", { signal: controller.signal }),
         ]);
+        if (controller.signal.aborted) return;
+        if (bookings.data.current_page > bookings.data.last_page) {
+          setQuery({ ...query, page: bookings.data.last_page });
+          return;
+        }
         setResult(bookings.data);
         setBarbers(catalog.data.barbers);
       } catch (err) {
@@ -290,7 +296,12 @@ export default function Admin() {
           params: query,
           signal: controller.signal,
         });
-        if (!controller.signal.aborted) setResult(data);
+        if (controller.signal.aborted) return;
+        if (data.current_page > data.last_page) {
+          setQuery({ ...query, page: data.last_page });
+          return;
+        }
+        setResult(data);
       } catch (err) {
         if (controller.signal.aborted) return;
         if (err.response?.status === 401) {
@@ -350,6 +361,10 @@ export default function Admin() {
         { revision: delivery.revision },
       );
       setMessage(data.message);
+      if (query.email_status === "failed") {
+        setRefresh((previous) => previous + 1);
+        return;
+      }
       setResult(
         (current) =>
           current && {
@@ -471,6 +486,19 @@ export default function Admin() {
               <option value="cancelled">Cancelled</option>
             </select>
           </label>
+          {canManageBookings && (
+            <label>
+              Email delivery
+              <select
+                name="email_status"
+                value={filters.email_status}
+                onChange={(event) => setFilters({ ...filters, email_status: event.target.value })}
+              >
+                <option value="">All email statuses</option>
+                <option value="failed">Failed emails</option>
+              </select>
+            </label>
+          )}
           <label>
             Customer
             <input
@@ -515,7 +543,13 @@ export default function Admin() {
             Refresh
           </button>
         </div>
-        {result?.data.length === 0 && <p role="status">No appointments match your filters.</p>}
+        {result?.data.length === 0 && (
+          <p role="status">
+            {query.email_status === "failed"
+              ? "No appointments with failed emails match your filters."
+              : "No appointments match your filters."}
+          </p>
+        )}
         <div className="admin-list">
           {result?.data.map((booking) => (
             <Appointment
