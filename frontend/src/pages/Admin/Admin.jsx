@@ -22,7 +22,80 @@ const errorText = (error) =>
   error.response?.data?.message ||
   "Unable to reach the server. Please try again.";
 
-function Appointment({ booking, barbers, busy, onUpdate, client, onPaymentSaved }) {
+const emailKinds = [
+  ["confirmation", "Confirmation"],
+  ["cancelled", "Cancellation"],
+  ["reminder", "24-hour reminder"],
+];
+const emailStatuses = {
+  sent: "Sent",
+  failed: "Failed",
+  pending: "Pending",
+  skipped: "Skipped",
+};
+const appointmentPollInterval = 10000;
+
+function EmailDelivery({ booking, busy, onRetry }) {
+  if (!booking.email_deliveries) return null;
+
+  const sentTime = new Intl.DateTimeFormat("en-ZA", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: booking.timezone || "Africa/Johannesburg",
+  });
+
+  return (
+    <div className="admin-email-delivery">
+      <h3>Email delivery</h3>
+      <dl>
+        {emailKinds.map(([kind, label]) => {
+          const delivery = booking.email_deliveries.find((email) => email.kind === kind);
+          const previousReminder =
+            kind === "reminder" && delivery && delivery.revision < booking.revision;
+
+          return (
+            <div key={kind}>
+              <dt>{label}</dt>
+              <dd>
+                <span
+                  className={`admin-badge admin-email-delivery__status--${delivery?.status || "missing"}`}
+                  aria-live="polite"
+                >
+                  {emailStatuses[delivery?.status] || "No record"}
+                </span>
+                {delivery?.sent_at && (
+                  <time dateTime={delivery.sent_at}>
+                    {sentTime.format(new Date(delivery.sent_at))}
+                  </time>
+                )}
+                {delivery?.status === "failed" && (
+                  <small>
+                    {delivery.attempts} {delivery.attempts === 1 ? "attempt" : "attempts"}
+                  </small>
+                )}
+                {delivery?.automatic_retry_scheduled && <small>Automatic retry scheduled</small>}
+                {previousReminder && <small>Previous appointment version</small>}
+                {delivery?.can_retry && (
+                  <button
+                    type="button"
+                    className="admin-email-delivery__retry"
+                    aria-label={`Retry ${label.toLowerCase()} email`}
+                    disabled={busy}
+                    onClick={() => onRetry(booking, delivery)}
+                  >
+                    Retry
+                  </button>
+                )}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+    </div>
+  );
+}
+
+function Appointment({ booking, barbers, busy, onUpdate, onRetryEmail, client, onPaymentSaved }) {
   const [editing, setEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [schedule, setSchedule] = useState({
@@ -48,6 +121,7 @@ function Appointment({ booking, barbers, busy, onUpdate, client, onPaymentSaved 
         <a href={`tel:${booking.phone}`}>{booking.phone}</a>
       </p>
       {booking.notes && <p className="admin-notes">{booking.notes}</p>}
+      <EmailDelivery booking={booking} busy={busy} onRetry={onRetryEmail} />
       <PaymentPanel booking={booking} client={client} onSaved={onPaymentSaved} />
       {booking.status === "confirmed" && (
         <div className="admin-actions">
@@ -156,6 +230,7 @@ function Appointment({ booking, barbers, busy, onUpdate, client, onPaymentSaved 
 export default function Admin() {
   const { session, setSession } = useAdmin();
   const token = session?.token || "";
+  const canManageBookings = session?.user.permissions?.includes("bookings.write");
   const [filters, setFilters] = useState(emptyFilters);
   const [query, setQuery] = useState({ ...emptyFilters, page: 1 });
   const [result, setResult] = useState(null);
@@ -202,6 +277,43 @@ export default function Admin() {
     return () => controller.abort();
   }, [token, client, query, refresh, setSession]);
 
+  useEffect(() => {
+    if (!canManageBookings || busy || loading) return;
+    const controller = new AbortController();
+    let checking = false;
+
+    const poll = async () => {
+      if (document.hidden || checking || controller.signal.aborted) return;
+      checking = true;
+      try {
+        const { data } = await client.get("/admin/bookings", {
+          params: query,
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) setResult(data);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (err.response?.status === 401) {
+          setSession(null);
+        } else if (err.response?.status === 403) {
+          controller.abort();
+          setResult(null);
+          setError(errorText(err));
+        }
+      } finally {
+        checking = false;
+      }
+    };
+
+    const timer = window.setInterval(poll, appointmentPollInterval);
+    document.addEventListener("visibilitychange", poll);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", poll);
+    };
+  }, [canManageBookings, client, query, refresh, busy, loading, setSession]);
+
   const update = async (booking, changes) => {
     setBusy(true);
     setError("");
@@ -228,6 +340,50 @@ export default function Admin() {
     }
   };
 
+  const retryEmail = async (booking, delivery) => {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data } = await client.post(
+        `/admin/bookings/${booking.id}/emails/${delivery.kind}/retry`,
+        { revision: delivery.revision },
+      );
+      setMessage(data.message);
+      setResult(
+        (current) =>
+          current && {
+            ...current,
+            data: current.data.map((appointment) =>
+              appointment.id === booking.id &&
+              appointment.revision === booking.revision &&
+              appointment.email_deliveries
+                ? {
+                    ...appointment,
+                    email_deliveries: appointment.email_deliveries.map((email) =>
+                      email.kind === delivery.kind && email.revision === delivery.revision
+                        ? {
+                            ...email,
+                            status: "pending",
+                            attempts: 0,
+                            can_retry: false,
+                            automatic_retry_scheduled: false,
+                          }
+                        : email,
+                    ),
+                  }
+                : appointment,
+            ),
+          },
+      );
+    } catch (err) {
+      if (err.response?.status === 401) setSession(null);
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!token) return <Navigate to="/admin/signin" replace />;
 
   return (
@@ -238,7 +394,7 @@ export default function Admin() {
           <h1 className="section-title">Appointments</h1>
           <p>Manage bookings, reschedule visits, and keep your day running smoothly.</p>
         </div>
-        {session.user.permissions?.includes("bookings.write") && (
+        {canManageBookings && (
           <Link className="btn btn-primary" to="/admin/appointments/new">
             Add appointment
           </Link>
@@ -368,6 +524,7 @@ export default function Admin() {
               barbers={barbers}
               busy={busy || loading}
               onUpdate={update}
+              onRetryEmail={retryEmail}
               client={client}
               onPaymentSaved={() => {
                 setMessage(

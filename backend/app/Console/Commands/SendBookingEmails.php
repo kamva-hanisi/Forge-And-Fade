@@ -21,7 +21,7 @@ class SendBookingEmails extends Command
         }
         $emails->reminders();
         $counts = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
-        $ids = DB::table('booking_emails')->whereIn('status', ['pending', 'failed'])->where('attempts', '<', 3)
+        $ids = DB::table('booking_emails')->whereIn('status', ['pending', 'failed'])->where('attempts', '<', BookingEmails::MAX_ATTEMPTS)
             ->where(function ($query) {
                 $query->where('kind', 'cancelled')->orWhereExists(function ($query) {
                     $query->selectRaw('1')->from('bookings')->join('shops', 'shops.id', '=', 'bookings.shop_id')
@@ -33,7 +33,7 @@ class SendBookingEmails extends Command
             $counts[$emails->deliver($id)]++;
         }
         $this->info("Sent: {$counts['sent']}; failed: {$counts['failed']}; skipped: {$counts['skipped']}.");
-        $exhausted = DB::table('booking_emails')->where('status', 'failed')->where('attempts', '>=', 3)->count();
+        $exhausted = DB::table('booking_emails')->where('status', 'failed')->where('attempts', '>=', BookingEmails::MAX_ATTEMPTS)->count();
         if ($exhausted) {
             $this->warn("{$exhausted} messages exhausted their retries. Investigate delivery before manually retrying.");
         }

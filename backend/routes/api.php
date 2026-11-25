@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ShopManagementController;
 use App\Http\Controllers\Api\ShopRegistrationController;
 use App\Http\Middleware\ProtectPublicForm;
 use App\Http\Middleware\ResolveShop;
+use App\Services\BookingEmails;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/registration', [AdminRegistrationController::class, 'status']);
@@ -47,6 +48,8 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::get('/invitations', [AdminSettingsController::class, 'invitations']);
     Route::post('/invitations', [AdminSettingsController::class, 'invite'])->middleware('throttle:5,1');
     Route::get('/bookings', [AdminController::class, 'index']);
+    Route::post('/bookings/{booking}/emails/{kind}/retry', [AdminController::class, 'retryEmail'])
+        ->whereNumber('booking')->whereIn('kind', BookingEmails::DASHBOARD_KINDS)->middleware('throttle:10,1');
     Route::post('/bookings/{booking}/payments', [BookingPaymentController::class, 'store'])->whereNumber('booking')->middleware('throttle:10,1');
     Route::post('/payments/{payment}/void', [BookingPaymentController::class, 'void'])->whereNumber('payment')->middleware('throttle:10,1');
     Route::post('/bookings', [AdminController::class, 'store'])->middleware('throttle:10,1');

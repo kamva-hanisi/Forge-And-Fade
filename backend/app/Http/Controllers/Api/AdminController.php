@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\User;
+use App\Services\BookingEmails;
 use App\Services\BookingSchedule;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
@@ -81,10 +82,12 @@ class AdminController extends Controller
             'page' => 'nullable|integer|min:1',
         ]);
         $query = ShopAccess::bookings($request);
-        if (in_array('reports.read', ShopAccess::permissions($request->attributes->get('shop_role')), true)) {
+        $permissions = ShopAccess::permissions($request->attributes->get('shop_role'));
+        if (in_array('reports.read', $permissions, true)) {
             $query->with('activePayment');
         }
-        $clock = now($request->attributes->get('shop')->timezone);
+        $shop = $request->attributes->get('shop');
+        $clock = now($shop->timezone);
         if (($input['view'] ?? '') === 'today') {
             $query->whereDate('booking_date', $clock->toDateString());
         } elseif (in_array($input['view'] ?? '', ['upcoming', 'past'], true)) {
@@ -108,8 +111,28 @@ class AdminController extends Controller
             });
         }
 
-        return response()->json($query->orderBy('booking_date')->orderBy('booking_time')->orderBy('id')->paginate(20))
-            ->header('Cache-Control', 'no-store');
+        $page = $query->orderBy('booking_date')->orderBy('booking_time')->orderBy('id')->paginate(20);
+        if ($page->count() && in_array('bookings.write', $permissions, true)) {
+            $deliveries = BookingEmails::latestForBookings($page->getCollection(), $shop->status === 'active');
+            $page->through(fn (Booking $booking) => $booking->setAttribute('email_deliveries', $deliveries->get($booking->id, [])));
+        }
+
+        return response()->json($page)->header('Cache-Control', 'no-store');
+    }
+
+    public function retryEmail(Request $request, int $booking, string $kind)
+    {
+        $shop = ShopAccess::authorize($request, 'bookings.write');
+        $input = $request->validate(['revision' => 'required|integer|min:0']);
+
+        return DB::transaction(function () use ($request, $shop, $booking, $kind, $input) {
+            $current = Booking::where('shop_id', $shop->id)->whereKey($booking)->lockForUpdate()->firstOrFail();
+            $noticeId = BookingEmails::retryFailed($current, $kind, (int) $input['revision']);
+            ShopAccess::audit($request, 'booking_email.retry_requested', $noticeId);
+
+            return response()->json(['message' => 'Email queued for retry. Its status will update automatically.'], 202)
+                ->header('Cache-Control', 'no-store');
+        });
     }
 
     public function update(Request $request, Booking $booking, BookingSchedule $schedule)

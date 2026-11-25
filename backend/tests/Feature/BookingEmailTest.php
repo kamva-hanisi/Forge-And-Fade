@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Mail\BookingEmail;
 use App\Models\Booking;
 use App\Models\Shop;
+use App\Models\User;
 use App\Services\BookingEmails;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class BookingEmailTest extends TestCase
@@ -152,6 +154,89 @@ class BookingEmailTest extends TestCase
             Carbon::setTestNow(now()->addMinutes(5));
         }
         $this->assertDatabaseHas('booking_emails', ['status' => 'failed', 'attempts' => 3]);
+    }
+
+    public function test_appointment_list_shows_only_the_latest_delivery_per_kind_to_shop_managers(): void
+    {
+        $booking = Booking::findOrFail($this->book()['id']);
+        $this->artisan('bookings:notify')->assertSuccessful();
+        BookingEmails::record($booking, 'reminder');
+        DB::table('booking_emails')->where('kind', 'reminder')->update(['status' => 'skipped']);
+        $booking->forceFill(['revision' => 1, 'booking_time' => '11:00'])->save();
+        BookingEmails::record($booking, 'reminder');
+        DB::table('booking_emails')->where('kind', 'reminder')->where('revision', 1)
+            ->update(['status' => 'failed', 'attempts' => 2]);
+
+        $credentials = ['reference' => $booking->reference, 'email' => $booking->email];
+        $this->postJson('/api/bookings/cancel', $credentials + ['revision' => 1])
+            ->assertOk()->assertJsonMissingPath('booking.email_deliveries');
+        $this->postJson('/api/bookings/lookup', $credentials)->assertOk()
+            ->assertJsonMissingPath('booking.email_deliveries');
+
+        $otherShop = Shop::create(['name' => 'Other Shop', 'slug' => 'other-notifications', 'timezone' => 'Africa/Johannesburg']);
+        $otherBooking = $booking->replicate()->forceFill(['shop_id' => $otherShop->id]);
+        $otherBooking->save();
+        $manager = User::factory()->create();
+        $this->grantShopRole($manager, 'manager');
+        Sanctum::actingAs($manager, ['admin']);
+
+        $this->getJson('/api/admin/bookings')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reference', $booking->reference)
+            ->assertJsonPath('data.0.email_deliveries', [
+                ['kind' => 'cancelled', 'status' => 'pending', 'attempts' => 0, 'revision' => 2, 'sent_at' => null, 'can_retry' => false, 'automatic_retry_scheduled' => false],
+                ['kind' => 'confirmation', 'status' => 'sent', 'attempts' => 1, 'revision' => 0, 'sent_at' => now()->toIso8601String(), 'can_retry' => false, 'automatic_retry_scheduled' => false],
+                ['kind' => 'reminder', 'status' => 'failed', 'attempts' => 2, 'revision' => 1, 'sent_at' => null, 'can_retry' => false, 'automatic_retry_scheduled' => false],
+            ]);
+        $this->postJson("/api/admin/bookings/{$booking->id}/emails/reminder/retry", ['revision' => 1])->assertConflict();
+        $this->postJson("/api/admin/bookings/{$otherBooking->id}/emails/confirmation/retry", ['revision' => 1])->assertNotFound();
+
+        $barber = User::factory()->create();
+        $this->grantShopRole($barber, 'barber', 1, $booking->barber_id);
+        Sanctum::actingAs($barber, ['admin']);
+        $this->getJson('/api/admin/bookings')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonMissingPath('data.0.email_deliveries');
+        $this->postJson("/api/admin/bookings/{$booking->id}/emails/reminder/retry", ['revision' => 1])->assertForbidden();
+    }
+
+    public function test_manager_can_requeue_an_exhausted_email_once_and_scheduler_sends_it(): void
+    {
+        $booking = Booking::findOrFail($this->book()['id']);
+        $notice = DB::table('booking_emails')->where('booking_id', $booking->id)->first();
+        DB::table('booking_emails')->where('id', $notice->id)
+            ->update(['status' => 'failed', 'attempts' => 3, 'available_at' => now()->addMinutes(5)]);
+        $manager = User::factory()->create();
+        $this->grantShopRole($manager, 'manager');
+        Sanctum::actingAs($manager, ['admin']);
+        $path = "/api/admin/bookings/{$booking->id}/emails/confirmation/retry";
+
+        $this->getJson('/api/admin/bookings')->assertOk()
+            ->assertJsonPath('data.0.email_deliveries.0.can_retry', true)
+            ->assertJsonPath('data.0.email_deliveries.0.automatic_retry_scheduled', false);
+        config(['booking_mail.enabled' => false]);
+        $this->postJson($path, ['revision' => 0])->assertServiceUnavailable();
+        $this->assertDatabaseHas('booking_emails', ['id' => $notice->id, 'status' => 'failed', 'attempts' => 3]);
+        config(['booking_mail.enabled' => true]);
+        $this->postJson($path, ['revision' => 0])->assertAccepted();
+        $this->assertDatabaseHas('booking_emails', ['id' => $notice->id, 'status' => 'pending', 'attempts' => 0]);
+        $this->assertDatabaseHas('audit_events', ['action' => 'booking_email.retry_requested', 'user_id' => $manager->id, 'subject_id' => $notice->id]);
+        $this->postJson($path, ['revision' => 0])->assertConflict();
+        Mail::assertNothingSent();
+
+        $fake = Mail::getFacadeRoot();
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('Transport failed'));
+        $this->artisan('bookings:notify')->assertFailed();
+        $this->getJson('/api/admin/bookings')->assertOk()
+            ->assertJsonPath('data.0.email_deliveries.0.status', 'failed')
+            ->assertJsonPath('data.0.email_deliveries.0.automatic_retry_scheduled', true);
+        Mail::swap($fake);
+        Carbon::setTestNow(now()->addMinutes(5));
+        $this->artisan('bookings:notify')->assertSuccessful();
+        Mail::assertSentCount(1);
+        $this->getJson('/api/admin/bookings')->assertOk()
+            ->assertJsonPath('data.0.email_deliveries.0.status', 'sent')
+            ->assertJsonPath('data.0.email_deliveries.0.can_retry', false)
+            ->assertJsonPath('data.0.email_deliveries.0.automatic_retry_scheduled', false);
+        $this->postJson($path, ['revision' => 0])->assertConflict();
     }
 
     public function test_short_notice_bookings_do_not_get_an_immediate_reminder(): void

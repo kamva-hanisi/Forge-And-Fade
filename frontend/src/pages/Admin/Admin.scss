@@ -130,6 +130,77 @@
   background: $error-bg;
   color: $error-text;
 }
+.admin-email-delivery {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid $border;
+
+  h3 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    gap: 10px;
+    margin: 0;
+  }
+
+  dl > div {
+    padding: 10px;
+    border: 1px solid $border;
+    background: $cream;
+  }
+
+  dt {
+    font-size: $font-small;
+    font-weight: 600;
+  }
+
+  dd {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+    margin: 6px 0 0;
+  }
+
+  time,
+  small {
+    color: $text-light;
+    font-size: $font-small;
+  }
+
+  &__status--failed {
+    background: $error-bg;
+    color: $error-text;
+  }
+
+  &__status--pending,
+  &__status--skipped,
+  &__status--missing {
+    background: $white;
+    color: $text-light;
+  }
+
+  &__status--pending {
+    color: $gold-text;
+  }
+
+  &__retry {
+    min-height: 44px;
+    padding: 4px 12px;
+    border: 1px solid $border;
+    background: $white;
+    color: $text;
+    font-size: $font-small;
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+      border-color: $gold;
+    }
+  }
+}
 .admin-error,
 .admin-success {
   padding: 16px;

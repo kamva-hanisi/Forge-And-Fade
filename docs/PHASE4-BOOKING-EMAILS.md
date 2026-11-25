@@ -67,7 +67,9 @@ This is a database-outbox worker, not a Laravel queue job. A separate `queue:wor
 6. On XAMPP/Windows, configure Windows Task Scheduler to run `C:\xampp\php\php.exe` with arguments `artisan schedule:run`, starting in the deployed backend directory, every minute. On other hosts use the equivalent Laravel scheduler runner. Keep output private and monitor failed exits. The web server must be running for management links to work; Task Scheduler must be able to access MySQL and SMTP.
 7. Test reminder timing, cancellation before processing, rescheduling and transport failure recovery. Review pending work before enabling on an existing database: eligible existing future bookings may receive reminders.
 
-Do not enable the preview environment against real recipient addresses. There is no dashboard delivery monitor or provider bounce/webhook integration yet. Operator access to `booking_emails` is required to inspect pending, failed, skipped and sent states. Do not reset failed attempts blindly; verify provider acceptance first.
+Shop owners and managers can view the latest confirmation, cancellation and reminder records in **Admin → Appointments**. The visible appointments page checks for updates every 10 seconds and when you return to the tab. **Retry** requeues an eligible failed email for the next scheduler run and starts a new attempt count. A sent timestamp records SMTP acceptance. Provider bounces and inbox delivery are outside this view. A reminder from an earlier appointment revision is labelled in the dashboard.
+
+Do not enable the preview environment against real recipient addresses. Do not reset failed attempts blindly; verify provider acceptance first.
 
 ## Delivery guarantees and tradeoffs
 
