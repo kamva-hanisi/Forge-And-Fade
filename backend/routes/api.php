@@ -31,6 +31,7 @@ Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('au
 Route::get('/platform/overview', [PlatformController::class, 'index'])->middleware(['auth:sanctum', 'throttle:30,1']);
 Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
+    Route::get('/session', [AdminController::class, 'session']);
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);
     Route::put('/management/branding', [ShopManagementController::class, 'branding'])->middleware('throttle:30,1');

@@ -42,6 +42,14 @@ class AdminController extends Controller
         });
     }
 
+    public function session(Request $request)
+    {
+        $shop = ShopAccess::authorize($request, 'bookings.read');
+
+        return response()->json(['user' => ShopAccess::identity($request->user(), $shop->id)])
+            ->header('Cache-Control', 'no-store');
+    }
+
     private function authorizeAdmin(Request $request): void
     {
         ShopAccess::authorize($request, 'bookings.read');

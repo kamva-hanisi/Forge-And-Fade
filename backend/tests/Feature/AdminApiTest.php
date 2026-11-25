@@ -60,9 +60,15 @@ class AdminApiTest extends TestCase
         $token = $this->postJson('/api/admin/login', ['email' => $user->email, 'password' => 'Admin-Testing-Password-123'])
             ->assertOk()->assertJsonMissingPath('user.password')->json('token');
         $this->assertNotNull($user->tokens()->firstOrFail()->expires_at);
+        $this->withToken($token)->getJson('/api/admin/session')
+            ->assertOk()->assertJsonPath('user.email', $user->email)->assertJsonPath('user.shop.id', 1)
+            ->assertJsonPath('user.role', 'owner')->assertJsonMissingPath('token');
+        $this->withToken($token)->getJson('/api/admin/session', ['X-Shop-Id' => 999])->assertForbidden();
         $this->withToken($token)->getJson('/api/admin/bookings')->assertOk();
         $this->withToken($token)->postJson('/api/admin/logout')->assertOk();
         $this->assertDatabaseCount('personal_access_tokens', 0);
+        app('auth')->forgetGuards();
+        $this->withToken($token)->getJson('/api/admin/session')->assertUnauthorized();
     }
 
     public function test_anonymous_and_non_admin_users_cannot_access_bookings(): void
