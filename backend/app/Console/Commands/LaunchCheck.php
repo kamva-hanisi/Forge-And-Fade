@@ -37,6 +37,7 @@ class LaunchCheck extends Command
                 && filled($connection['password'] ?? null),
             'Shared rate-limit cache configured' => in_array(config('cache.default'), ['database', 'redis'], true),
             'South Africa business timezone' => config('app.timezone') === 'Africa/Johannesburg',
+            'Local Mailpit mode disabled' => ! config('booking_mail.local_mailpit'),
         ];
         foreach ($checks as $label => $passed) {
             $this->line(($passed ? 'PASS ' : 'FAIL ').$label);

@@ -15,7 +15,33 @@
 
 ## Current deployment status
 
-**Email sending remains disabled. Real SMTP delivery and the operating-system scheduler have not been configured or acceptance-tested.** No real customer emails were sent during this delivery. The roadmap notification item remains open until those checks pass.
+Production email delivery and the host scheduler still require verification. Use Mailpit to verify SMTP delivery without sending mail to customers.
+
+## Local Mailpit
+
+Start [Mailpit](https://mailpit.axllent.org/docs/install/) bound to loopback:
+
+```powershell
+mailpit --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025
+```
+
+Set these values in a local development environment or disposable preview database:
+
+```dotenv
+APP_ENV=local
+BOOKING_EMAIL_ENABLED=true
+BOOKING_EMAIL_LOCAL_MAILPIT=true
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025
+MAIL_URL=null
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS=booking@forge-fade.test
+```
+
+Set `FRONTEND_URL` to the local frontend so the management link opens the preview. Restart Laravel after changing its environment. Run `php artisan schedule:work` while developing, or run `php artisan bookings:notify` for a single pass. Open [the local inbox](http://127.0.0.1:8025/) to inspect messages. Mailpit mode requires the local environment and its loopback SMTP listener. Keep it disabled in production.
 
 This is a database-outbox worker, not a Laravel queue job. A separate `queue:work` process is not required for these booking emails.
 

@@ -3,9 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { services as descriptions } from "../data/services";
 
-export default function useShopServices() {
+export default function useShopServices(fixedShop) {
   const [params] = useSearchParams();
-  const shop = params.get("shop") || "forge-and-fade";
+  const shop = fixedShop || params.get("shop") || "forge-and-fade";
   const [state, setState] = useState({ shop: "", services: [], error: "" });
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
@@ -19,6 +19,7 @@ export default function useShopServices() {
       .then(({ data }) =>
         setState({
           shop,
+          profile: data.shop,
           error: "",
           services: data.services.map((item) => ({
             ...item,
@@ -44,6 +45,7 @@ export default function useShopServices() {
     error: state.shop === shop ? state.error : "",
     loading: state.shop !== shop,
     shop,
+    profile: state.shop === shop ? state.profile : null,
     retry: () => {
       setState({ shop: "", services: [], error: "" });
       setRefresh((value) => value + 1);

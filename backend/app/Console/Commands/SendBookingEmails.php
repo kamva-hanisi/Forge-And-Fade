@@ -15,7 +15,7 @@ class SendBookingEmails extends Command
     public function handle(BookingEmails $emails): int
     {
         if (! BookingEmails::ready()) {
-            $this->warn('Booking email is disabled or authenticated SMTP is not configured. No messages sent.');
+            $this->warn('Booking email is disabled or SMTP is not configured. No messages sent.');
 
             return self::FAILURE;
         }

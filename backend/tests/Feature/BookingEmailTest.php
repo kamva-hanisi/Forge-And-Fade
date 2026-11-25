@@ -50,6 +50,19 @@ class BookingEmailTest extends TestCase
         $this->assertDatabaseHas('booking_emails', ['booking_id' => $booking['id'], 'status' => 'sent', 'attempts' => 1]);
     }
 
+    public function test_unauthenticated_mailpit_is_only_available_on_the_local_loopback(): void
+    {
+        config(['booking_mail.local_mailpit' => true, 'mail.mailers.smtp.host' => '127.0.0.1',
+            'mail.mailers.smtp.port' => 1025, 'mail.mailers.smtp.scheme' => 'smtp', 'mail.mailers.smtp.url' => null,
+            'mail.mailers.smtp.username' => null, 'mail.mailers.smtp.password' => null]);
+
+        $this->assertFalse(BookingEmails::ready());
+        $this->app->instance('env', 'local');
+        $this->assertTrue(BookingEmails::ready());
+        config(['mail.mailers.smtp.host' => 'smtp.example.test']);
+        $this->assertFalse(BookingEmails::ready());
+    }
+
     public function test_disabled_or_log_mail_never_sends_or_claims_real_delivery(): void
     {
         config(['booking_mail.enabled' => false]);

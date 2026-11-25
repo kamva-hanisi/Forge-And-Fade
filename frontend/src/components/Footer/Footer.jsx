@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera, Clock3, Mail, MapPin, Phone, UsersRound } from "lucide-react";
+import { Clock3, Mail } from "lucide-react";
 
 import "./Footer.scss";
 import Brand from "../Brand/Brand";
@@ -17,28 +17,6 @@ const Footer = () => {
           <p>
             Professional cuts, clean fades and beard grooming in a comfortable modern barbershop.
           </p>
-
-          <div className="footer__socials">
-            <a
-              href="https://www.instagram.com/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Forge & Fade on Instagram"
-              title="Instagram"
-            >
-              <Camera aria-hidden="true" />
-            </a>
-
-            <a
-              href="https://www.facebook.com/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Forge & Fade on Facebook"
-              title="Facebook"
-            >
-              <UsersRound aria-hidden="true" />
-            </a>
-          </div>
         </div>
 
         {/* NAVIGATION */}
@@ -51,8 +29,6 @@ const Footer = () => {
 
           <Link to="/about">About</Link>
 
-          <Link to="/contact">Contact</Link>
-
           <Link to="/booking">Book Appointment</Link>
           <Link to="/booking/manage">Manage Booking</Link>
         </div>
@@ -61,46 +37,20 @@ const Footer = () => {
         <div className="footer__column">
           <h3>Contact</h3>
 
-          <a href="tel:+27651360694" className="footer__detail">
-            <Phone aria-hidden="true" />
-            +27 65 136 0694
-          </a>
-
-          <a href="mailto:kamva@forgeandfade.co.za" className="footer__detail">
+          <Link to="/contact" className="footer__detail">
             <Mail aria-hidden="true" />
-            kamva@forgeandfade.co.za
-          </a>
-
-          <div className="footer__detail">
-            <MapPin aria-hidden="true" />
-            <p>
-              Cape Town,
-              <br />
-              South Africa
-            </p>
-          </div>
+            Contact the shop
+          </Link>
         </div>
 
         {/* HOURS */}
         <div className="footer__column">
           <h3>Opening Hours</h3>
 
-          <div className="footer__detail footer__detail--hours">
+          <Link to="/booking" className="footer__detail">
             <Clock3 aria-hidden="true" />
-            <div>
-              <p>Monday – Saturday</p>
-              <p>08:00 – 18:00</p>
-              <p>Sunday: Closed</p>
-            </div>
-          </div>
-
-          {/* <Link
-            to="/booking"
-            className="footer__book"
-          >
-            <CalendarDays aria-hidden="true" />
-            Book Now
-          </Link> */}
+            View current shop hours
+          </Link>
         </div>
       </div>
 
@@ -110,8 +60,7 @@ const Footer = () => {
 
           <div>
             <Link to="/terms">Terms & Conditions</Link>
-
-            <Link to="/contact">Contact</Link>
+            <Link to="/privacy">Privacy</Link>
           </div>
         </div>
       </div>

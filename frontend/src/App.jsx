@@ -6,10 +6,10 @@ import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import Home from "./pages/Home/Home";
 import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
-import Booking from "./pages/Booking/Booking";
-import ManageBooking from "./pages/Booking/ManageBooking";
 import PublicShop from "./pages/Booking/PublicShop";
+import { resolveShopSlug, shopPath } from "./utils/shopLinks";
 import Terms from "./pages/Terms/Terms";
+import Privacy from "./pages/Terms/Privacy";
 import Contact from "./pages/Contact/Contact";
 import Footer from "./components/Footer/Footer";
 import Admin from "./pages/Admin/Admin";
@@ -22,6 +22,14 @@ import AdminInbox from "./pages/Admin/AdminInbox";
 import AdminBooking from "./pages/Admin/AdminBooking";
 import ShopManagement from "./pages/Admin/ShopManagement";
 import PlatformOverview from "./pages/Admin/PlatformOverview";
+
+function BookingRedirect({ manage = false }) {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const pathname = shopPath(resolveShopSlug(undefined, params.get("shop")), manage);
+  params.delete("shop");
+  return <Navigate to={{ pathname, search: params.toString() }} replace />;
+}
 
 function App() {
   const { pathname } = useLocation();
@@ -45,8 +53,8 @@ function App() {
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/booking" element={<Booking />} />
-        <Route path="/booking/manage" element={<ManageBooking />} />
+        <Route path="/booking" element={<BookingRedirect />} />
+        <Route path="/booking/manage" element={<BookingRedirect manage />} />
         <Route path="/shops/:slug/book" element={<PublicShop />} />
         <Route path="/shops/:slug/manage" element={<PublicShop manage />} />
         <Route
@@ -59,6 +67,7 @@ function App() {
           }
         />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminSettings key="dashboard" />} />
           <Route path="appointments" element={<Admin />} />

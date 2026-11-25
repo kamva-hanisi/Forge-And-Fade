@@ -1,16 +1,11 @@
 import { Link } from "react-router-dom";
 
-import barbersTeam from "../../assets/barbers-team.jpg";
 import "./AboutSection.scss";
 
 const AboutSection = () => {
   return (
     <section className="about-section">
       <div className="container about-section__container">
-        <div className="about-section__image">
-          <img src={barbersTeam} alt="Barber team inside a classic barbershop" loading="lazy" />
-        </div>
-
         <div className="about-section__content">
           <span className="section-label">About Forge & Fade</span>
 

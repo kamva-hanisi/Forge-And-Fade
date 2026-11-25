@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
 import axios from "axios";
-import { barbers as barberProfiles } from "../../data/barbers";
 import { openGoogleCalendar, downloadAppleCalendar } from "../../utils/calendar";
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError as errorText } from "../../utils/formError";
@@ -233,11 +232,13 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
     <main className="booking-page">
       <section className="booking-page__header">
         <div className="container">
-          <span className="section-label">{catalog?.shop?.name || "Your next great cut"}</span>
-          <h1 className="section-title">Reserve Your Chair.</h1>
-          <p className="section-text">
-            A few simple steps. Your service, your barber, your time. No account needed.
-          </p>
+          {!dedicated && (
+            <span className="section-label">{catalog?.shop?.name || "Your next great cut"}</span>
+          )}
+          <h1 className="section-title">
+            {dedicated ? "Book your appointment" : "Reserve Your Chair."}
+          </h1>
+          <p className="section-text">Choose a service, barber and time. Book as a guest.</p>
         </div>
       </section>
       <section className="booking-page__content">
@@ -482,38 +483,29 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                                 </span>
                               </span>
                             </label>
-                            {catalog.barbers.map((barber) => {
-                              const profile = barberProfiles.find(
-                                (item) => item.id === barber.id && item.name === barber.name,
-                              );
-                              return (
-                                <label
-                                  className={
-                                    "booking-choice booking-choice--barber" +
-                                    (Number(formData.barber_id) === barber.id ? " is-selected" : "")
+                            {catalog.barbers.map((barber) => (
+                              <label
+                                className={
+                                  "booking-choice booking-choice--barber" +
+                                  (Number(formData.barber_id) === barber.id ? " is-selected" : "")
+                                }
+                                key={barber.id}
+                              >
+                                <input
+                                  type="radio"
+                                  name="barber_id"
+                                  value={barber.id}
+                                  checked={Number(formData.barber_id) === barber.id}
+                                  onChange={(event) =>
+                                    change(event.target.name, event.target.value)
                                   }
-                                  key={barber.id}
-                                >
-                                  <input
-                                    type="radio"
-                                    name="barber_id"
-                                    value={barber.id}
-                                    checked={Number(formData.barber_id) === barber.id}
-                                    onChange={(event) =>
-                                      change(event.target.name, event.target.value)
-                                    }
-                                    required
-                                  />
-                                  {profile && <img src={profile.image} alt="" />}
-                                  <span className="booking-choice__content">
-                                    <span className="booking-choice__title">{barber.name}</span>
-                                    <span className="booking-choice__meta">
-                                      {profile?.specialty || "Professional barber"}
-                                    </span>
-                                  </span>
-                                </label>
-                              );
-                            })}
+                                  required
+                                />
+                                <span className="booking-choice__content">
+                                  <span className="booking-choice__title">{barber.name}</span>
+                                </span>
+                              </label>
+                            ))}
                           </fieldset>
                         )}
                         {step === 2 && (
@@ -666,8 +658,18 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                               />
                             </div>
                             <p className="booking-hint">
-                              <ShieldCheck size={16} aria-hidden="true" /> Your details are used to
-                              manage your appointment. No account or online payment required.
+                              <ShieldCheck size={16} aria-hidden="true" />
+                              <span>
+                                Read the{" "}
+                                <Link to="/terms" target="_blank" rel="noopener">
+                                  booking terms
+                                </Link>{" "}
+                                and{" "}
+                                <Link to="/privacy" target="_blank" rel="noopener">
+                                  privacy notice
+                                </Link>
+                                .
+                              </span>
                             </p>
                           </>
                         )}
@@ -700,7 +702,6 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                   )}
                 </div>
                 <aside className="booking-info" aria-label="Your appointment summary">
-                  <span className="section-label">Made for you</span>
                   <h2>Your appointment</h2>
                   <dl>
                     <div>

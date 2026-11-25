@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { BadgeCheck, MessageSquareText, Scissors } from "lucide-react";
 
-import craftImage from "../../assets/about-craft.jpg";
+import barberTools from "../../assets/barber-tools.jpg";
 
 import "./About.scss";
 
@@ -54,7 +54,7 @@ const About = () => {
       <section className="about-page__story">
         <div className="container about-page__story-grid">
           <div className="about-page__story-image">
-            <img src={craftImage} alt="Traditional barber tools arranged on a workbench" />
+            <img src={barberTools} alt="" loading="lazy" />
 
             <span>Tools change. Standards do not.</span>
           </div>

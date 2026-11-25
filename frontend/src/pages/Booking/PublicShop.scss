@@ -1,44 +1,177 @@
+@use "../../styles/variables" as *;
+
 .public-shop {
-  &__header {
+  --shop-ink: #211a16;
+  --shop-brass: #e0b98d;
+  background: #f7f4ef;
+
+  &__top {
+    background: var(--shop-ink);
+    color: #fff8ef;
+    border-bottom: 1px solid #ffffff21;
+  }
+
+  &__header,
+  &__nav,
+  &__policy-links {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1rem;
-    padding-block: 1.5rem;
+    gap: 0.5rem 1rem;
   }
+
+  &__header {
+    justify-content: space-between;
+    padding-block: 1rem;
+  }
+
   &__brand {
-    font-family: Georgia, serif;
-    font-size: 1.7rem;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: $font-heading;
+    font-size: clamp(1.28rem, 3vw, 1.6rem);
     overflow-wrap: anywhere;
     min-width: 0;
   }
-  nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+
+  &__mark {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    border: 1px solid #e0b98d70;
+    border-radius: 50%;
+    color: var(--shop-brass);
   }
-  nav [aria-current="page"] {
-    text-decoration: underline;
-    text-underline-offset: 0.4rem;
+
+  &__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.72rem;
+    border-radius: 0.35rem;
+    font-size: 0.9rem;
+
+    &:hover,
+    &[aria-current="page"] {
+      color: var(--shop-brass);
+      background: #ffffff10;
+    }
   }
+
   .booking-page {
     padding-top: 0;
   }
-  .manage-booking {
-    padding-top: 3rem;
+
+  .booking-page__header {
+    padding: clamp(2.75rem, 8vw, 5.75rem) 0;
+    background:
+      linear-gradient(90deg, var(--shop-ink) 20%, #211a16ee 38%, #211a1630 100%),
+      url("../../assets/barber-tools.jpg") center right / cover,
+      var(--shop-ink);
+    color: #fff8ef;
+    border: 0;
+
+    .section-title {
+      max-width: 17ch;
+      font-size: clamp(2.55rem, 6.5vw, 5.25rem);
+      line-height: 1.03;
+      overflow-wrap: anywhere;
+    }
+
+    .section-text {
+      max-width: 38ch;
+      color: #e8dbce;
+    }
   }
+
+  .booking-page__content {
+    background: #fcfaf7;
+  }
+
+  .booking-info,
+  .booking-choice,
+  .booking-confirmation {
+    border-radius: 0.75rem;
+  }
+
+  .manage-booking {
+    padding-block: clamp(2.25rem, 6vw, 5rem);
+  }
+
   &__footer {
-    padding-block: 2rem;
-    border-top: 1px solid #ddd;
+    padding-block: 2.5rem;
+    border-top: 1px solid #e4dacf;
     overflow-wrap: anywhere;
   }
-  &__footer p {
-    margin-block: 0.75rem;
+
+  &__footer-grid {
+    display: grid;
+    grid-template-columns: 1fr minmax(15rem, 24rem);
+    gap: 2rem;
   }
+
+  &__detail {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    margin-block: 0.65rem;
+
+    svg {
+      flex: none;
+      align-self: center;
+    }
+  }
+
+  &__hours {
+    margin: 0;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #e4dacf;
+    }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__policy-links {
+    margin-top: 0.9rem;
+  }
+
+  &__policy-links a,
+  &__footer a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
   &__loading {
     padding-block: 4rem;
-    min-height: 70vh;
+    min-height: 55vh;
+  }
+
+  @media (max-width: 600px) {
+    .booking-page__header {
+      background:
+        linear-gradient(90deg, #211a16f5 15%, #211a16a8 100%),
+        url("../../assets/barber-tools.jpg") 70% center / cover,
+        var(--shop-ink);
+    }
+
+    &__footer-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__nav a {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
   }
 }

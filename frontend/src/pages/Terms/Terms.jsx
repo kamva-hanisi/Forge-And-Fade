@@ -18,14 +18,14 @@ const Terms = () => {
       <section className="terms-page__content">
         <div className="container">
           <div className="terms-page__document">
-            <p className="terms-page__updated">Last updated: September 2026</p>
+            <p className="terms-page__updated">Last updated November 2026</p>
 
             <section>
               <h2>1. About Forge & Fade</h2>
 
               <p>
-                Forge & Fade is a fictional barbershop website created to provide information about
-                grooming services and allow customers to make appointments online.
+                Forge &amp; Fade provides online booking for participating barbershops. The shop
+                named on your booking page is responsible for providing your service.
               </p>
             </section>
 
@@ -57,8 +57,9 @@ const Terms = () => {
               <h2>4. Cancellations and Changes</h2>
 
               <p>
-                Customers who need to cancel or change an appointment should contact Forge & Fade as
-                early as possible using the contact information available on the website.
+                You can cancel before the appointment starts from Manage booking using the reference
+                and email address from your booking. To change an appointment or ask about a late
+                cancellation, contact the shop directly.
               </p>
             </section>
 
@@ -76,8 +77,8 @@ const Terms = () => {
               <h2>6. Prices</h2>
 
               <p>
-                Service prices displayed on the website are shown in South African Rand. Forge &
-                Fade may update its services or prices when necessary.
+                Service prices are shown in South African Rand. Each shop manages the services and
+                prices displayed on its booking page. Pay the shop directly.
               </p>
             </section>
 

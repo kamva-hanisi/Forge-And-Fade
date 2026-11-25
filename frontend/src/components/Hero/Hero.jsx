@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import heroBarber from "../../assets/hero-barber.jpg";
+import barberTools from "../../assets/barber-tools.jpg";
 
 import "./Hero.scss";
 
@@ -34,7 +34,7 @@ const Hero = () => {
         </div>
 
         <div className="hero__image">
-          <img src={heroBarber} alt="Barber styling a client's hair" />
+          <img src={barberTools} alt="" />
         </div>
       </div>
     </section>

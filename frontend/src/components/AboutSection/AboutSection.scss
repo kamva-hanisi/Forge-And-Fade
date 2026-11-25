@@ -3,34 +3,8 @@
 .about-section {
   background: $cream;
 
-  &__container {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    align-items: center;
-
-    gap: 70px;
-  }
-
-  &__image {
-    min-height: 480px;
-    height: 100%;
-
-    overflow: hidden;
-
-    img {
-      width: 100%;
-      height: 100%;
-
-      display: block;
-
-      object-fit: cover;
-      object-position: center;
-    }
-  }
-
   &__content {
+    max-width: 46rem;
     p {
       margin-top: 18px;
 
@@ -79,28 +53,10 @@
   }
 }
 
-@media (max-width: 850px) {
-  .about-section {
-    &__container {
-      grid-template-columns: 1fr;
-
-      gap: 40px;
-    }
-
-    &__image {
-      min-height: 400px;
-    }
-  }
-}
-
 @media (max-width: 550px) {
   .about-section {
     &__points {
       grid-template-columns: 1fr;
-    }
-
-    &__image {
-      min-height: 320px;
     }
   }
 }

@@ -88,9 +88,7 @@ class AdminController extends Controller
         if (($input['view'] ?? '') === 'today') {
             $query->whereDate('booking_date', $clock->toDateString());
         } elseif (in_array($input['view'] ?? '', ['upcoming', 'past'], true)) {
-            $operator = $input['view'] === 'past' ? '<' : '>';
-            $query->where('status', 'confirmed')->where(fn ($query) => $query->where('booking_date', $operator, $clock->toDateString())
-                ->orWhere(fn ($query) => $query->whereDate('booking_date', $clock->toDateString())->where('booking_time', $operator.($operator === '>' ? '=' : ''), $clock->format('H:i:s'))));
+            $query->byStart($clock, $input['view'] === 'past');
         }
         foreach (['barber_id', 'status'] as $field) {
             if (! empty($input[$field])) {

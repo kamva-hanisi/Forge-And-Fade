@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
+import useShopServices from "../../hooks/useShopServices";
 
 import "./Contact.scss";
 
 const Contact = () => {
+  const { profile } = useShopServices("forge-and-fade");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -78,38 +80,21 @@ const Contact = () => {
           <div className="contact-info">
             <h2>Visit Forge & Fade</h2>
 
-            <div className="contact-info__item">
-              <span>Phone</span>
-
-              <a href="tel:+27 65 136 0694">+27 65 136 0694</a>
-            </div>
-
-            <div className="contact-info__item">
-              <span>Email</span>
-
-              <a href="mailto:kamva@forgeandfade.co.za">kamva@forgeandfade.co.za</a>
-            </div>
-
-            <div className="contact-info__item">
-              <span>Location</span>
-
-              <p>Cape Town, South Africa</p>
-            </div>
-
-            <div className="contact-info__item">
-              <span>Opening Hours</span>
-
-              <p>
-                Monday – Saturday
-                <br />
-                08:00 – 18:00
-              </p>
-
-              <p>Sunday: Closed</p>
-            </div>
+            {profile?.phone && (
+              <div className="contact-info__item">
+                <span>Phone</span>
+                <a href={`tel:${profile.phone.replace(/[^+\d]/g, "")}`}>{profile.phone}</a>
+              </div>
+            )}
+            {profile?.address && (
+              <div className="contact-info__item">
+                <span>Location</span>
+                <p>{profile.address}</p>
+              </div>
+            )}
 
             <Link to="/booking" className="btn btn-primary">
-              Book Appointment
+              View hours and book
             </Link>
           </div>
 

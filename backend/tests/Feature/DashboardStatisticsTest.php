@@ -92,6 +92,8 @@ class DashboardStatisticsTest extends TestCase
         $this->getJson('/api/admin/dashboard')->assertOk()->assertJsonPath('today', '2026-11-03')
             ->assertJsonPath('timezone', 'Africa/Johannesburg')->assertJsonPath('today_count', 3)
             ->assertJsonPath('past_count', 1)->assertJsonPath('upcoming_count', 2)->assertJsonCount(2, 'next');
+        $this->getJson('/api/admin/bookings?view=past')->assertOk()->assertJsonPath('total', 1);
+        $this->getJson('/api/admin/bookings?view=upcoming')->assertOk()->assertJsonPath('total', 2);
     }
 
     public function test_empty_statistics_and_period_validation(): void

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Services\BookingEmails;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -41,6 +43,18 @@ class Booking extends Model
     public function activePayment(): HasOne
     {
         return $this->hasOne(BookingPayment::class)->whereNull('voided_at');
+    }
+
+    public function scopeByStart(Builder $query, CarbonInterface $clock, bool $past): Builder
+    {
+        $date = $clock->toDateString();
+        $time = $clock->format('H:i:s');
+
+        return $query->where('status', 'confirmed')->where(function (Builder $starts) use ($date, $time, $past) {
+            $starts->where('booking_date', $past ? '<' : '>', $date)
+                ->orWhere(fn (Builder $sameDay) => $sameDay->whereDate('booking_date', $date)
+                    ->whereTime('booking_time', $past ? '<' : '>=', $time));
+        });
     }
 
     protected static function booted(): void
