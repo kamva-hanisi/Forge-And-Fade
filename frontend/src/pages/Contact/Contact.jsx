@@ -4,11 +4,20 @@ import axios from "axios";
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
 import useShopServices from "../../hooks/useShopServices";
+import ShopHours from "../../components/ShopHours/ShopHours";
+import { directionsLink, shopPath } from "../../utils/shopLinks";
 
 import "./Contact.scss";
 
 const Contact = () => {
-  const { profile } = useShopServices("forge-and-fade");
+  const {
+    profile,
+    hours,
+    shop,
+    loading: shopLoading,
+    error: shopError,
+    retry,
+  } = useShopServices("forge-and-fade");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -65,12 +74,10 @@ const Contact = () => {
     <main className="contact-page">
       <section className="contact-page__header">
         <div className="container">
-          <span className="section-label">Contact Us</span>
-
-          <h1 className="section-title">Get In Touch.</h1>
+          <h1 className="section-title">Visit or contact the shop</h1>
 
           <p className="section-text">
-            Have a question about our services or your appointment? Get in touch with Forge & Fade.
+            Find the shop’s hours and directions, manage an appointment, or send us a question.
           </p>
         </div>
       </section>
@@ -78,7 +85,16 @@ const Contact = () => {
       <section className="contact-page__content">
         <div className="container contact-page__grid">
           <div className="contact-info">
-            <h2>Visit Forge & Fade</h2>
+            <h2>{profile?.name || "Shop details"}</h2>
+            {shopLoading && <p role="status">Loading shop details…</p>}
+            {shopError && (
+              <div role="alert">
+                <p>Shop details are temporarily unavailable.</p>
+                <button type="button" className="btn btn-outline" onClick={retry}>
+                  Reload shop details
+                </button>
+              </div>
+            )}
 
             {profile?.phone && (
               <div className="contact-info__item">
@@ -90,15 +106,28 @@ const Contact = () => {
               <div className="contact-info__item">
                 <span>Location</span>
                 <p>{profile.address}</p>
+                <a href={directionsLink(profile.address)}>Get directions</a>
               </div>
             )}
-
-            <Link to="/booking" className="btn btn-primary">
-              View hours and book
-            </Link>
+            {hours && (
+              <div className="contact-info__item">
+                <h3>Weekly opening hours</h3>
+                <ShopHours hours={hours} className="contact-info__hours" />
+                <p>Available appointment times account for breaks and closure dates.</p>
+              </div>
+            )}
+            <div className="contact-info__actions">
+              <Link to={shopPath(shop)} className="btn btn-primary">
+                Book an appointment
+              </Link>
+              <Link to={shopPath(shop, true)} className="btn btn-outline">
+                Manage a booking
+              </Link>
+            </div>
           </div>
 
           <form className="contact-form" onSubmit={handleSubmit}>
+            <h2>Send a message</h2>
             <FormGuard
               value={formData.website}
               onChange={(value) => setFormData((previous) => ({ ...previous, website: value }))}
@@ -184,7 +213,34 @@ const Contact = () => {
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? "Sending..." : "Send Message"}
             </button>
+            <p className="contact-form__privacy">
+              Read our <Link to="/privacy">privacy notice</Link> before sharing personal details.
+            </p>
           </form>
+        </div>
+      </section>
+      <section className="contact-page__faq">
+        <div className="container">
+          <h2 className="section-title">Booking questions</h2>
+          <details>
+            <summary>How do I cancel or change my appointment?</summary>
+            <p>
+              To cancel before your appointment, use{" "}
+              <Link to={shopPath(shop, true)}>Manage a booking</Link> with your reference and email.
+              Contact the shop to change the time.
+            </p>
+          </details>
+          <details>
+            <summary>Do I need to pay online?</summary>
+            <p>You can book online as a guest and pay at the shop when you visit.</p>
+          </details>
+          <details>
+            <summary>What if I’m unsure which service to book?</summary>
+            <p>
+              <Link to="/services">Compare services and prices</Link>. If you’re between options,
+              tell us the look you want and what you’d like to keep or change.
+            </p>
+          </details>
         </div>
       </section>
     </main>

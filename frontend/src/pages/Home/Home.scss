@@ -1,0 +1,62 @@
+@use "../../styles/variables" as *;
+
+.home-availability {
+  border-block: 1px solid $border;
+  background: #f1eae1;
+  padding-block: clamp(2rem, 7vw, 4rem);
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    align-items: start;
+    gap: clamp(1.5rem, 5vw, 4rem);
+  }
+
+  p {
+    margin-top: 0.5rem;
+    max-width: 42ch;
+  }
+
+  label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 600;
+  }
+
+  select {
+    width: 100%;
+    padding-inline: 0.75rem;
+    border: 1px solid $border;
+    background: $white;
+  }
+}
+
+.home-visit {
+  background: $white;
+  padding-block: clamp(2rem, 7vw, 4rem);
+
+  &__inner,
+  &__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  &__inner {
+    justify-content: space-between;
+  }
+
+  p {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-availability__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

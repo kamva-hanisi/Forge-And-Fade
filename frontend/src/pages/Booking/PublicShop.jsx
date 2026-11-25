@@ -4,18 +4,13 @@ import axios from "axios";
 import { Clock3, MapPin, Phone, Scissors } from "lucide-react";
 import Booking from "./Booking";
 import ManageBooking from "./ManageBooking";
-import { shopPath } from "../../utils/shopLinks";
+import { directionsLink, shopPath } from "../../utils/shopLinks";
+import ShopHours from "../../components/ShopHours/ShopHours";
 import { shopMediaUrl } from "../../utils/shopMedia";
 import "./PublicShop.scss";
 
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 function ShopDetails({ catalog }) {
   const { address, phone } = catalog.shop;
-  const hours = weekdays.map((day, index) => {
-    const window = catalog.hours?.[index + 1];
-    return [day, Array.isArray(window) ? window.join("–") : "Closed"];
-  });
 
   return (
     <footer className="public-shop__footer">
@@ -23,10 +18,7 @@ function ShopDetails({ catalog }) {
         <div>
           <h2>{catalog.shop.name}</h2>
           {address && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-              className="public-shop__detail"
-            >
+            <a href={directionsLink(address)} className="public-shop__detail">
               <MapPin size={18} aria-hidden="true" />
               {address}
             </a>
@@ -47,14 +39,7 @@ function ShopDetails({ catalog }) {
             <h3 className="public-shop__detail">
               <Clock3 size={18} aria-hidden="true" /> Opening hours
             </h3>
-            <dl className="public-shop__hours">
-              {hours.map(([day, time]) => (
-                <div key={day}>
-                  <dt>{day}</dt>
-                  <dd>{time}</dd>
-                </div>
-              ))}
-            </dl>
+            <ShopHours hours={catalog.hours} className="public-shop__hours" />
           </div>
         )}
       </div>

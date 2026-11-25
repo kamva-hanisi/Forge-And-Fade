@@ -1,6 +1,62 @@
 @use "../../styles/variables" as *;
 
 .about-page {
+  &__team {
+    background: $cream;
+    border-block: 1px solid $border;
+  }
+
+  &__team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+    align-items: start;
+  }
+
+  &__barber {
+    background: $white;
+    border: 1px solid $border;
+
+    img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+    }
+
+    div {
+      padding: 1.25rem;
+    }
+
+    h3 {
+      font-size: 1.55rem;
+    }
+
+    p {
+      margin-top: 0.4rem;
+    }
+
+    .btn {
+      margin-top: 0.9rem;
+    }
+  }
+
+  &__first-visit {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    border-top: 1px solid $border;
+
+    ul {
+      display: grid;
+      gap: 0.65rem;
+      margin-block: 1rem 1.5rem;
+      padding-left: 1.3rem;
+      list-style: disc;
+    }
+  }
+}
+
+.about-page {
   padding-top: $header-height;
 
   &__header {
@@ -72,23 +128,6 @@
 
       object-fit: cover;
     }
-
-    > span {
-      position: absolute;
-
-      right: 0;
-      bottom: 0;
-
-      padding: 15px 20px;
-
-      background: $black;
-      color: $white;
-
-      font-size: 0.72rem;
-      font-weight: 700;
-
-      text-transform: uppercase;
-    }
   }
 
   &__story-content {
@@ -124,46 +163,6 @@
       color: $gold;
 
       border-color: $gold;
-    }
-  }
-
-  &__manifesto {
-    background: $black;
-    color: $white;
-  }
-
-  &__manifesto-content {
-    max-width: 900px;
-
-    text-align: center;
-
-    > span {
-      display: block;
-
-      height: 48px;
-
-      color: $gold;
-
-      font-family: $font-heading;
-      font-size: 5rem;
-      line-height: 1;
-    }
-
-    blockquote {
-      font-family: $font-heading;
-      font-size: clamp(2rem, 5vw, 3.6rem);
-      line-height: 1.2;
-    }
-
-    p {
-      margin-top: 24px;
-
-      color: #b7b7b7;
-
-      font-size: 0.72rem;
-      font-weight: 700;
-
-      text-transform: uppercase;
     }
   }
 
@@ -225,14 +224,8 @@
     display: flex;
 
     align-items: center;
-    justify-content: space-between;
 
     color: $gold;
-
-    span {
-      font-family: $font-heading;
-      font-size: 1.15rem;
-    }
 
     svg {
       width: 26px;

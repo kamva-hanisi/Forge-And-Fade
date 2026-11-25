@@ -24,6 +24,42 @@
 
     align-items: start;
   }
+
+  &__faq {
+    border-top: 1px solid $border;
+    background: $cream;
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+    details {
+      max-width: 48rem;
+      border-top: 1px solid $border;
+    }
+
+    summary {
+      min-height: 44px;
+      padding-block: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    summary:focus-visible {
+      outline: 2px solid $gold;
+      outline-offset: 2px;
+    }
+
+    details p {
+      margin-bottom: 1rem;
+    }
+  }
+
+  &__faq a,
+  .contact-form__privacy a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 }
 
 .contact-info {
@@ -47,7 +83,7 @@
 
       margin-bottom: 6px;
 
-      color: $gold;
+      color: $gold-text;
 
       font-size: 0.75rem;
 
@@ -65,13 +101,42 @@
       line-height: 1.7;
     }
 
-    a:hover {
-      color: $gold;
+    a {
+      color: $gold-text;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
     }
   }
 
   .btn {
     margin-top: 20px;
+  }
+
+  &__hours {
+    margin-block: 0.5rem;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 1px solid $border;
+      padding-block: 0.25rem;
+    }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    .btn {
+      margin-top: 0;
+    }
   }
 }
 

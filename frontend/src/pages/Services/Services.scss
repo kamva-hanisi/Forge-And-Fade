@@ -21,6 +21,44 @@
     border-top: 1px solid $border;
   }
 
+  &__filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(10rem, 15rem) max-content;
+    align-items: end;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding: 1rem;
+    background: $cream;
+    border: 1px solid $border;
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-width: 0;
+      padding-inline: 0.75rem;
+      background: $white;
+      border: 1px solid $border;
+    }
+
+    p {
+      padding-bottom: 0.65rem;
+    }
+  }
+
+  &__empty {
+    padding-block: 1.25rem;
+
+    .btn {
+      margin-top: 0.75rem;
+    }
+  }
+
   &__cta {
     background: $cream;
 
@@ -87,7 +125,7 @@
 
       margin-top: 10px;
 
-      color: $gold;
+      color: $gold-text;
 
       font-size: 0.75rem;
       font-weight: 700;
@@ -108,7 +146,7 @@
     gap: 14px;
 
     strong {
-      color: $gold;
+      color: $gold-text;
 
       font-family: $font-heading;
 
@@ -118,6 +156,10 @@
 }
 
 @media (max-width: 650px) {
+  .services-page__filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .full-service-card {
     align-items: flex-start;
 

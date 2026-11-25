@@ -6,9 +6,10 @@ import { openGoogleCalendar, downloadAppleCalendar } from "../../utils/calendar"
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError as errorText } from "../../utils/formError";
 import "./Booking.scss";
-import { resolveShopSlug, shopPath } from "../../utils/shopLinks";
+import { initialBookingSelection, resolveShopSlug, shopPath } from "../../utils/shopLinks";
 import BarberPortfolio from "./BarberPortfolio";
 import NextAvailable from "./NextAvailable";
+import { formatRand as money } from "../../utils/money";
 
 const steps = ["Service", "Barber", "Date & time", "Your details"];
 const emptyDetails = {
@@ -29,23 +30,14 @@ const displayDate = (date) =>
         year: "numeric",
       }).format(new Date(date.slice(0, 10) + "T12:00:00"))
     : "Choose a date";
-const money = (price) =>
-  new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price);
-
 export default function Booking({ shop, dedicated = false, initialCatalog = null }) {
   const [searchParams] = useSearchParams();
   const shopSlug = resolveShopSlug(shop, searchParams.get("shop"));
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     ...emptyDetails,
-    service_id: searchParams.get("service") || "",
-    barber_id: searchParams.get("barber") || "",
-  });
-  const [step, setStep] = useState(0);
+    ...initialBookingSelection(searchParams, initialCatalog),
+  }));
+  const [step, setStep] = useState(() => (formData.booking_time ? 3 : 0));
   const [catalog, setCatalog] = useState(initialCatalog);
   const [catalogError, setCatalogError] = useState("");
   const [catalogRefresh, setCatalogRefresh] = useState(0);

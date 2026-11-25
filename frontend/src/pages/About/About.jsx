@@ -2,26 +2,26 @@ import { Link } from "react-router-dom";
 import { BadgeCheck, MessageSquareText, Scissors } from "lucide-react";
 
 import barberTools from "../../assets/barber-tools.jpg";
+import useShopServices from "../../hooks/useShopServices";
+import { bookingLink } from "../../utils/shopLinks";
+import { shopMediaUrl } from "../../utils/shopMedia";
 
 import "./About.scss";
 
 const visitSteps = [
   {
-    number: "01",
     icon: MessageSquareText,
     title: "We listen first",
     description:
       "Your routine, hair type and preferred finish shape the plan before the clippers start.",
   },
   {
-    number: "02",
     icon: Scissors,
     title: "We work with intent",
     description:
       "Every line, blend and transition is considered from the first pass to the final detail.",
   },
   {
-    number: "03",
     icon: BadgeCheck,
     title: "We finish for real life",
     description:
@@ -30,6 +30,7 @@ const visitSteps = [
 ];
 
 const About = () => {
+  const catalog = useShopServices("forge-and-fade");
   return (
     <main className="about-page">
       <section className="about-page__header">
@@ -54,9 +55,15 @@ const About = () => {
       <section className="about-page__story">
         <div className="container about-page__story-grid">
           <div className="about-page__story-image">
-            <img src={barberTools} alt="" loading="lazy" />
-
-            <span>Tools change. Standards do not.</span>
+            <img
+              src={
+                catalog.branding?.cover
+                  ? shopMediaUrl(catalog.shop, catalog.branding.cover)
+                  : barberTools
+              }
+              alt=""
+              loading="lazy"
+            />
           </div>
 
           <div className="about-page__story-content">
@@ -83,14 +90,44 @@ const About = () => {
         </div>
       </section>
 
-      <section className="about-page__manifesto">
-        <div className="container about-page__manifesto-content">
-          <span aria-hidden="true">"</span>
-          <blockquote>
-            The best haircut does not compete with who you are. It brings the sharper version into
-            focus.
-          </blockquote>
-          <p>Our approach to every appointment</p>
+      <section className="about-page__team">
+        <div className="container">
+          <h2 className="section-title">Meet the barbers</h2>
+          {catalog.loading && <p role="status">Loading barber profiles…</p>}
+          {catalog.error && (
+            <button className="btn btn-outline" type="button" onClick={catalog.retry}>
+              Reload barber profiles
+            </button>
+          )}
+          {!catalog.loading && !catalog.error && !catalog.barbers.length && (
+            <p>No barber profiles are available.</p>
+          )}
+          <div className="about-page__team-grid">
+            {catalog.barbers.map((barber) => {
+              const photo = barber.portfolio?.[0];
+              return (
+                <article key={barber.id} className="about-page__barber">
+                  {photo && (
+                    <img
+                      src={shopMediaUrl(catalog.shop, photo.image)}
+                      alt={photo.caption || `A haircut by ${barber.name}`}
+                      loading="lazy"
+                    />
+                  )}
+                  <div>
+                    <h3>{barber.name}</h3>
+                    {barber.bio && <p>{barber.bio}</p>}
+                    <Link
+                      className="btn btn-outline"
+                      to={bookingLink(catalog.shop, { barber: barber.id })}
+                    >
+                      Book with {barber.name}
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -105,10 +142,9 @@ const About = () => {
           </div>
 
           <ol className="about-page__steps">
-            {visitSteps.map(({ number, icon: Icon, title, description }) => (
-              <li className="about-step" key={number}>
+            {visitSteps.map(({ icon: Icon, title, description }) => (
+              <li className="about-step" key={title}>
                 <div className="about-step__topline">
-                  <span>{number}</span>
                   <Icon aria-hidden="true" strokeWidth={1.5} />
                 </div>
                 <h3>{title}</h3>
@@ -116,6 +152,26 @@ const About = () => {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      <section className="about-page__first-visit">
+        <div className="container">
+          <h2 className="section-title">Before your first visit</h2>
+          <ul>
+            <li>Bring a reference photo if you have a cut or beard shape in mind.</li>
+            <li>
+              Tell your barber how you usually wear your hair and how much time you spend styling
+              it.
+            </li>
+            <li>
+              Let the shop know in advance if you have a question about your visit or need
+              assistance.
+            </li>
+          </ul>
+          <Link to="/contact" className="btn btn-outline">
+            Contact the shop
+          </Link>
         </div>
       </section>
 

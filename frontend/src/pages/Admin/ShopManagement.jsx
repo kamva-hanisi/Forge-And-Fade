@@ -68,6 +68,16 @@ function CatalogEditor({ item, type, busy, save }) {
                 onChange={change}
               />
             </label>
+            <label>
+              Public service description (optional)
+              <textarea
+                name="description"
+                maxLength={360}
+                value={draft.description || ""}
+                onChange={change}
+                rows={3}
+              />
+            </label>
           </>
         )}
         {type === "barbers" && (

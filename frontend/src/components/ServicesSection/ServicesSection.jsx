@@ -2,25 +2,16 @@ import { Link } from "react-router-dom";
 
 import "./ServicesSection.scss";
 
-import useShopServices from "../../hooks/useShopServices";
+import { bookingLink } from "../../utils/shopLinks";
+import { formatRand } from "../../utils/money";
 
-const ServicesSection = () => {
-  const { services, loading, error, shop, retry } = useShopServices();
+const ServicesSection = ({ catalog }) => {
+  const { services, loading, error, shop, retry } = catalog;
   return (
     <section className="services-section">
       <div className="container">
         <div className="services-section__header">
-          <span className="section-label">Our Services</span>
-
-          <h2 className="section-title">
-            Simple Grooming.
-            <br />
-            Professional Results.
-          </h2>
-
-          <p className="section-text">
-            Choose from our most popular barbering and grooming services.
-          </p>
+          <h2 className="section-title">Services and prices</h2>
         </div>
 
         <div className="services-section__grid">
@@ -41,16 +32,16 @@ const ServicesSection = () => {
               <div>
                 <h3>{service.name}</h3>
 
-                <p>{service.description}</p>
+                {service.description && <p>{service.description}</p>}
               </div>
 
               <div className="service-card__bottom">
-                <span>R{service.price}</span>
+                <div>
+                  <span>{formatRand(service.price)}</span>
+                  <small>{service.duration} min</small>
+                </div>
 
-                <Link
-                  to={`/booking?shop=${encodeURIComponent(shop)}&service=${service.id}`}
-                  className="btn btn-outline"
-                >
+                <Link to={bookingLink(shop, { service: service.id })} className="btn btn-outline">
                   Book
                 </Link>
               </div>

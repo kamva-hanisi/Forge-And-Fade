@@ -71,12 +71,13 @@ class ShopManagementController extends Controller
     {
         return $this->change($request, function ($shop, &$settings) use ($request, $service) {
             $input = $request->validate(['name' => 'required|string|max:100', 'duration' => 'required|integer|min:10|max:480',
-                'price' => 'required|numeric|min:0|max:99999999.99|decimal:0,2', 'active' => 'required|boolean']);
+                'price' => 'required|numeric|min:0|max:99999999.99|decimal:0,2', 'active' => 'required|boolean',
+                'description' => 'sometimes|nullable|string|max:360']);
             $items = ShopCatalog::services($shop, true);
             abort_if($service !== null && ! isset($items[$service]), 404);
             abort_if($service === null && count($items) >= 200, 422, 'The service limit is 200.');
             $id = $service ?? (max([0, ...array_keys($items)]) + 1);
-            $items[$id] = [...$input, 'price' => number_format((float) $input['price'], 2, '.', ''), 'active' => (bool) $input['active']];
+            $items[$id] = [...($items[$id] ?? []), ...$input, 'price' => number_format((float) $input['price'], 2, '.', ''), 'active' => (bool) $input['active']];
             $settings['services'] = $items;
             ShopAccess::audit($request, 'service.saved', $id);
         });

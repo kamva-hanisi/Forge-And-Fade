@@ -20,13 +20,20 @@ export default function useShopServices(fixedShop) {
         setState({
           shop,
           profile: data.shop,
+          hours: data.hours,
+          barbers: data.barbers,
+          branding: data.branding,
           error: "",
           services: data.services.map((item) => ({
             ...item,
             description:
-              descriptions.find(
-                (description) => description.id === item.id && description.name === item.name,
-              )?.description || "Choose your preferred barber and an available appointment time.",
+              item.description !== undefined
+                ? item.description
+                : shop === "forge-and-fade"
+                  ? descriptions.find(
+                      (description) => description.id === item.id && description.name === item.name,
+                    )?.description
+                  : undefined,
           })),
         }),
       )
@@ -40,12 +47,16 @@ export default function useShopServices(fixedShop) {
       });
     return () => controller.abort();
   }, [shop, refresh]);
+  const current = state.shop === shop ? state : null;
   return {
-    services: state.shop === shop ? state.services : [],
-    error: state.shop === shop ? state.error : "",
-    loading: state.shop !== shop,
+    services: current?.services || [],
+    error: current?.error || "",
+    loading: !current,
     shop,
-    profile: state.shop === shop ? state.profile : null,
+    profile: current?.profile,
+    hours: current?.hours,
+    barbers: current?.barbers || [],
+    branding: current?.branding,
     retry: () => {
       setState({ shop: "", services: [], error: "" });
       setRefresh((value) => value + 1);

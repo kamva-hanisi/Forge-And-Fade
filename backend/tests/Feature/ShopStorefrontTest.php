@@ -87,4 +87,17 @@ class ShopStorefrontTest extends TestCase
             Carbon::setTestNow();
         }
     }
+
+    public function test_service_description_is_published_and_preserved_by_older_catalog_editors(): void
+    {
+        $owner = User::factory()->create();
+        $this->grantShopRole($owner);
+        Sanctum::actingAs($owner, ['admin']);
+        $edit = ['name' => 'Classic Haircut', 'duration' => 45, 'price' => 240, 'active' => true];
+        $this->putJson('/api/admin/management/services/1', $edit + ['version' => 0, 'description' => 'A trim finished with styling.'])
+            ->assertOk();
+        $this->putJson('/api/admin/management/services/1', $edit + ['version' => 1])->assertOk();
+        $this->getJson('/api/bookings/catalog')->assertOk()
+            ->assertJsonPath('services.0.description', 'A trim finished with styling.');
+    }
 }
