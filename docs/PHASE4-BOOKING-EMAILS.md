@@ -19,11 +19,23 @@ Production email delivery and the host scheduler still require verification. Use
 
 ## Local Mailpit
 
-Start [Mailpit](https://mailpit.axllent.org/docs/install/) bound to loopback:
+On Windows, place [Mailpit](https://mailpit.axllent.org/docs/install/) at
+`backend/storage/app/private/tools/mailpit.exe`. From the project root, start it
+in Git Bash or PowerShell:
 
-```powershell
-mailpit --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025
+```sh
+npm run dev:mailpit
 ```
+
+From the project root, `npm run dev:all` starts Vite on port 5173, Laravel on
+port 8000, Mailpit on ports 1025 and 8025, and the Laravel email scheduler.
+Use `Ctrl+C` in that terminal to stop the group. Stop separate instances first
+if they already use those ports. Start the local database before running the
+combined command.
+
+To run the services individually, use `npm run dev` for Vite,
+`php artisan serve` and `php artisan schedule:work` from `backend` in separate
+terminals, and `npm run dev:mailpit` from the project root.
 
 Set these values in a local development environment or disposable preview database:
 

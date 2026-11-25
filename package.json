@@ -1,0 +1,9 @@
+{
+  "name": "forge-and-fade",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev --",
+    "dev:all": "node scripts/dev-all.cjs",
+    "dev:mailpit": "node scripts/dev-mailpit.cjs"
+  }
+}
