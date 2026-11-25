@@ -8,19 +8,27 @@ use App\Services\BookingEmails;
 use App\Services\BookingSchedule;
 use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
-    private function validateAppointment(Request $request, bool $creating): array
+    private function selectionRules(Request $request): array
     {
-        return $request->validate([
+        return [
             'service_id' => ['required', 'integer', Rule::in(array_keys(ShopCatalog::services()))],
             'barber_id' => $request->input('barber_id') === 'any'
                 ? ['required', Rule::in(ShopCatalog::barbers() ? ['any'] : [])]
                 : ['required', 'integer', Rule::in(array_keys(ShopCatalog::barbers()))],
+        ];
+    }
+
+    private function validateAppointment(Request $request, bool $creating): array
+    {
+        return $request->validate([
+            ...$this->selectionRules($request),
             'booking_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             ...($creating ? [
                 'booking_time' => 'required|date_format:H:i',
@@ -42,6 +50,7 @@ class BookingController extends Controller
             'services' => collect($paused ? [] : ShopCatalog::services())->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
             'barbers' => collect($paused ? [] : ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
             'booking_status' => $shop->status,
+            'branding' => (object) ($shop->settings['branding'] ?? []),
             'timezone' => $shop->timezone,
             'hours' => $shop->settings['hours'] ?? config('booking.hours'),
             'shop' => $shop->only(['name', 'slug', 'address', 'phone']),
@@ -104,21 +113,39 @@ class BookingController extends Controller
         $validated = $this->validateAppointment($request, false);
         $duration = ShopCatalog::services()[$validated['service_id']]['duration'];
         $barbers = $validated['barber_id'] === 'any' ? array_keys(ShopCatalog::barbers()) : [$validated['barber_id']];
-        $bookings = [];
-        foreach ($barbers as $barber) {
-            $bookings[$barber] = $schedule->bookings($barber, $validated['booking_date']);
-        }
-        $available = [];
-        for ($minute = 0; $minute < 1440; $minute += config('booking.interval')) {
-            $time = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60);
-            foreach ($barbers as $barber) {
-                if ($schedule->allowed($validated['booking_date'], $time, $duration, $barber) && ! $schedule->overlaps($time, $duration, $bookings[$barber])) {
-                    $available[] = $time;
-                    break;
-                }
+        $date = $validated['booking_date'];
+        $shop = $request->attributes->get('shop');
+        $bookings = $this->scheduledBookings($shop->id, $barbers, $date, $date);
+
+        return response()->json(['available_times' => $schedule->availableTimes($date, $duration, $barbers, $bookings->get($date, collect())),
+            'timezone' => $shop->timezone]);
+    }
+
+    public function nextAvailable(Request $request, BookingSchedule $schedule)
+    {
+        $validated = $request->validate($this->selectionRules($request));
+        $duration = ShopCatalog::services()[$validated['service_id']]['duration'];
+        $barbers = $validated['barber_id'] === 'any' ? array_keys(ShopCatalog::barbers()) : [$validated['barber_id']];
+        $shop = $request->attributes->get('shop');
+        $today = now($shop->timezone)->startOfDay();
+        $end = $today->copy()->addDays(6);
+        $bookings = $this->scheduledBookings($shop->id, $barbers, $today->toDateString(), $end->toDateString());
+        $slots = [];
+        for ($day = $today; $day->lte($end) && count($slots) < 4; $day->addDay()) {
+            $date = $day->toDateString();
+            foreach ($schedule->availableTimes($date, $duration, $barbers, $bookings->get($date, collect()), 4 - count($slots)) as $time) {
+                $slots[] = ['booking_date' => $date, 'booking_time' => $time];
             }
         }
 
-        return response()->json(['available_times' => $available, 'timezone' => $request->attributes->get('shop')->timezone]);
+        return response()->json(['slots' => $slots])->header('Cache-Control', 'no-store');
+    }
+
+    private function scheduledBookings(int $shopId, array $barbers, string $from, string $to): Collection
+    {
+        return Booking::where('shop_id', $shopId)->whereIn('barber_id', $barbers)
+            ->whereBetween('booking_date', [$from, $to])->where('status', '!=', 'cancelled')->toBase()
+            ->get(['booking_date', 'barber_id', 'booking_time', 'duration'])
+            ->groupBy(['booking_date', 'barber_id']);
     }
 }

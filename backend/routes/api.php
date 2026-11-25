@@ -14,7 +14,9 @@ use App\Http\Controllers\Api\ShopManagementController;
 use App\Http\Controllers\Api\ShopRegistrationController;
 use App\Http\Middleware\ProtectPublicForm;
 use App\Http\Middleware\ResolveShop;
+use App\Models\Shop;
 use App\Services\BookingEmails;
+use App\Services\ShopMedia;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/registration', [AdminRegistrationController::class, 'status']);
@@ -30,6 +32,10 @@ Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);
+    Route::put('/management/branding', [ShopManagementController::class, 'branding'])->middleware('throttle:30,1');
+    Route::post('/management/media', [ShopManagementController::class, 'media'])->middleware('throttle:20,1');
+    Route::get('/management/media/{image}', [ShopManagementController::class, 'previewMedia'])
+        ->where('image', '[a-f0-9-]{36}\.(jpg|png|webp)')->middleware('throttle:120,1');
     Route::put('/management/business-hours', [ShopManagementController::class, 'businessHours'])->middleware('throttle:30,1');
     Route::post('/management/services', [ShopManagementController::class, 'service']);
     Route::put('/management/services/{service}', [ShopManagementController::class, 'service'])->whereNumber('service');
@@ -59,6 +65,9 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
 });
 
 Route::get('/bookings/catalog', [BookingController::class, 'catalog'])->middleware(['throttle:public-availability', ResolveShop::class]);
+Route::get('/bookings/next-available', [BookingController::class, 'nextAvailable'])->middleware(['throttle:public-availability', ResolveShop::class]);
+Route::get('/shop-media/{shop:slug}/{image}', fn (Shop $shop, string $image) => ShopMedia::show($shop, $image))
+    ->where('image', '[a-f0-9-]{36}\.(jpg|png|webp)')->middleware('throttle:120,1');
 Route::post('/bookings/lookup', [CustomerBookingController::class, 'lookup'])->middleware(['throttle:5,1', ResolveShop::class]);
 Route::post('/bookings/cancel', [CustomerBookingController::class, 'cancel'])->middleware(['throttle:5,1', ResolveShop::class]);
 

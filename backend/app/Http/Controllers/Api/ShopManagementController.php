@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Services\BookingSchedule;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
+use App\Services\ShopMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ class ShopManagementController extends Controller
 
         return response()->json([
             'version' => $settings['management_revision'] ?? 0,
+            'shop_status' => $shop->status,
+            'branding' => (object) ($settings['branding'] ?? []),
             'services' => collect(ShopCatalog::services($shop, true))->map(fn ($item, $id) => ['id' => $id, 'active' => true, ...$item])->values(),
             'barbers' => collect(ShopCatalog::barbers($shop, true))->map(fn ($item, $id) => ['id' => $id, ...$item])->values(),
             'schedules' => $schedules,
@@ -82,15 +85,77 @@ class ShopManagementController extends Controller
     public function barber(Request $request, ?int $barber = null)
     {
         return $this->change($request, function ($shop, &$settings) use ($request, $barber) {
-            $input = $request->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean']);
+            $input = $request->validate(['name' => 'required|string|max:100', 'active' => 'required|boolean',
+                'bio' => 'sometimes|nullable|string|max:360']);
             $items = ShopCatalog::barbers($shop, true);
             abort_if($barber !== null && ! isset($items[$barber]), 404);
             abort_if($barber === null && count($items) >= 200, 422, 'The barber limit is 200.');
             $id = $barber ?? (max([0, ...array_keys($items)]) + 1);
-            $items[$id] = ['name' => $input['name'], 'active' => (bool) $input['active']];
+            $items[$id] = [...($items[$id] ?? []), ...$input, 'active' => (bool) $input['active']];
             $settings['barbers'] = $items;
             ShopAccess::audit($request, 'barber.saved', $id);
         });
+    }
+
+    public function branding(Request $request)
+    {
+        return $this->change($request, function ($shop, &$settings) use ($request) {
+            $input = $request->validate(['accent' => ['present', 'nullable', 'regex:/^#[0-9A-Fa-f]{6}$/']]);
+            $settings['branding']['accent'] = $input['accent'];
+            ShopAccess::audit($request, 'shop.branding_saved', $shop->id);
+        });
+    }
+
+    public function media(Request $request)
+    {
+        return $this->change($request, function ($shop, &$settings) use ($request) {
+            $input = $request->validate([
+                'target' => ['required', Rule::in(['logo', 'cover', 'portfolio'])],
+                'barber_id' => 'required_if:target,portfolio|integer|min:1',
+                'photo' => ['required_without:remove', 'prohibits:remove', 'file', 'image',
+                    'mimetypes:image/jpeg,image/png,image/webp', 'max:2048', 'dimensions:max_width=3200,max_height=3200'],
+                'caption' => 'nullable|string|max:80',
+                'remove' => ['sometimes', 'string', 'regex:/^[a-f0-9-]{36}\.(jpg|png|webp)$/'],
+            ]);
+            $target = $input['target'];
+            $remove = $input['remove'] ?? null;
+
+            if ($target === 'portfolio') {
+                $barbers = ShopCatalog::barbers($shop, true);
+                $id = $input['barber_id'];
+                abort_unless(isset($barbers[$id]), 404);
+                $portfolio = collect($barbers[$id]['portfolio'] ?? []);
+                if ($remove) {
+                    abort_unless($portfolio->contains('image', $remove), 404);
+                    $portfolio = $portfolio->reject(fn ($photo) => $photo['image'] === $remove);
+                } else {
+                    abort_if($portfolio->count() >= 6, 422, 'Each barber can have up to six portfolio photos.');
+                    $portfolio->push(['image' => ShopMedia::store($shop, $request->file('photo')),
+                        'caption' => $input['caption'] ?? null]);
+                }
+                $barbers[$id]['portfolio'] = $portfolio->values()->all();
+                $settings['barbers'] = $barbers;
+                ShopAccess::audit($request, 'barber.portfolio_saved', $id);
+            } else {
+                $previous = $settings['branding'][$target] ?? null;
+                if ($remove) {
+                    abort_unless($previous === $remove, 404);
+                    unset($settings['branding'][$target]);
+                } else {
+                    $settings['branding'][$target] = ShopMedia::store($shop, $request->file('photo'));
+                    $remove = $previous;
+                }
+                ShopAccess::audit($request, 'shop.branding_saved', $shop->id);
+            }
+            if ($remove) {
+                ShopMedia::removeAfterCommit($shop, $remove);
+            }
+        });
+    }
+
+    public function previewMedia(Request $request, string $image)
+    {
+        return ShopMedia::show(ShopAccess::authorize($request, 'shop.manage'), $image, true);
     }
 
     private function scheduleInput(Request $request): array

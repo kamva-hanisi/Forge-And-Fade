@@ -1,5 +1,43 @@
 @use "../../styles/variables" as *;
 
+.booking-next {
+  margin-block: 1.5rem;
+  padding: clamp(1rem, 3vw, 1.4rem);
+  border: 1px solid $border;
+  border-left: 3px solid var(--shop-accent, #{$gold});
+  background: $cream;
+  border-radius: 0.65rem;
+
+  h3 {
+    margin-bottom: 0.4rem;
+  }
+
+  ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0.75rem 0 0;
+  }
+
+  button {
+    display: grid;
+    gap: 0.15rem;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.5rem;
+    border: 1px solid $border;
+    background: $white;
+    color: $text;
+    font-size: $font-small;
+
+    &:hover {
+      border-color: $gold;
+    }
+  }
+}
+
 .booking-reference {
   overflow-wrap: anywhere;
   font-weight: 600;

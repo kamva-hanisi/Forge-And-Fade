@@ -5,6 +5,7 @@ import { Clock3, MapPin, Phone, Scissors } from "lucide-react";
 import Booking from "./Booking";
 import ManageBooking from "./ManageBooking";
 import { shopPath } from "../../utils/shopLinks";
+import { shopMediaUrl } from "../../utils/shopMedia";
 import "./PublicShop.scss";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -114,13 +115,22 @@ function ShopPage({ slug, manage }) {
         )}
       </main>
     );
+  const branding = catalog.branding || {};
+  const style = {
+    "--shop-accent": branding.accent || undefined,
+    "--shop-cover": branding.cover ? `url("${shopMediaUrl(slug, branding.cover)}")` : undefined,
+  };
   return (
-    <div className="public-shop">
+    <div className="public-shop" style={style}>
       <header className="public-shop__top">
         <div className="public-shop__header container">
           <Link className="public-shop__brand" to={shopPath(slug)}>
-            <span className="public-shop__mark">
-              <Scissors size={20} aria-hidden="true" />
+            <span className={`public-shop__mark${branding.logo ? " public-shop__mark--logo" : ""}`}>
+              {branding.logo ? (
+                <img src={shopMediaUrl(slug, branding.logo)} alt="" />
+              ) : (
+                <Scissors size={20} aria-hidden="true" />
+              )}
             </span>
             {catalog.shop.name}
           </Link>
@@ -131,6 +141,18 @@ function ShopPage({ slug, manage }) {
             <Link to={shopPath(slug, true)} aria-current={manage ? "page" : undefined}>
               Manage booking
             </Link>
+            {!manage && catalog.barbers.some((barber) => barber.portfolio?.length) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const portfolio = document.getElementById("shop-portfolio");
+                  portfolio?.focus({ preventScroll: true });
+                  portfolio?.scrollIntoView();
+                }}
+              >
+                Our work
+              </button>
+            )}
           </nav>
         </div>
       </header>

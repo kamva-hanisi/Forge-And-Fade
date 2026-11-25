@@ -7,6 +7,8 @@ import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError as errorText } from "../../utils/formError";
 import "./Booking.scss";
 import { resolveShopSlug, shopPath } from "../../utils/shopLinks";
+import BarberPortfolio from "./BarberPortfolio";
+import NextAvailable from "./NextAvailable";
 
 const steps = ["Service", "Barber", "Date & time", "Your details"];
 const emptyDetails = {
@@ -52,6 +54,8 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmedBooking, setConfirmedBooking] = useState(null);
+  const [showMobileButton, setShowMobileButton] = useState(false);
+  const wizard = useRef(null);
   const heading = useRef(null);
   const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
   const selectedService = catalog?.services.find(
@@ -134,6 +138,15 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
     shopSlug,
   ]);
 
+  useEffect(() => {
+    if (!dedicated || !wizard.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setShowMobileButton(!entry.isIntersecting && entry.boundingClientRect.bottom < 0),
+    );
+    observer.observe(wizard.current);
+    return () => observer.disconnect();
+  }, [dedicated]);
+
   const focusHeading = () =>
     requestAnimationFrame(() => {
       heading.current?.focus();
@@ -155,6 +168,10 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
   const retryTimes = () => {
     change("booking_time", "");
     setRefresh((previous) => previous + 1);
+  };
+  const selectSuggestedTime = (slot, barber) => {
+    setFormData((previous) => ({ ...previous, ...slot, barber_id: String(barber) }));
+    goToStep(3);
   };
   const canContinue =
     step === 0 ? Boolean(selectedService) : step === 1 ? Boolean(selectedBarber) : validTime;
@@ -239,9 +256,21 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
             {dedicated ? "Book your appointment" : "Reserve Your Chair."}
           </h1>
           <p className="section-text">Choose a service, barber and time. Book as a guest.</p>
+          {dedicated &&
+            !confirmedBooking &&
+            catalog?.services.length > 0 &&
+            catalog.barbers.length > 0 && (
+              <button
+                type="button"
+                className="booking-hero-cta btn btn-primary"
+                onClick={focusHeading}
+              >
+                Book now
+              </button>
+            )}
         </div>
       </section>
-      <section className="booking-page__content">
+      <section className="booking-page__content" ref={wizard}>
         <div className="container">
           {confirmedBooking ? (
             <div className="booking-confirmation">
@@ -582,8 +611,36 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                             </p>
                           </>
                         )}
+                        {(step === 0 || step === 2) &&
+                          selectedService &&
+                          catalog.barbers.length > 0 && (
+                            <NextAvailable
+                              key={`${shopSlug}/${selectedService.id}/${selectedBarber?.id || "any"}/${refresh}`}
+                              apiUrl={apiUrl}
+                              shop={shopSlug}
+                              service={selectedService.id}
+                              barber={selectedBarber?.id || "any"}
+                              onSelect={selectSuggestedTime}
+                            />
+                          )}
                         {step === 3 && (
                           <>
+                            {checkingTimes && <p role="status">Checking your selected time…</p>}
+                            {!checkingTimes && !validTime && (
+                              <div
+                                className="booking-form__message booking-form__message--error"
+                                role="alert"
+                              >
+                                <p>{availabilityError || "That time is no longer available."}</p>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline"
+                                  onClick={() => goToStep(2)}
+                                >
+                                  Choose another time
+                                </button>
+                              </div>
+                            )}
                             <div className="booking-review">
                               <CheckCircle2 size={22} aria-hidden="true" />
                               <div>
@@ -753,6 +810,33 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
           )}
         </div>
       </section>
+      {dedicated && catalog && (
+        <BarberPortfolio
+          barbers={catalog.barbers}
+          slug={shopSlug}
+          onBook={
+            confirmedBooking
+              ? null
+              : (barber) => {
+                  change("barber_id", String(barber));
+                  goToStep(selectedService ? 2 : 0);
+                }
+          }
+        />
+      )}
+      {dedicated &&
+        showMobileButton &&
+        !confirmedBooking &&
+        catalog?.services.length > 0 &&
+        catalog.barbers.length > 0 && (
+          <button
+            className="booking-mobile-cta btn btn-primary"
+            type="button"
+            onClick={focusHeading}
+          >
+            Book an appointment
+          </button>
+        )}
     </main>
   );
 }

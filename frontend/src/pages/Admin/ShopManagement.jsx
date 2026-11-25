@@ -6,6 +6,7 @@ import { useAdmin } from "../../context/AdminContext";
 import { formError } from "../../utils/formError";
 import { catalogReadiness } from "../../utils/shopOnboarding";
 import { shopPath } from "../../utils/shopLinks";
+import { BrandingEditor, MediaEditor } from "./ShopMediaEditor";
 import "./ShopManagement.scss";
 
 function CatalogEditor({ item, type, busy, save }) {
@@ -68,6 +69,18 @@ function CatalogEditor({ item, type, busy, save }) {
               />
             </label>
           </>
+        )}
+        {type === "barbers" && (
+          <label>
+            Public bio (optional)
+            <textarea
+              name="bio"
+              maxLength={360}
+              value={draft.bio || ""}
+              onChange={change}
+              rows={3}
+            />
+          </label>
         )}
         <label className="staff-checkbox">
           <input name="active" type="checkbox" checked={Boolean(draft.active)} onChange={change} />{" "}
@@ -342,10 +355,11 @@ export default function ShopManagement() {
     setError("");
     setNotice("");
     try {
+      if (payload instanceof FormData) payload.set("version", data.version);
       const response = await client.request({
         url,
         method,
-        data: { ...payload, version: data.version },
+        data: payload instanceof FormData ? payload : { ...payload, version: data.version },
       });
       setData(response.data);
       setNotice("Shop changes saved. Existing booking prices and names are preserved.");
@@ -423,6 +437,8 @@ export default function ShopManagement() {
         {[
           ["staff", "Staff"],
           ["services", "Services"],
+          ["branding", "Branding"],
+          ["portfolios", "Barber portfolios"],
           ["hours", "Business hours"],
           ["schedules", "Barber schedules"],
         ].map(([value, label]) => (
@@ -461,6 +477,54 @@ export default function ShopManagement() {
       {!data && !error && <p role="status">Loading shop management…</p>}
       {data && (
         <div className="shop-management__content">
+          {tab === "branding" && (
+            <>
+              <p>JPEG, PNG or WebP, up to 2 MB and 3200 pixels wide or tall.</p>
+              <div className="shop-management__grid" key={data.version}>
+                <BrandingEditor branding={data.branding || {}} busy={busy} save={save} />
+                {[
+                  ["logo", "Shop logo"],
+                  ["cover", "Booking cover photo"],
+                ].map(([target, title]) => (
+                  <MediaEditor
+                    key={target}
+                    title={title}
+                    target={target}
+                    slug={session.user.shop.slug}
+                    images={data.branding?.[target] ? [{ image: data.branding[target] }] : []}
+                    busy={busy}
+                    save={save}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+          {tab === "portfolios" && (
+            <>
+              <p>
+                Add up to six photos per barber. JPEG, PNG or WebP, up to 2 MB and 3200 pixels wide
+                or tall.
+              </p>
+              {!data.barbers.length && <p>Add a barber in Staff to start a portfolio.</p>}
+              <div className="shop-management__grid" key={data.version}>
+                {data.barbers.map((barber) => (
+                  <MediaEditor
+                    key={barber.id}
+                    title={barber.name}
+                    target="portfolio"
+                    barberId={barber.id}
+                    slug={session.user.shop.slug}
+                    images={barber.portfolio || []}
+                    busy={busy}
+                    save={save}
+                    previewClient={
+                      !barber.active || data.shop_status !== "active" ? client : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </>
+          )}
           {tab === "staff" && (
             <>
               <Link className="btn btn-outline" to="/admin/settings/invite">
