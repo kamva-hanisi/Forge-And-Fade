@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
 import { useAdmin } from "../../context/AdminContext";
@@ -327,7 +327,8 @@ function ScheduleEditor({ data, busy, save, business = false }) {
 export default function ShopManagement() {
   const { session, setSession } = useAdmin();
   const allowed = session.user.permissions?.includes("shop.manage");
-  const [tab, setTab] = useState("staff");
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(() => (params.get("tab") === "hours" ? "hours" : "staff"));
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");

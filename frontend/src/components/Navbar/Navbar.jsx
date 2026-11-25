@@ -55,6 +55,9 @@ export default function Navbar({ admin = false }) {
               <NavLink to="/about" onClick={closeMenu}>
                 About
               </NavLink>
+              <NavLink to="/locations" onClick={closeMenu}>
+                Locations
+              </NavLink>
               <NavLink to="/contact" onClick={closeMenu}>
                 Contact
               </NavLink>

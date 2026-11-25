@@ -47,9 +47,9 @@ const Footer = () => {
         <div className="footer__column">
           <h3>Opening Hours</h3>
 
-          <Link to="/booking" className="footer__detail">
+          <Link to="/locations" className="footer__detail">
             <Clock3 aria-hidden="true" />
-            View current shop hours
+            Locations and opening hours
           </Link>
         </div>
       </div>

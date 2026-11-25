@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import { shopPath } from "../../utils/shopLinks";
 
@@ -47,10 +48,10 @@ export default function ShopProfile({ client }) {
   };
   return (
     <section className="staff-card staff-invitations">
-      <h2>Your shop</h2>
+      <h2>Shop details and location</h2>
       <p>
-        Owner-only business details. The identifier and timezone stay fixed to protect existing
-        bookings.
+        Your address and map link appear on the public Locations page. Edit opening hours under
+        Business hours.
       </p>
       {error && (
         <p className="admin-error" role="alert">
@@ -66,7 +67,7 @@ export default function ShopProfile({ client }) {
         <form className="staff-form" onSubmit={submit}>
           {[
             ["name", "Shop name", 100],
-            ["address", "Address", 255],
+            ["address", "Full street address", 255],
             ["phone", "Shop phone", 30],
           ].map(([field, label, limit]) => (
             <label key={field}>
@@ -74,6 +75,9 @@ export default function ShopProfile({ client }) {
               <input
                 name={field}
                 maxLength={limit}
+                placeholder={
+                  field === "address" ? "Street, suburb, city and postal code" : undefined
+                }
                 required={field === "name"}
                 disabled={busy}
                 value={fields[field] || ""}
@@ -81,6 +85,22 @@ export default function ShopProfile({ client }) {
               />
             </label>
           ))}
+          <label>
+            Google Maps pin link (optional)
+            <input
+              name="directions_url"
+              type="url"
+              maxLength={2048}
+              disabled={busy}
+              value={fields.directions_url || ""}
+              onChange={(event) => setFields({ ...fields, directions_url: event.target.value })}
+              aria-describedby="shop-directions-help"
+            />
+            <small id="shop-directions-help">
+              Paste the share link from your shop’s Google Maps pin. When blank, directions use your
+              street address.
+            </small>
+          </label>
           <p className="staff-notice">
             Shop identifier: {fields.slug}
             <br />
@@ -89,6 +109,10 @@ export default function ShopProfile({ client }) {
             <a href={`#${shopPath(fields.slug)}`} target="_blank" rel="noreferrer">
               Open your public booking page
             </a>
+            {" · "}
+            <Link to="/locations">View Locations page</Link>
+            {" · "}
+            <Link to="/admin/management?tab=hours">Edit business hours</Link>
           </p>
           <div className="staff-form-actions">
             <button className="btn btn-primary" disabled={busy}>

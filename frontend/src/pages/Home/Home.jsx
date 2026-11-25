@@ -93,7 +93,7 @@ const Home = () => {
             )}
           </div>
           <div className="home-visit__actions">
-            <Link to="/contact" className="btn btn-primary">
+            <Link to="/locations" className="btn btn-primary">
               Hours and directions
             </Link>
             <Link to={shopPath(catalog.shop, true)} className="btn btn-outline">

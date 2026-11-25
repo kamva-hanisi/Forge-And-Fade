@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ContactReplyEmail;
 use App\Models\ContactMessage;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AdminInboxTest extends TestCase
@@ -25,6 +29,67 @@ class AdminInboxTest extends TestCase
     {
         return ContactMessage::create($attributes + ['shop_id' => 1, 'name' => 'Customer Example',
             'email' => 'customer@example.com', 'phone' => null, 'message' => 'Is parking available?', 'status' => 'new']);
+    }
+
+    private function configureMail(): void
+    {
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => 'smtp.example.test',
+            'mail.mailers.smtp.username' => 'test', 'mail.mailers.smtp.password' => 'test',
+            'mail.from.address' => 'shop@example.test', 'booking_mail.local_mailpit' => false, 'booking_mail.enabled' => false]);
+    }
+
+    public function test_manager_can_queue_one_reply_to_the_original_sender_and_see_delivery(): void
+    {
+        $manager = $this->member('manager');
+        $enquiry = $this->enquiry();
+        $this->configureMail();
+        Mail::fake();
+        $path = "/api/admin/messages/{$enquiry->id}/reply";
+        $body = 'Thanks for contacting us. We can help with your visit.';
+        $payload = ['body' => $body, 'request_id' => (string) Str::uuid(), 'email' => 'other@example.test'];
+        $replyId = $this->postJson($path, $payload)->assertAccepted()
+            ->assertJsonPath('reply.status', 'pending')->json('reply.id');
+        $this->postJson($path, $payload)->assertOk()->assertJsonPath('reply.id', $replyId);
+        $this->postJson($path, ['body' => 'An edited body'] + $payload)->assertConflict();
+        $this->postJson($path, ['request_id' => (string) Str::uuid()] + $payload)->assertConflict();
+        Mail::assertNothingSent();
+        $this->assertDatabaseHas('audit_events', ['user_id' => $manager->id, 'action' => 'message.reply_queued', 'subject_id' => $enquiry->id]);
+
+        $this->artisan('contact:send-replies')->assertSuccessful();
+        $this->artisan('contact:send-replies')->assertSuccessful();
+        Mail::assertSentCount(1);
+        Mail::assertSent(ContactReplyEmail::class, fn ($mail) => $mail->hasTo($enquiry->email)
+            && ! $mail->hasTo('other@example.test') && $mail->body === $body);
+        $this->getJson('/api/admin/messages')->assertOk()
+            ->assertJsonPath('data.0.status', 'new')
+            ->assertJsonPath('data.0.latest_reply.body', $body)
+            ->assertJsonPath('data.0.latest_reply.status', 'sent')
+            ->assertJsonMissingPath('data.0.latest_reply.request_id');
+    }
+
+    public function test_reply_permissions_and_mail_failure_are_handled(): void
+    {
+        $enquiry = $this->enquiry();
+        $path = "/api/admin/messages/{$enquiry->id}/reply";
+        $payload = ['body' => 'Thanks for reaching out.', 'request_id' => (string) Str::uuid()];
+        $this->postJson($path, $payload)->assertUnauthorized();
+        Sanctum::actingAs($this->member('barber'), ['admin']);
+        $this->postJson($path, $payload)->assertForbidden();
+        Sanctum::actingAs($this->member(), ['admin']);
+        $otherShop = Shop::create(['name' => 'Other Shop', 'slug' => 'other-reply-shop', 'timezone' => 'Africa/Johannesburg']);
+        $foreign = $this->enquiry(['shop_id' => $otherShop->id]);
+        $this->postJson("/api/admin/messages/{$foreign->id}/reply", $payload)->assertNotFound();
+        $this->postJson($path, ['body' => '   '] + $payload)->assertUnprocessable();
+        $this->postJson($path, $payload)->assertServiceUnavailable();
+
+        $this->configureMail();
+        $this->postJson($path, $payload)->assertAccepted();
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('Internal transport details'));
+        $this->artisan('contact:send-replies')->assertFailed();
+        $this->getJson('/api/admin/messages')->assertOk()
+            ->assertJsonPath('data.0.latest_reply.status', 'failed')
+            ->assertJsonPath('data.0.latest_reply.sent_at', null)
+            ->assertJsonMissing(['message' => 'Internal transport details']);
     }
 
     public function test_inbox_requires_an_authenticated_authorized_membership(): void

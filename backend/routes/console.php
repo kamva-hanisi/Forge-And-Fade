@@ -2,6 +2,7 @@
 
 use App\Models\Shop;
 use App\Models\User;
+use App\Services\OutgoingMail;
 use App\Services\ShopCatalog;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 Schedule::command('bookings:notify')->everyMinute()->withoutOverlapping(10)->when(fn () => config('booking_mail.enabled'));
+Schedule::command('contact:send-replies')->everyMinute()->withoutOverlapping(10)->when(fn () => OutgoingMail::ready());
 
 Artisan::command('admin:create {email} {--name=Administrator}', function () {
     $password = $this->secret('Choose a password (at least 12 characters)');

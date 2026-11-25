@@ -11,6 +11,7 @@ import { resolveShopSlug, shopPath } from "./utils/shopLinks";
 import Terms from "./pages/Terms/Terms";
 import Privacy from "./pages/Terms/Privacy";
 import Contact from "./pages/Contact/Contact";
+import Locations from "./pages/Locations/Locations";
 import Footer from "./components/Footer/Footer";
 import Admin from "./pages/Admin/Admin";
 import AdminAccess from "./pages/Admin/AdminAccess";
@@ -53,6 +54,7 @@ function App() {
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/locations" element={<Locations />} />
         <Route path="/booking" element={<BookingRedirect />} />
         <Route path="/booking/manage" element={<BookingRedirect manage />} />
         <Route path="/shops/:slug/book" element={<PublicShop />} />

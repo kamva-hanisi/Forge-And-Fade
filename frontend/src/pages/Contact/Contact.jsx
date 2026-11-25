@@ -5,7 +5,7 @@ import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
 import useShopServices from "../../hooks/useShopServices";
 import ShopHours from "../../components/ShopHours/ShopHours";
-import { directionsLink, shopPath } from "../../utils/shopLinks";
+import { shopDirections, shopPath } from "../../utils/shopLinks";
 
 import "./Contact.scss";
 
@@ -18,6 +18,7 @@ const Contact = () => {
     error: shopError,
     retry,
   } = useShopServices("forge-and-fade");
+  const directions = shopDirections(profile);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -102,11 +103,11 @@ const Contact = () => {
                 <a href={`tel:${profile.phone.replace(/[^+\d]/g, "")}`}>{profile.phone}</a>
               </div>
             )}
-            {profile?.address && (
+            {(profile?.address || directions) && (
               <div className="contact-info__item">
                 <span>Location</span>
-                <p>{profile.address}</p>
-                <a href={directionsLink(profile.address)}>Get directions</a>
+                {profile?.address && <p>{profile.address}</p>}
+                {directions && <a href={directions}>Get directions</a>}
               </div>
             )}
             {hours && (
@@ -126,76 +127,82 @@ const Contact = () => {
             </div>
           </div>
 
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <h2>Send a message</h2>
+          <form
+            className="contact-form"
+            onSubmit={handleSubmit}
+            aria-labelledby="contact-form-title"
+          >
+            <h2 id="contact-form-title">Send a message</h2>
             <FormGuard
               value={formData.website}
               onChange={(value) => setFormData((previous) => ({ ...previous, website: value }))}
             />
-            <div className="contact-form__group">
-              <label htmlFor="name">Full Name *</label>
+            <div className="contact-form__fields">
+              <div className="contact-form__group">
+                <label htmlFor="name">Full Name *</label>
 
-              <input
-                type="text"
-                id="name"
-                name="name"
-                autoComplete="name"
-                maxLength={100}
-                disabled={loading}
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Your full name"
-                required
-              />
-            </div>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  autoComplete="name"
+                  maxLength={100}
+                  disabled={loading}
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
 
-            <div className="contact-form__group">
-              <label htmlFor="email">Email *</label>
+              <div className="contact-form__group">
+                <label htmlFor="email">Email *</label>
 
-              <input
-                type="email"
-                id="email"
-                name="email"
-                autoComplete="email"
-                maxLength={150}
-                disabled={loading}
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  autoComplete="email"
+                  maxLength={150}
+                  disabled={loading}
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
 
-            <div className="contact-form__group">
-              <label htmlFor="phone">Phone</label>
+              <div className="contact-form__group contact-form__group--wide">
+                <label htmlFor="phone">Phone</label>
 
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                autoComplete="tel"
-                maxLength={30}
-                disabled={loading}
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="071 234 5678"
-              />
-            </div>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  autoComplete="tel"
+                  maxLength={30}
+                  disabled={loading}
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="071 234 5678"
+                />
+              </div>
 
-            <div className="contact-form__group">
-              <label htmlFor="message">Message *</label>
+              <div className="contact-form__group contact-form__group--wide contact-form__group--message">
+                <label htmlFor="message">Message *</label>
 
-              <textarea
-                id="message"
-                name="message"
-                maxLength={1500}
-                disabled={loading}
-                rows="6"
-                value={formData.message}
-                onChange={handleChange}
-                placeholder="How can we help?"
-                required
-              />
+                <textarea
+                  id="message"
+                  name="message"
+                  maxLength={1500}
+                  disabled={loading}
+                  rows={5}
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="How can we help?"
+                  required
+                />
+              </div>
             </div>
 
             {success && (
@@ -210,12 +217,14 @@ const Contact = () => {
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? "Sending..." : "Send Message"}
-            </button>
-            <p className="contact-form__privacy">
-              Read our <Link to="/privacy">privacy notice</Link> before sharing personal details.
-            </p>
+            <div className="contact-form__footer">
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? "Sending..." : "Send Message"}
+              </button>
+              <p className="contact-form__privacy">
+                Read our <Link to="/privacy">privacy notice</Link> before sharing personal details.
+              </p>
+            </div>
           </form>
         </div>
       </section>

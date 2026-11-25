@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BookingPaymentController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CustomerBookingController;
 use App\Http\Controllers\Api\PlatformController;
+use App\Http\Controllers\Api\ShopLocationController;
 use App\Http\Controllers\Api\ShopManagementController;
 use App\Http\Controllers\Api\ShopRegistrationController;
 use App\Http\Middleware\ProtectPublicForm;
@@ -47,6 +48,7 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::patch('/shop', [ShopRegistrationController::class, 'update']);
     Route::get('/dashboard', [AdminSettingsController::class, 'dashboard']);
     Route::get('/messages', [AdminMessageController::class, 'index']);
+    Route::post('/messages/{message}/reply', [AdminMessageController::class, 'reply'])->whereNumber('message')->middleware('throttle:10,1');
     Route::patch('/messages/{message}', [AdminMessageController::class, 'update'])->whereNumber('message')->middleware('throttle:30,1');
     Route::get('/profile', [AdminSettingsController::class, 'profile']);
     Route::patch('/profile', [AdminSettingsController::class, 'updateProfile']);
@@ -64,6 +66,7 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::patch('/bookings/{booking}', [AdminController::class, 'update']);
 });
 
+Route::get('/locations', [ShopLocationController::class, 'index'])->middleware('throttle:public-availability');
 Route::get('/bookings/catalog', [BookingController::class, 'catalog'])->middleware(['throttle:public-availability', ResolveShop::class]);
 Route::get('/bookings/next-available', [BookingController::class, 'nextAvailable'])->middleware(['throttle:public-availability', ResolveShop::class]);
 Route::get('/shop-media/{shop:slug}/{image}', fn (Shop $shop, string $image) => ShopMedia::show($shop, $image))

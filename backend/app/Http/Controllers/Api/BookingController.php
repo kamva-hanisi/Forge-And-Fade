@@ -53,7 +53,9 @@ class BookingController extends Controller
             'branding' => (object) ($shop->settings['branding'] ?? []),
             'timezone' => $shop->timezone,
             'hours' => $shop->settings['hours'] ?? config('booking.hours'),
-            'shop' => $shop->only(['name', 'slug', 'address', 'phone']),
+            'shop' => $shop->only(['name', 'slug', 'address', 'phone']) + [
+                'directions_url' => $shop->settings['directions_url'] ?? null,
+            ],
         ])->header('Cache-Control', 'no-store');
     }
 

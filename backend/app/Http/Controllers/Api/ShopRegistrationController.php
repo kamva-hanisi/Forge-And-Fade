@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Models\User;
 use App\Services\ShopAccess;
+use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,17 +47,45 @@ class ShopRegistrationController extends Controller
 
     public function profile(Request $request)
     {
-        ShopAccess::authorize($request, 'bookings.read');
+        $shop = ShopAccess::authorize($request, 'bookings.read');
 
-        return response()->json($request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone', 'timezone']))
+        return response()->json($shop->only(['name', 'slug', 'address', 'phone', 'timezone']) + [
+            'directions_url' => $shop->settings['directions_url'] ?? null,
+        ])
             ->header('Cache-Control', 'no-store');
     }
 
     public function update(Request $request)
     {
         $shop = ShopAccess::authorize($request, 'shop.write');
-        $input = $request->validate(['name' => 'required|string|max:100', 'address' => 'nullable|string|max:255', 'phone' => 'nullable|string|max:30']);
+        $input = $request->validate([
+            'name' => 'required|string|max:100',
+            'address' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:30',
+            'directions_url' => ['bail', 'nullable', 'string', 'max:2048', 'url:https',
+                function (string $attribute, string $value, Closure $fail): void {
+                    $url = parse_url($value);
+                    $host = strtolower($url['host'] ?? '');
+                    $path = $url['path'] ?? '';
+                    $maps = in_array($host, ['google.com', 'www.google.com'], true)
+                        && ($path === '/maps' || str_starts_with($path, '/maps/'));
+                    $sharedPin = $host === 'maps.app.goo.gl' && preg_match('#^/[A-Za-z0-9_-]+/?$#D', $path);
+                    if ((! $maps && ! $sharedPin) || isset($url['user']) || isset($url['port'])) {
+                        $fail('Enter a Google Maps link for your shop pin.');
+                    }
+                }],
+        ]);
         DB::transaction(function () use ($shop, $input, $request) {
+            if (array_key_exists('directions_url', $input)) {
+                $settings = $shop->settings ?? [];
+                if ($input['directions_url'] === null) {
+                    unset($settings['directions_url']);
+                } else {
+                    $settings['directions_url'] = $input['directions_url'];
+                }
+                $input['settings'] = $settings;
+                unset($input['directions_url']);
+            }
             $shop->update($input);
             ShopAccess::audit($request, 'shop.updated', $shop->id);
         });

@@ -12,7 +12,20 @@ export function bookingLink(slug, selection = {}) {
 }
 
 export function directionsLink(address) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+}
+
+export function shopStreetAddress(shop) {
+  const address = shop?.address?.trim();
+  // The original shop was seeded with a city instead of a street address.
+  const cityOnly =
+    shop?.slug === "forge-and-fade" && address?.toLowerCase() === "cape town, south africa";
+  return cityOnly ? "" : address || "";
+}
+
+export function shopDirections(shop) {
+  const address = shopStreetAddress(shop);
+  return shop?.directions_url || (address ? directionsLink(address) : "");
 }
 
 export function initialBookingSelection(params, catalog) {

@@ -45,6 +45,39 @@
     border: 1px solid $border;
     font-size: $font-small;
   }
+  &__badge--sent {
+    background: $success-bg;
+    color: $success-text;
+  }
+  &__badge--failed {
+    background: $error-bg;
+    color: $error-text;
+  }
+  &__reply,
+  &__reply-form {
+    display: grid;
+    gap: 10px;
+    margin-block: 16px;
+    padding: 14px;
+    border: 1px solid $border;
+    overflow-wrap: anywhere;
+  }
+  &__reply summary {
+    cursor: pointer;
+  }
+  &__reply-form {
+    background: $cream;
+    label {
+      display: grid;
+      gap: 6px;
+    }
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid $border;
+      background: $white;
+    }
+  }
   &__contact {
     margin-top: 12px;
     overflow-wrap: anywhere;

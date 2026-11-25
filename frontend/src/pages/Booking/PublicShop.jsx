@@ -4,23 +4,25 @@ import axios from "axios";
 import { Clock3, MapPin, Phone, Scissors } from "lucide-react";
 import Booking from "./Booking";
 import ManageBooking from "./ManageBooking";
-import { directionsLink, shopPath } from "../../utils/shopLinks";
+import { shopDirections, shopPath } from "../../utils/shopLinks";
 import ShopHours from "../../components/ShopHours/ShopHours";
 import { shopMediaUrl } from "../../utils/shopMedia";
 import "./PublicShop.scss";
 
 function ShopDetails({ catalog }) {
   const { address, phone } = catalog.shop;
+  const directions = shopDirections(catalog.shop);
 
   return (
     <footer className="public-shop__footer">
       <div className="container public-shop__footer-grid">
         <div>
           <h2>{catalog.shop.name}</h2>
-          {address && (
-            <a href={directionsLink(address)} className="public-shop__detail">
+          {address && <p className="public-shop__detail">{address}</p>}
+          {directions && (
+            <a href={directions} className="public-shop__detail">
               <MapPin size={18} aria-hidden="true" />
-              {address}
+              Get directions
             </a>
           )}
           {phone && (

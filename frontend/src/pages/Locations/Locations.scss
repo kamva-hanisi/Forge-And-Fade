@@ -1,0 +1,192 @@
+@use "../../styles/variables" as *;
+
+.locations-page {
+  padding-top: $header-height;
+  background: $cream;
+
+  &__hero {
+    border-bottom: 1px solid $border;
+    background: #eeebe3;
+  }
+
+  &__hero-inner {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 0.9fr);
+    gap: clamp(24px, 6vw, 84px);
+    align-items: center;
+    padding-block: clamp(28px, 5vw, 64px);
+
+    h1 {
+      margin: 0;
+      color: $black;
+      font-family: $font-heading;
+      font-size: clamp(2.8rem, 6vw, 5.75rem);
+      font-weight: 400;
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+
+    p {
+      max-width: 29rem;
+      margin: 20px 0 0;
+      color: #514c43;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      line-height: 1.6;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: clamp(156px, 23vw, 310px);
+      border-radius: 4px;
+      object-fit: cover;
+      object-position: 50% 55%;
+    }
+  }
+
+  &__list {
+    display: grid;
+    gap: 28px;
+    padding-block: clamp(28px, 6vw, 78px);
+  }
+
+  &__state .btn {
+    margin-top: 16px;
+  }
+}
+
+.location-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  overflow: hidden;
+  border: 1px solid #ded8cd;
+  border-radius: 12px;
+  background: $white;
+  box-shadow: 0 12px 32px rgba(38, 27, 15, 0.055);
+
+  &__info,
+  &__schedule {
+    min-width: 0;
+    padding: clamp(22px, 4vw, 48px);
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    overflow-wrap: anywhere;
+
+    h2 {
+      margin: 0 0 5px;
+      font-family: $font-heading;
+      font-size: clamp(1.9rem, 4vw, 3.25rem);
+      font-weight: 400;
+      line-height: 1.08;
+    }
+  }
+
+  &__cover {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  &__address,
+  &__phone,
+  &__schedule h3 {
+    display: flex;
+    align-items: start;
+    gap: 10px;
+
+    svg {
+      flex-shrink: 0;
+      color: $gold-text;
+    }
+  }
+
+  &__address p,
+  &__schedule p {
+    margin: 0;
+  }
+
+  &__address p + p {
+    margin-top: 3px;
+  }
+
+  &__phone {
+    align-items: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+
+    .btn {
+      gap: 8px;
+    }
+  }
+
+  &__schedule {
+    border-left: 1px solid #ded8cd;
+    background: #f8f6f1;
+
+    h3 {
+      align-items: center;
+      margin: 0 0 14px;
+      font-size: 1.22rem;
+    }
+  }
+
+  &__hours {
+    margin: 0 0 12px;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid $border;
+    }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__muted {
+    color: $text-light;
+    font-size: $font-small;
+  }
+
+  &__schedule &__closure {
+    margin-top: 12px;
+    color: $gold-text;
+    font-size: $font-small;
+  }
+}
+
+@media (max-width: 700px) {
+  .locations-page__hero-inner,
+  .location-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .location-card__schedule {
+    border-top: 1px solid #ded8cd;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 440px) {
+  .location-card__actions {
+    display: grid;
+    width: 100%;
+  }
+}
