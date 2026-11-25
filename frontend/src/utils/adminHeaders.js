@@ -5,3 +5,7 @@ export function adminHeaders(session) {
     ...(session.user.shop?.id ? { "X-Shop-Id": String(session.user.shop.id) } : {}),
   };
 }
+
+export function platformHeaders(session) {
+  return { Authorization: `Bearer ${session.token}`, Accept: "application/json" };
+}

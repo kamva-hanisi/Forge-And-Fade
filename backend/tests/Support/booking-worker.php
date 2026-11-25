@@ -36,6 +36,10 @@ if ($editing) {
     $payload = ['version' => 0, 'hours' => array_fill(1, 7, ['10:00', '11:00']), 'breaks' => [], 'closed_dates' => []];
 }
 $editPath = getenv('BOOKING_BUSINESS_EDIT') === '1' ? '/api/admin/management/business-hours' : '/api/admin/management/barbers/1/schedule';
+if (getenv('BOOKING_LIFECYCLE_EDIT') === '1') {
+    $payload = ['status' => 'suspended', 'revision' => 0, 'confirm_slug' => 'forge-and-fade'];
+    $editPath = '/api/platform/shops/1/status';
+}
 $request = Request::create($editing ? $editPath : ($staffToken ? '/api/admin/bookings' : '/api/bookings'), $editing ? 'PUT' : 'POST', $payload, [], [], $headers);
 $response = $kernel->handle($request);
 echo 'STATUS:'.$response->getStatusCode()."\n";

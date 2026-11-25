@@ -8,5 +8,5 @@ class Shop extends Model
 {
     protected $fillable = ['name', 'slug', 'address', 'phone', 'timezone', 'settings'];
 
-    protected $casts = ['settings' => 'array'];
+    protected $casts = ['settings' => 'array', 'lifecycle_revision' => 'integer'];
 }

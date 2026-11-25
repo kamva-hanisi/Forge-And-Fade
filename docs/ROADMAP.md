@@ -61,8 +61,8 @@ Implementation and local verification complete for the listed basic owner/staff 
 - [ ] Scope every API query to the correct shop
 - [ ] Build onboarding for new barbershops (first-catalog checklist and business-hours editor delivered; full setup remains pending)
 - [ ] Add shop branding, logos, addresses and opening hours
-- [ ] Create platform super-admin dashboard
-- [ ] Add account suspension and shop lifecycle controls
+- [x] Create platform super-admin dashboard (overview, shop search, aggregate counts and reversible shop status controls)
+- [ ] Add account suspension and shop lifecycle controls (shop suspension/reactivation delivered; user-account suspension remains pending)
 - [ ] Test cross-shop privacy and permissions
 
 Phase 2's shop accounts and isolation require some underlying schema groundwork; full SaaS onboarding and platform operations remain in Phase 5.
@@ -70,6 +70,8 @@ Phase 2's shop accounts and isolation require some underlying schema groundwork;
 That groundwork now includes shops, memberships, basic settings storage, tenant IDs on bookings/messages/invitations and scoped booking locks. Existing service/barber catalogs are now snapshotted per shop in JSON settings; new shops start empty with a first-catalog setup checklist. Dedicated catalog/settings tables and a complete tenant lifecycle/onboarding system are not yet delivered. See PHASE5-CATALOG-ONBOARDING.md.
 
 Owners can now edit their shop's weekday hours, daily breaks and closed dates, with protection for upcoming/in-progress appointments and concurrent bookings. See PHASE5-BUSINESS-HOURS.md. Custom logos and themes remain pending.
+
+A separately authorized platform overview provides shop search and operational counts. Reversible shop suspension now requires exact shop-identifier confirmation and a current status revision. Existing appointments remain intact and customer lookup/cancellation remain available. No real account receives new privileges. See PHASE5-PLATFORM-OVERVIEW.md and PHASE5-SHOP-LIFECYCLE.md.
 
 ## Phase 6 — Subscriptions and billing
 

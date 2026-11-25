@@ -31,7 +31,7 @@ class BookingEmails
 
     public function reminders(): void
     {
-        Booking::where('status', 'confirmed')->whereBetween('booking_date', [now()->subDays(2)->toDateString(), now()->addDays(3)->toDateString()])
+        Booking::whereIn('shop_id', Shop::where('status', 'active')->select('id'))->where('status', 'confirmed')->whereBetween('booking_date', [now()->subDays(2)->toDateString(), now()->addDays(3)->toDateString()])
             ->lazyById()->each(function (Booking $booking) {
                 $start = CarbonImmutable::parse($booking->starts_at);
                 if ($start->isFuture() && $start->lte(now()->addDay()) && $booking->created_at->lte($start->subDay())) {
@@ -53,6 +53,9 @@ class BookingEmails
             $notice = DB::table('booking_emails')->where('id', $id)->lockForUpdate()->first();
             if (! $notice || ! in_array($notice->status, ['pending', 'failed'], true) || $notice->attempts >= 3
                 || CarbonImmutable::parse($notice->available_at)->isFuture()) {
+                return 'skipped';
+            }
+            if ($shop->status !== 'active' && $notice->kind !== 'cancelled') {
                 return 'skipped';
             }
             $booking = Booking::whereKey($notice->booking_id)->lockForUpdate()->first();

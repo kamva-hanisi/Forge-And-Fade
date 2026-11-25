@@ -22,6 +22,12 @@ class SendBookingEmails extends Command
         $emails->reminders();
         $counts = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
         $ids = DB::table('booking_emails')->whereIn('status', ['pending', 'failed'])->where('attempts', '<', 3)
+            ->where(function ($query) {
+                $query->where('kind', 'cancelled')->orWhereExists(function ($query) {
+                    $query->selectRaw('1')->from('bookings')->join('shops', 'shops.id', '=', 'bookings.shop_id')
+                        ->whereColumn('bookings.id', 'booking_emails.booking_id')->where('shops.status', 'active');
+                });
+            })
             ->where('available_at', '<=', now())->orderBy('id')->limit(100)->pluck('id');
         foreach ($ids as $id) {
             $counts[$emails->deliver($id)]++;

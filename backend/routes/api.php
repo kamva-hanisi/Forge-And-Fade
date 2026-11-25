@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingPaymentController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CustomerBookingController;
+use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\ShopManagementController;
 use App\Http\Controllers\Api\ShopRegistrationController;
 use App\Http\Middleware\ProtectPublicForm;
@@ -23,6 +24,8 @@ Route::post('/admin/forgot-password', [AdminRecoveryController::class, 'requestL
 Route::post('/admin/reset-password', [AdminRecoveryController::class, 'reset'])->middleware('throttle:5,1');
 Route::post('/admin/register-shop', [ShopRegistrationController::class, 'store'])->middleware(['throttle:3,1', ProtectPublicForm::class]);
 Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/platform/overview', [PlatformController::class, 'index'])->middleware(['auth:sanctum', 'throttle:30,1']);
+Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);

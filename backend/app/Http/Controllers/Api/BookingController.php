@@ -35,12 +35,15 @@ class BookingController extends Controller
 
     public function catalog(Request $request)
     {
+        $paused = $request->attributes->get('shop')->status !== 'active' && ! $request->attributes->has('shop_role');
+
         return response()->json([
-            'services' => collect(ShopCatalog::services())->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
-            'barbers' => collect(ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
+            'services' => collect($paused ? [] : ShopCatalog::services())->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
+            'barbers' => collect($paused ? [] : ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
+            'booking_status' => $request->attributes->get('shop')->status,
             'timezone' => $request->attributes->get('shop')->timezone,
             'shop' => $request->attributes->get('shop')->only(['name', 'slug', 'address', 'phone']),
-        ]);
+        ])->header('Cache-Control', 'no-store');
     }
 
     public function store(Request $request, BookingSchedule $schedule)

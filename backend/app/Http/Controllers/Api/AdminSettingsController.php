@@ -49,6 +49,7 @@ class AdminSettingsController extends Controller
         return response()->json([
             'today' => $today,
             'timezone' => $shop->timezone,
+            'shop_status' => $shop->status,
             'statistics' => $statistics,
             'past_count' => ShopAccess::bookings($request)->where('status', 'confirmed')->where(function ($query) use ($today, $time) {
                 $query->where('booking_date', '<', $today)->orWhere(fn ($query) => $query->whereDate('booking_date', $today)->where('booking_time', '<', $time));

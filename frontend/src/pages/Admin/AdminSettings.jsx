@@ -144,6 +144,13 @@ export default function AdminSettings({ page = "dashboard" }) {
       {!data && !error && <p role="status">Loading…</p>}
       {page === "dashboard" && data && (
         <>
+          {data.shop_status === "suspended" && (
+            <p className="admin-error" role="status">
+              This shop is suspended. New bookings and operational changes are paused. Existing
+              appointments remain available to view or cancel. Contact the platform administrator
+              for help.
+            </p>
+          )}
           <div className="staff-stats">
             {[
               ["Today’s appointments", data.today_count, CalendarDays],

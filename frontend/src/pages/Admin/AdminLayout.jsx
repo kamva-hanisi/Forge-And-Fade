@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Mail,
   SlidersHorizontal,
+  Building2,
 } from "lucide-react";
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
@@ -26,6 +27,7 @@ const items = [
   ["/admin/appointments", "Appointments", CalendarDays],
   ["/admin/inbox", "Contact inbox", Mail],
   ["/admin/management", "Shop management", SlidersHorizontal],
+  ["/admin/platform", "Platform overview", Building2],
 ];
 const settings = [
   ["/admin/settings/profile", "My profile", UserRound],
@@ -100,7 +102,9 @@ export default function AdminLayout() {
               ([path]) =>
                 (path !== "/admin/inbox" ||
                   session.user.permissions?.includes("messages.manage")) &&
-                (path !== "/admin/management" || session.user.permissions?.includes("shop.manage")),
+                (path !== "/admin/management" ||
+                  session.user.permissions?.includes("shop.manage")) &&
+                (path !== "/admin/platform" || session.user.role === "platform_admin"),
             )
             .map(renderLink)}
           <div className="staff-settings">

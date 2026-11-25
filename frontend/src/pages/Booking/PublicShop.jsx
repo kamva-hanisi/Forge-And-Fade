@@ -76,6 +76,15 @@ function ShopPage({ slug, manage }) {
       </header>
       {manage ? (
         <ManageBooking key={slug} shop={slug} dedicated />
+      ) : catalog.booking_status === "suspended" ? (
+        <main className="public-shop__loading container">
+          <h1>Online booking paused</h1>
+          <p>
+            This shop is not accepting new online bookings. Existing appointments have not been
+            cancelled. Contact the shop for assistance.
+          </p>
+          <Link to={shopPath(slug, true)}>Manage an existing booking</Link>
+        </main>
       ) : (
         <Booking key={slug} shop={slug} dedicated initialCatalog={catalog} />
       )}

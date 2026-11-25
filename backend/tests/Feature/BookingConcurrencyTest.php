@@ -15,6 +15,7 @@ class BookingConcurrencyTest extends TestCase
     {
         return [
             'identical starts' => [['10:00', '10:00']],
+            'suspension and public booking' => [['10:00', '10:00'], 'lifecycle'],
             'any barber capacity' => [['10:00', '10:00'], 'any'],
             'specific and any capacity' => [['10:00', '10:00'], 'specific_any'],
             'overlapping starts' => [['10:00', '10:20']],
@@ -45,22 +46,30 @@ class BookingConcurrencyTest extends TestCase
         $processes = [];
         $user = null;
         $scheduling = str_starts_with($mode, 'schedule_') || str_starts_with($mode, 'business_');
+        $lifecycle = $mode === 'lifecycle';
+        $originalStatus = DB::table('shops')->where('id', 1)->first(['status', 'lifecycle_revision']);
         $originalSettings = DB::table('shops')->where('id', 1)->value('settings');
         $barrier = tempnam(sys_get_temp_dir(), 'booking-race-');
         unlink($barrier);
         try {
+            if ($lifecycle) {
+                DB::table('shops')->where('id', 1)->update(['status' => 'active', 'lifecycle_revision' => 0]);
+            }
             if ($scheduling) {
                 DB::table('shops')->where('id', 1)->update(['settings' => null]);
             }
             if (! in_array($mode, ['public', 'any', 'specific_any'], true)) {
                 $user = User::factory()->create();
+                if ($lifecycle) {
+                    $user->forceFill(['is_platform_admin' => true])->save();
+                }
                 $this->grantShopRole($user, $scheduling ? 'owner' : 'manager');
                 $token = $user->createToken('race-test', ['admin'])->plainTextToken;
             }
             foreach ($times as $index => $time) {
-                $editing = $scheduling && $index === 0;
+                $editing = ($scheduling || $lifecycle) && $index === 0;
                 $staff = $editing || $mode === 'staff' || ($mode === 'mixed' && $index === 0) || (in_array($mode, ['schedule_staff', 'business_staff'], true) && $index === 1);
-                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path(), ['BOOKING_STAFF_TOKEN' => $staff ? $token : '', 'BOOKING_SCHEDULE_EDIT' => $editing ? '1' : '', 'BOOKING_BUSINESS_EDIT' => $editing && str_starts_with($mode, 'business_') ? '1' : '', 'BOOKING_ANY_BARBER' => $mode === 'any' || ($mode === 'specific_any' && $index === 1) ? '1' : '']);
+                $process = new Process([PHP_BINARY, base_path('tests/Support/booking-worker.php'), $time, $barrier, (string) $index], base_path(), ['BOOKING_STAFF_TOKEN' => $staff ? $token : '', 'BOOKING_SCHEDULE_EDIT' => $editing ? '1' : '', 'BOOKING_LIFECYCLE_EDIT' => $editing && $lifecycle ? '1' : '', 'BOOKING_BUSINESS_EDIT' => $editing && str_starts_with($mode, 'business_') ? '1' : '', 'BOOKING_ANY_BARBER' => $mode === 'any' || ($mode === 'specific_any' && $index === 1) ? '1' : '']);
                 $process->setTimeout(120);
                 $process->start();
                 $processes[] = $process;
@@ -82,7 +91,11 @@ class BookingConcurrencyTest extends TestCase
                 $statuses[] = (int) ($matches[1] ?? 0);
             }
             sort($statuses);
-            if ($scheduling) {
+            if ($lifecycle) {
+                $this->assertContains($statuses, [[200, 201], [200, 404]]);
+                $this->assertSame(in_array(201, $statuses, true) ? 1 : 0, DB::table('bookings')->where('booking_date', $date)->count());
+                $this->assertSame('suspended', DB::table('shops')->where('id', 1)->value('status'));
+            } elseif ($scheduling) {
                 $this->assertContains($statuses, [[200, 422], [201, 422]]);
                 $this->assertSame($statuses[0] === 201 ? 1 : 0, DB::table('bookings')->where('booking_date', $date)->count());
             } elseif ($mode === 'any') {
@@ -108,6 +121,9 @@ class BookingConcurrencyTest extends TestCase
             DB::table('bookings')->where('booking_date', $date)->delete();
             DB::table('booking_day_locks')->where('booking_date', $date)->delete();
             DB::table('shop_booking_day_locks')->where('shop_id', 1)->where('booking_date', $date)->delete();
+            if ($lifecycle) {
+                DB::table('shops')->where('id', 1)->update(['status' => $originalStatus->status, 'lifecycle_revision' => $originalStatus->lifecycle_revision]);
+            }
             if ($user) {
                 $user->tokens()->delete();
                 DB::table('audit_events')->where('user_id', $user->id)->delete();
