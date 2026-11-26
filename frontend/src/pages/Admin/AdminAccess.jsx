@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import { useAdmin } from "../../context/AdminContext";
+import AdminAccessIntro from "./AdminAccessIntro";
 import "./AdminAccess.scss";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -24,6 +25,7 @@ export default function AdminAccess({ signup = false }) {
   const [refresh, setRefresh] = useState(0);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState("");
+  const firstAdminSetup = signup && ready && !requiresInvitation;
 
   useEffect(() => {
     if (!signup) return;
@@ -84,47 +86,42 @@ export default function AdminAccess({ signup = false }) {
   };
 
   return (
-    <main className="admin-access container">
-      <div className="admin-access__intro">
-        <span className="section-label">Forge & Fade · Administration</span>
-        <h1 className="section-title">
-          Your shop.
-          <br />
-          Your schedule.
-        </h1>
-        <p>
-          One place to manage appointments, look after your team, and keep the day running smoothly.
-        </p>
-        <span className="admin-access__staff">
-          <ShieldCheck size={18} aria-hidden="true" /> For shop owners and authorized staff
-        </span>
-      </div>
+    <main
+      className={`admin-access admin-access--branded container${signup ? " admin-access--signup" : ""}`}
+    >
+      <AdminAccessIntro title="Your shop." accent="Your schedule.">
+        One place to manage appointments, look after your team, and keep the day running smoothly.
+      </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="admin-access-title">
         <nav aria-label="Admin account access">
           <Link to="/admin/signin" aria-current={!signup ? "page" : undefined}>
             Admin sign in
           </Link>
           <Link to="/admin/signup" aria-current={signup ? "page" : undefined}>
-            Admin sign up
+            Staff sign up
           </Link>
         </nav>
         <h2 id="admin-access-title">
-          {signup ? "Create an admin account" : "Welcome back, admin."}
+          {signup
+            ? firstAdminSetup
+              ? "Set up the first admin"
+              : "Staff sign up"
+            : "Welcome back."}
         </h2>
-        {!signup && (
-          <p>
-            Opening a new barbershop? <Link to="/admin/register-shop">Register your shop</Link>
-          </p>
-        )}
         <p>
           {signup
             ? checking
               ? "Checking account setup…"
-              : requiresInvitation
-                ? "Enter the invitation code provided by your shop owner."
-                : "Create the first administrator account for this shop."
-            : "Sign in to manage your shop’s appointments."}
+              : firstAdminSetup
+                ? "Create the first owner account for the existing Forge & Fade shop."
+                : "For staff invited to an existing shop. Use the work email and invitation code from your shop owner."
+            : "Shop owners and staff can sign in here to access their dashboard."}
         </p>
+        {signup && (
+          <p>
+            Opening a new barbershop? <Link to="/admin/register-shop">Register your shop</Link>
+          </p>
+        )}
         {error && (
           <div role="alert" className="admin-access__error">
             {error}
@@ -139,7 +136,7 @@ export default function AdminAccess({ signup = false }) {
             Retry
           </button>
         )}
-        <form onSubmit={submit}>
+        <form className={signup ? "admin-access__signup-fields" : undefined} onSubmit={submit}>
           {signup && (
             <label htmlFor="admin-name">
               Full name
@@ -210,7 +207,7 @@ export default function AdminAccess({ signup = false }) {
             </label>
           )}
           {signup && requiresInvitation && (
-            <label htmlFor="admin-invitation">
+            <label className="admin-access__invitation" htmlFor="admin-invitation">
               Invitation code
               <input
                 id="admin-invitation"
@@ -229,24 +226,33 @@ export default function AdminAccess({ signup = false }) {
             className="btn btn-primary admin-access__submit"
             disabled={busy || checking || !ready}
           >
-            {busy ? "Please wait…" : signup ? "Create admin account" : "Sign in to dashboard"}
+            {busy
+              ? "Please wait…"
+              : signup
+                ? firstAdminSetup
+                  ? "Create owner account"
+                  : "Join your shop"
+                : "Sign in to dashboard"}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>
         {!signup && (
-          <p>
+          <p className="admin-access__recovery">
             <Link to="/admin/forgot-password">Forgot your password?</Link>
           </p>
         )}
-        <p className="admin-access__switch">
-          {signup ? "Already an administrator?" : "Need an admin account?"}{" "}
-          <Link to={signup ? "/admin/signin" : "/admin/signup"}>
-            {signup ? "Sign in" : "Sign up"}
-          </Link>
-        </p>
-        <Link className="admin-access__back" to="/">
-          Back to the website
-        </Link>
+        {signup ? (
+          <div className="admin-access__signup-footer">
+            <p>
+              Already have an account? <Link to="/admin/signin">Sign in</Link>
+            </p>
+            <Link to="/">Back to the website</Link>
+          </div>
+        ) : (
+          <p className="admin-access__registration">
+            Opening a new barbershop? <Link to="/admin/register-shop">Register your shop</Link>
+          </p>
+        )}
       </section>
     </main>
   );

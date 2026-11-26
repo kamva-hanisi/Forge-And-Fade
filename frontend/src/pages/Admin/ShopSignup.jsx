@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { useAdmin } from "../../context/AdminContext";
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
+import AdminAccessIntro from "./AdminAccessIntro";
 import "./AdminAccess.scss";
 
 export default function ShopSignup() {
@@ -43,33 +45,23 @@ export default function ShopSignup() {
     }
   };
   return (
-    <main className="admin-access container">
-      <div className="admin-access__intro">
-        <span className="section-label">For barbershop owners</span>
-        <h1 className="section-title">
-          Your business.
-          <br />
-          Your own space.
-        </h1>
-        <p>
-          Create a separate shop account. Your bookings and staff access are kept separate from
-          other shops.
-        </p>
-        <p>
-          Joining an existing team?{" "}
-          <Link to="/admin/signup">Use your staff invitation instead.</Link>
-        </p>
-      </div>
+    <main className="admin-access admin-access--branded admin-access--signup container">
+      <AdminAccessIntro title="Your business." accent="Your own space.">
+        Give your barbershop its own workspace to manage appointments and staff access.
+      </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="shop-signup-title">
         <h2 id="shop-signup-title">Register your shop</h2>
-        <p>You’ll be its owner. Staff join through invitations, not this form.</p>
+        <p>
+          For owners opening a new barbershop. Create your shop and owner account, then invite your
+          team.
+        </p>
         {error && (
           <p className="admin-access__error" role="alert">
             {error}
           </p>
         )}
         <form onSubmit={submit}>
-          <fieldset className="shop-signup-fields" disabled={busy}>
+          <fieldset className="admin-access__fields admin-access__signup-fields" disabled={busy}>
             <FormGuard
               value={fields.website}
               onChange={(value) => setFields((previous) => ({ ...previous, website: value }))}
@@ -152,14 +144,18 @@ export default function ShopSignup() {
                 onChange={change}
               />
             </label>
-            <button className="btn btn-primary" disabled={busy}>
+            <button className="btn btn-primary admin-access__submit" disabled={busy}>
               {busy ? "Creating your shop…" : "Create shop account"}
+              <ArrowRight size={16} aria-hidden="true" />
             </button>
           </fieldset>
         </form>
-        <p className="admin-access__switch">
-          Already registered? <Link to="/admin/signin">Sign in</Link>
-        </p>
+        <div className="admin-access__signup-footer">
+          <p>
+            Already registered? <Link to="/admin/signin">Sign in</Link>
+          </p>
+          <Link to="/admin/signup">Staff sign up with an invitation</Link>
+        </div>
       </section>
     </main>
   );

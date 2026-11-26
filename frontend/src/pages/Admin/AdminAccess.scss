@@ -1,6 +1,5 @@
 @use "../../styles/variables" as *;
 
-.shop-signup-fields,
 .admin-access__fields {
   border: 0;
   padding: 0;
@@ -174,6 +173,291 @@
     padding: 24px;
     nav {
       gap: 20px;
+    }
+  }
+}
+
+.admin-access.admin-access--branded {
+  --access-card-radius: 18px;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr);
+  align-items: stretch;
+  align-content: center;
+  gap: 0;
+  width: min(92%, 1080px);
+  padding: clamp(24px, 4vw, 52px) 0;
+
+  .admin-access__intro {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: clamp(28px, 4vw, 48px);
+    border: 1px solid #53402e;
+    border-radius: var(--access-card-radius) 0 0 var(--access-card-radius);
+    background: radial-gradient(ellipse at 100% 100%, #4b3422 0%, transparent 67%), #211c17;
+    color: #fff8ef;
+
+    .section-label {
+      margin: 0;
+      color: #ebc99e;
+      letter-spacing: 0.14em;
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      font-size: clamp(2.7rem, 4.6vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 400;
+
+      span {
+        display: inline-block;
+        color: #ebc99e;
+      }
+    }
+
+    > p {
+      color: #e9dacc;
+      line-height: 1.65;
+    }
+  }
+
+  .admin-access__photos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: 9px;
+    padding-top: 26px;
+
+    > div {
+      height: clamp(94px, 11vw, 140px);
+      border: 1px solid #9a7456;
+      border-radius: 8px;
+      background-color: #35281d;
+      background-size: cover;
+    }
+  }
+
+  .admin-access__photo-shop {
+    background-image: url("../../assets/hero-barber.jpg");
+    background-position: center 53%;
+  }
+
+  .admin-access__photo-tools {
+    background-image: url("../../assets/barber-tools.jpg");
+    background-position: 71% center;
+  }
+
+  .admin-access__staff {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-color: #775c45;
+    color: #e9dacc;
+
+    svg {
+      color: #ebc99e;
+    }
+  }
+
+  .admin-access__card {
+    padding: clamp(26px, 4vw, 46px);
+    border-color: #ded5c8;
+    border-left: 0;
+    border-radius: 0 var(--access-card-radius) var(--access-card-radius) 0;
+    background: #fffdf9;
+    box-shadow: 12px 12px 38px rgba(47, 35, 25, 0.08);
+
+    nav {
+      width: fit-content;
+      max-width: 100%;
+      gap: 4px;
+      margin-bottom: 24px;
+      padding: 4px;
+      border: 1px solid #e7ded3;
+      border-radius: 9px;
+      background: #f5efe7;
+
+      a {
+        min-height: 44px;
+        padding: 6px 13px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+      }
+
+      a[aria-current="page"] {
+        border: 1px solid #ded1c2;
+        background: $white;
+        color: #3e2b1a;
+      }
+    }
+
+    h2 {
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    > p {
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    form,
+    .admin-access__signup-fields {
+      gap: 16px;
+    }
+
+    form {
+      margin-top: 22px;
+    }
+
+    input {
+      min-height: 48px;
+      border-color: #d8cdbf;
+      border-radius: 7px;
+    }
+
+    .admin-access__submit {
+      justify-content: space-between;
+      margin-top: 2px;
+      border-radius: 7px;
+      background: #292019;
+      color: #fff8ef;
+
+      &:hover:not(:disabled) {
+        background: #4b3422;
+      }
+    }
+
+    .admin-access__recovery {
+      margin-top: 13px;
+    }
+
+    .admin-access__registration {
+      margin-top: 18px;
+      padding-top: 15px;
+      border-top: 1px solid #e7ded3;
+    }
+
+    .admin-access__signup-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      column-gap: 16px;
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #e7ded3;
+      color: $text-light;
+      font-size: $font-small;
+    }
+
+    p a,
+    .admin-access__signup-footer > a {
+      display: inline-block;
+      padding: 4px 0;
+      color: #754b24;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+
+  &.admin-access--recovery {
+    .admin-access__card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .admin-access__fields {
+      gap: 16px;
+    }
+
+    .admin-access__back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-color: #e7ded3;
+      color: #754b24;
+      font-weight: 600;
+      text-align: left;
+
+      &:hover {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    }
+  }
+}
+
+@media (min-width: 851px) {
+  .admin-access.admin-access--signup .admin-access__intro {
+    justify-content: center;
+  }
+}
+
+@media (min-width: 951px) {
+  .admin-access.admin-access--signup .admin-access__card {
+    h2 {
+      font-size: clamp(2rem, 3vw, 2.5rem);
+    }
+
+    .admin-access__signup-fields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .admin-access__invitation,
+    .admin-access__submit {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+@media (max-width: 850px) {
+  .admin-access.admin-access--branded {
+    grid-template-columns: minmax(0, 1fr);
+    width: min(92%, 580px);
+    align-content: start;
+
+    .admin-access__intro {
+      border-radius: var(--access-card-radius) var(--access-card-radius) 0 0;
+    }
+
+    .admin-access__card {
+      border-top: 0;
+      border-left: 1px solid #ded5c8;
+      border-radius: 0 0 var(--access-card-radius) var(--access-card-radius);
+    }
+  }
+}
+
+@media (max-width: 550px) {
+  .admin-access.admin-access--branded {
+    padding: 18px 0 28px;
+
+    .admin-access__intro,
+    .admin-access__card {
+      padding: 20px;
+    }
+
+    .admin-access__intro {
+      h1 {
+        margin: 12px 0 8px;
+        font-size: clamp(1.85rem, 7.1vw, 2.7rem);
+      }
+
+      > p {
+        font-size: $font-small;
+      }
+    }
+
+    .admin-access__photos {
+      padding-top: 14px;
+
+      > div {
+        height: 64px;
+      }
     }
   }
 }

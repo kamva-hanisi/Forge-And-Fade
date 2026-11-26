@@ -9,6 +9,15 @@ import { shopPath } from "../../utils/shopLinks";
 import { BrandingEditor, MediaEditor } from "./ShopMediaEditor";
 import "./ShopManagement.scss";
 
+const managementTabs = [
+  ["staff", "Staff"],
+  ["services", "Services"],
+  ["branding", "Branding"],
+  ["portfolios", "Barber portfolios"],
+  ["hours", "Business hours"],
+  ["schedules", "Barber schedules"],
+];
+
 function CatalogEditor({ item, type, busy, save }) {
   const [draft, setDraft] = useState({ name: "", price: "", duration: 30, active: true, ...item });
   const [confirm, setConfirm] = useState(false);
@@ -328,7 +337,9 @@ export default function ShopManagement() {
   const { session, setSession } = useAdmin();
   const allowed = session.user.permissions?.includes("shop.manage");
   const [params] = useSearchParams();
-  const [tab, setTab] = useState(() => (params.get("tab") === "hours" ? "hours" : "staff"));
+  const [tab, setTab] = useState(
+    () => managementTabs.find(([value]) => value === params.get("tab"))?.[0] || "staff",
+  );
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -445,14 +456,7 @@ export default function ShopManagement() {
         </p>
       )}
       <nav className="shop-management__tabs" aria-label="Shop management sections">
-        {[
-          ["staff", "Staff"],
-          ["services", "Services"],
-          ["branding", "Branding"],
-          ["portfolios", "Barber portfolios"],
-          ["hours", "Business hours"],
-          ["schedules", "Barber schedules"],
-        ].map(([value, label]) => (
+        {managementTabs.map(([value, label]) => (
           <button
             key={value}
             className={`btn ${tab === value ? "btn-primary" : "btn-outline"}`}

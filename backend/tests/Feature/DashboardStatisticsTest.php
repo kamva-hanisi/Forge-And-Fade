@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\ContactMessage;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DashboardStatisticsTest extends TestCase
@@ -78,8 +80,46 @@ class DashboardStatisticsTest extends TestCase
         $this->booking();
         $this->booking(['barber_id' => 2]);
         $this->getJson('/api/admin/dashboard')->assertOk()->assertJsonPath('today_count', 1)
+            ->assertJsonCount(1, 'today_appointments')
+            ->assertJsonPath('new_message_count', null)
+            ->assertJsonPath('failed_email_count', null)
             ->assertJsonPath('statistics.confirmed_count', 1)->assertJsonPath('statistics.booked_values', null)
             ->assertJsonPath('statistics.unpriced_count', null);
+    }
+
+    public function test_overview_shows_todays_schedule_and_shop_scoped_attention_counts(): void
+    {
+        $this->member('manager');
+        $later = $this->booking();
+        $earlier = $this->booking(['booking_time' => '09:00']);
+        $this->booking(['booking_time' => '12:00', 'status' => 'cancelled']);
+        $this->booking(['booking_date' => '2026-11-03']);
+        $other = Shop::create(['name' => 'Other Shop', 'slug' => 'other-overview', 'timezone' => 'Africa/Johannesburg']);
+        $otherBooking = $this->booking(['shop_id' => $other->id]);
+        foreach ([
+            [$later->id, 'confirmation', 0, 'failed'],
+            [$later->id, 'reminder', 0, 'failed'],
+            [$earlier->id, 'confirmation', 0, 'failed'],
+            [$earlier->id, 'confirmation', 1, 'sent'],
+            [$otherBooking->id, 'confirmation', 0, 'failed'],
+        ] as [$id, $kind, $revision, $status]) {
+            DB::table('booking_emails')->insert(['booking_id' => $id, 'kind' => $kind, 'revision' => $revision,
+                'status' => $status, 'available_at' => now()]);
+        }
+
+        foreach ([[1, 'new'], [1, 'read'], [$other->id, 'new']] as [$shopId, $status]) {
+            ContactMessage::create(['shop_id' => $shopId, 'status' => $status,
+                'name' => 'Customer', 'email' => 'enquiry@example.com', 'message' => 'Is there availability?']);
+        }
+
+        $this->getJson('/api/admin/dashboard')->assertOk()
+            ->assertJsonPath('today_count', 2)->assertJsonCount(2, 'today_appointments')
+            ->assertJsonPath('today_appointments.0.id', $earlier->id)
+            ->assertJsonPath('today_appointments.1.id', $later->id)
+            ->assertJsonMissingPath('today_appointments.0.email')
+            ->assertJsonPath('new_message_count', 1)->assertJsonPath('failed_email_count', 2);
+        $this->getJson('/api/admin/bookings?email_status=failed')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $later->id);
     }
 
     public function test_today_and_start_time_boundaries_use_the_shop_timezone(): void

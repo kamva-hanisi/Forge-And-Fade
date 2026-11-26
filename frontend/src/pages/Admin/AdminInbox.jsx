@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
 import { useAdmin } from "../../context/AdminContext";
@@ -49,8 +49,13 @@ function ReplyEditor({ enquiry, saving, onSend, onClose }) {
 export default function AdminInbox() {
   const { session, setSession } = useAdmin();
   const allowed = session.user.permissions?.includes("messages.manage");
+  const [params] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({ search: "", status: "", page: 1 });
+  const [filters, setFilters] = useState(() => ({
+    search: "",
+    status: params.get("status") === "new" ? "new" : "",
+    page: 1,
+  }));
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

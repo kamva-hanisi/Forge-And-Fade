@@ -2,9 +2,127 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
-import { CalendarDays, Clock3, Ban, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Clock3,
+  Inbox,
+  MailWarning,
+  Plus,
+  Scissors,
+  Settings2,
+  ShieldCheck,
+  UserPlus,
+} from "lucide-react";
 import { useAdmin } from "../../context/AdminContext";
 import ShopProfile from "./ShopProfile";
+import "./AdminDashboard.scss";
+
+const todayLink = "/admin/appointments?view=today&status=confirmed";
+const dashboardDate = new Intl.DateTimeFormat("en-ZA", {
+  dateStyle: "full",
+  timeZone: "UTC",
+});
+
+function DashboardOverview({ title, shopName, data }) {
+  return (
+    <div className="staff-dashboard__overview">
+      <header className="staff-dashboard__hero">
+        <div>
+          <p className="staff-dashboard__shop">{shopName || "Forge & Fade"}</p>
+          <h1>{title}</h1>
+          {data && (
+            <p className="staff-dashboard__date">
+              <CalendarDays size={16} aria-hidden="true" />
+              <span>
+                <time dateTime={data.today}>{dashboardDate.format(new Date(data.today))}</time>
+                <small>
+                  {data.timezone === "Africa/Johannesburg" ? "South Africa time" : data.timezone}
+                </small>
+              </span>
+            </p>
+          )}
+        </div>
+        <div className="staff-dashboard__photos" aria-hidden="true">
+          <div className="staff-dashboard__photo-shop" />
+          <div className="staff-dashboard__photo-tools" />
+        </div>
+      </header>
+      {data && (
+        <div className="staff-dashboard__metrics" aria-label="Shop overview" role="group">
+          {[
+            ["Today’s appointments", data.today_count, CalendarDays, todayLink, "View schedule"],
+            [
+              "New contact messages",
+              data.new_message_count,
+              Inbox,
+              "/admin/inbox?status=new",
+              "Open inbox",
+            ],
+            [
+              "Failed booking emails",
+              data.failed_email_count,
+              MailWarning,
+              "/admin/appointments?email_status=failed",
+              "Review delivery",
+            ],
+          ]
+            .filter(([, value]) => value != null)
+            .map(([label, value, Icon, to, action]) => (
+              <Link
+                className="staff-dashboard__metric"
+                data-attention={Icon === MailWarning && value > 0}
+                key={label}
+                to={to}
+              >
+                <span className="staff-dashboard__icon">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <span className="staff-dashboard__metric-label">{label}</span>
+                <strong>{value}</strong>
+                <span className="staff-dashboard__action">
+                  {action} <ArrowRight size={16} aria-hidden="true" />
+                </span>
+              </Link>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DashboardOwnerTools({ permissions }) {
+  const links = [
+    ["Shop settings", "/admin/settings/profile", Settings2, "shop.write"],
+    ["Services", "/admin/management?tab=services", Scissors, "shop.manage"],
+    ["Business hours", "/admin/management?tab=hours", Clock3, "shop.manage"],
+    ["Invite staff", "/admin/settings/invite", UserPlus, "members.invite"],
+  ].filter(([, , , permission]) => permissions?.includes(permission));
+
+  if (!links.length) return null;
+
+  return (
+    <section
+      className="staff-card staff-dashboard__panel staff-dashboard__owner-tools"
+      aria-labelledby="dashboard-owner-tools"
+    >
+      <div className="staff-card-heading">
+        <h2 id="dashboard-owner-tools">Owner tools</h2>
+      </div>
+      <div className="staff-dashboard__tools">
+        {links.map(([label, to, Icon]) => (
+          <Link key={label} to={to}>
+            <span className="staff-dashboard__tool-icon">
+              <Icon size={18} aria-hidden="true" />
+            </span>
+            <span>{label}</span>
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 const describeError = (error) =>
   Object.values(error.response?.data?.errors || {})
@@ -13,7 +131,7 @@ const describeError = (error) =>
   error.response?.data?.message ||
   "Unable to connect. Please try again.";
 
-export default function AdminSettings({ page = "dashboard" }) {
+export default function AdminSettings({ page = "dashboard", dashboard }) {
   const { session, setSession } = useAdmin();
   const [data, setData] = useState(null);
   const [name, setName] = useState(session.user.name);
@@ -99,10 +217,6 @@ export default function AdminSettings({ page = "dashboard" }) {
     }
   };
   const titles = {
-    dashboard: [
-      "Dashboard",
-      "A clear view of your shop’s schedule. All times are South Africa time.",
-    ],
     profile: ["My profile", "Manage the name shown on your administrator account."],
     security: ["Security", "Keep your administrator account protected."],
     invite: [
@@ -112,15 +226,18 @@ export default function AdminSettings({ page = "dashboard" }) {
   };
   if (page === "invite" && !canInvite) return <Navigate to="/admin" replace />;
   return (
-    <main className="staff-page">
-      <header className="staff-page-heading">
-        <span className="section-label">
-          {session.user.shop?.name || "Forge & Fade"} ·{" "}
-          {page === "dashboard" ? "Overview" : "Settings"}
-        </span>
-        <h1 className="section-title">{titles[page][0]}</h1>
-        <p>{titles[page][1]}</p>
-      </header>
+    <main className={page === "dashboard" ? "staff-page staff-dashboard" : "staff-page"}>
+      {page === "dashboard" ? (
+        <DashboardOverview title={dashboard.title} shopName={session.user.shop?.name} data={data} />
+      ) : (
+        <header className="staff-page-heading">
+          <span className="section-label">
+            {session.user.shop?.name || "Forge & Fade"} · Settings
+          </span>
+          <h1 className="section-title">{titles[page][0]}</h1>
+          <p>{titles[page][1]}</p>
+        </header>
+      )}
       {error && (
         <div className="admin-error" role="alert">
           {error}
@@ -151,21 +268,92 @@ export default function AdminSettings({ page = "dashboard" }) {
               for help.
             </p>
           )}
-          <div className="staff-stats">
-            {[
-              ["Today’s appointments", data.today_count, CalendarDays],
-              ["Upcoming appointments", data.upcoming_count, Clock3],
-              ["Cancelled · all time", data.cancelled_count, Ban],
-            ].map(([label, value, Icon]) => (
-              <section className="staff-card" key={label}>
-                <Icon size={22} aria-hidden="true" />
-                <p>{label}</p>
-                <strong>{value}</strong>
-              </section>
-            ))}
+          {dashboard.kind === "owner" && (
+            <DashboardOwnerTools permissions={session.user.permissions} />
+          )}
+          <div className="staff-dashboard__schedule">
+            <section className="staff-card staff-dashboard__panel" aria-labelledby="today-schedule">
+              <div className="staff-card-heading">
+                <div>
+                  <h2 id="today-schedule">Today’s schedule</h2>
+                  <p>
+                    {session.user.role === "barber"
+                      ? "Confirmed appointments assigned to you"
+                      : "Confirmed appointments in start-time order"}
+                  </p>
+                </div>
+                <div className="staff-dashboard__schedule-actions">
+                  <Link className="staff-dashboard__action" to={todayLink}>
+                    View day <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                  {dashboard.kind === "staff" &&
+                    data.shop_status === "active" &&
+                    session.user.permissions?.includes("bookings.write") && (
+                      <Link className="staff-dashboard__create" to="/admin/appointments/new">
+                        <Plus size={16} aria-hidden="true" /> New appointment
+                      </Link>
+                    )}
+                </div>
+              </div>
+              {data.today_appointments?.length ? (
+                <>
+                  <ul className="staff-dashboard__appointments">
+                    {data.today_appointments.map((booking) => (
+                      <li key={booking.id}>
+                        <time dateTime={booking.booking_time.slice(0, 5)}>
+                          {booking.booking_time.slice(0, 5)}
+                        </time>
+                        <div>
+                          <strong>{booking.customer_name}</strong>
+                          <p>
+                            {booking.service_name} · {booking.barber_name}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  {data.today_count > data.today_appointments.length && (
+                    <p className="staff-dashboard__more">
+                      Showing {data.today_appointments.length} of {data.today_count}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="staff-dashboard__empty">
+                  <CalendarDays size={24} aria-hidden="true" />
+                  <p>No confirmed appointments scheduled for today.</p>
+                </div>
+              )}
+            </section>
+            <section className="staff-card staff-dashboard__panel" aria-labelledby="coming-up">
+              <div className="staff-card-heading">
+                <div>
+                  <h2 id="coming-up">Coming up next</h2>
+                  <p>{data.upcoming_count} upcoming confirmed appointments</p>
+                </div>
+                <Clock3 size={20} aria-hidden="true" />
+              </div>
+              {data.next.length ? (
+                <ul className="staff-dashboard__next">
+                  {data.next.map((booking) => (
+                    <li key={booking.id}>
+                      <strong>{booking.customer_name}</strong>
+                      <p>
+                        {booking.service_name} · {booking.barber_name}
+                      </p>
+                      <p>
+                        {booking.booking_date.slice(0, 10)} · {booking.booking_time.slice(0, 5)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No upcoming appointments.</p>
+              )}
+            </section>
           </div>
           {data.statistics && (
-            <section className="staff-card staff-report">
+            <section className="staff-card staff-report staff-dashboard__panel">
               <div className="staff-card-heading">
                 <div>
                   <h2>Booking activity</h2>
@@ -181,7 +369,6 @@ export default function AdminSettings({ page = "dashboard" }) {
                     value={days}
                     onChange={(event) => {
                       setError("");
-                      setData(null);
                       setDays(Number(event.target.value));
                     }}
                   >
@@ -200,6 +387,9 @@ export default function AdminSettings({ page = "dashboard" }) {
                 </p>
                 <p>
                   <strong>{data.past_count}</strong> earlier confirmed appointments · all time
+                </p>
+                <p>
+                  <strong>{data.cancelled_count}</strong> cancelled appointments · all time
                 </p>
               </div>
               {data.statistics.booked_values !== null && (
@@ -266,36 +456,6 @@ export default function AdminSettings({ page = "dashboard" }) {
               )}
             </section>
           )}
-          <section className="staff-card">
-            <div className="staff-card-heading">
-              <div>
-                <h2>Coming up next</h2>
-                <p>Your next five confirmed appointments.</p>
-              </div>
-              <Link className="btn btn-outline" to="/admin/appointments">
-                View appointments <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            </div>
-            {data.next.length ? (
-              <div className="staff-upcoming">
-                {data.next.map((booking) => (
-                  <article key={booking.id}>
-                    <div>
-                      <h3>{booking.customer_name}</h3>
-                      <p>
-                        {booking.service_name} · {booking.barber_name}
-                      </p>
-                    </div>
-                    <p>
-                      {booking.booking_date.slice(0, 10)} · {booking.booking_time.slice(0, 5)}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p>No upcoming appointments yet. New bookings will appear here.</p>
-            )}
-          </section>
         </>
       )}
       {page !== "dashboard" && data && (

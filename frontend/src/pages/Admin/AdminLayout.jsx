@@ -19,11 +19,11 @@ import {
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
 import { useAdmin } from "../../context/AdminContext";
+import { adminDashboard } from "../../utils/adminDashboard";
 import { shopPath } from "../../utils/shopLinks";
 import "./AdminWorkspace.scss";
 
 const items = [
-  ["/admin", "Dashboard", LayoutDashboard],
   ["/admin/appointments", "Appointments", CalendarDays],
   ["/admin/inbox", "Contact inbox", Mail],
   ["/admin/management", "Shop management", SlidersHorizontal],
@@ -43,7 +43,9 @@ export default function AdminLayout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!session) return <Navigate to="/admin/signin" replace />;
-  const current = [...items, ...settings].find(
+  const dashboard = adminDashboard(session.user.role);
+  const navigation = [[dashboard.path, dashboard.title, LayoutDashboard], ...items];
+  const current = [...navigation, ...settings].find(
     ([path]) =>
       path === pathname || (path === "/admin/appointments" && pathname.startsWith(path + "/")),
   );
@@ -97,7 +99,7 @@ export default function AdminLayout() {
           <span className="section-label">Administration</span>
         </div>
         <nav aria-label="Admin sidebar">
-          {items
+          {navigation
             .filter(
               ([path]) =>
                 (path !== "/admin/inbox" ||
@@ -166,7 +168,7 @@ export default function AdminLayout() {
         <div className="staff-topbar">
           <span>
             {pathname.includes("/settings/") ? "Settings / " : "Administration / "}
-            <strong>{current?.[1] || "Dashboard"}</strong>
+            <strong>{current?.[1] || dashboard.title}</strong>
           </span>
           <span className="staff-topbar-name">{session.user.name}</span>
         </div>

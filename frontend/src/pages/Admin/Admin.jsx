@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import "./Admin.scss";
 import PaymentPanel from "./PaymentPanel";
@@ -232,8 +232,14 @@ export default function Admin() {
   const { session, setSession } = useAdmin();
   const token = session?.token || "";
   const canManageBookings = session?.user.permissions?.includes("bookings.write");
-  const [filters, setFilters] = useState(emptyFilters);
-  const [query, setQuery] = useState({ ...emptyFilters, page: 1 });
+  const [params] = useSearchParams();
+  const [filters, setFilters] = useState(() => ({
+    ...emptyFilters,
+    view: params.get("view") === "today" ? "today" : "all",
+    status: params.get("status") === "confirmed" ? "confirmed" : "",
+    email_status: canManageBookings && params.get("email_status") === "failed" ? "failed" : "",
+  }));
+  const [query, setQuery] = useState(() => ({ ...filters, page: 1 }));
   const [result, setResult] = useState(null);
   const [barbers, setBarbers] = useState([]);
   const [busy, setBusy] = useState(false);

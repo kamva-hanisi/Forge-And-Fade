@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { formError } from "../../utils/formError";
 import { useAdmin } from "../../context/AdminContext";
+import AdminAccessIntro from "./AdminAccessIntro";
 import "./AdminAccess.scss";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -48,24 +49,16 @@ export default function AdminRecovery({ reset = false }) {
   };
 
   return (
-    <main className="admin-access container">
-      <div className="admin-access__intro">
-        <span className="section-label">Forge & Fade · Administration</span>
-        <h1 className="section-title">Get back to your shop.</h1>
-        <p>
-          Secure recovery for shop owners and authorized staff. Customer bookings do not need an
-          account.
-        </p>
-        <span className="admin-access__staff">
-          <ShieldCheck size={18} aria-hidden="true" /> Your permissions stay unchanged
-        </span>
-      </div>
+    <main className="admin-access admin-access--branded admin-access--recovery container">
+      <AdminAccessIntro title="Get back" accent="to your shop.">
+        Recover access to the tools you use to manage appointments and run your shop.
+      </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="recovery-title">
         <h2 id="recovery-title">{reset ? "Choose a new password" : "Forgot your password?"}</h2>
         <p>
           {reset
             ? "Recovery links expire after 60 minutes and can only be used once. Resetting signs you out on every device."
-            : "Enter your admin email. If it matches an account, we’ll email a recovery link. You do not need an invitation to recover an existing account."}
+            : "Enter your work email. If it matches an admin account, we’ll send you a recovery link."}
         </p>
         {invalidLink && (
           <div className="admin-access__error" role="alert">
@@ -128,6 +121,7 @@ export default function AdminRecovery({ reset = false }) {
               )}
               <button className="btn btn-primary admin-access__submit" disabled={busy}>
                 {busy ? "Please wait…" : reset ? "Reset password" : "Send recovery link"}
+                <ArrowRight size={16} aria-hidden="true" />
               </button>
             </fieldset>
           </form>
@@ -138,7 +132,7 @@ export default function AdminRecovery({ reset = false }) {
           </p>
         )}
         <Link className="admin-access__back" to="/admin/signin">
-          Back to admin sign in
+          <ArrowLeft size={16} aria-hidden="true" /> Back to admin sign in
         </Link>
       </section>
     </main>

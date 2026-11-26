@@ -39,7 +39,10 @@ export default function Navbar({ admin = false }) {
                     Admin sign in
                   </NavLink>
                   <NavLink to="/admin/signup" onClick={closeMenu}>
-                    Admin sign up
+                    Staff sign up
+                  </NavLink>
+                  <NavLink to="/admin/register-shop" onClick={closeMenu}>
+                    Register your shop
                   </NavLink>
                 </>
               )}

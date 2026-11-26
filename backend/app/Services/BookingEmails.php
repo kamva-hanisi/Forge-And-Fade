@@ -21,16 +21,24 @@ class BookingEmails
 
     public static function filterFailed(Builder $bookings): void
     {
-        $bookings->whereExists(function (QueryBuilder $email) {
-            $email->selectRaw('1')->from('booking_emails as notice')
-                ->whereColumn('notice.booking_id', 'bookings.id')
-                ->whereIn('notice.kind', self::DASHBOARD_KINDS)
-                ->where('notice.status', 'failed')
-                ->whereNotExists(fn (QueryBuilder $newer) => $newer->selectRaw('1')->from('booking_emails as newer')
-                    ->whereColumn('newer.booking_id', 'notice.booking_id')
-                    ->whereColumn('newer.kind', 'notice.kind')
-                    ->whereColumn('newer.revision', '>', 'notice.revision'));
-        });
+        $bookings->whereExists(self::failedDeliveries()->selectRaw('1')
+            ->whereColumn('notice.booking_id', 'bookings.id'));
+    }
+
+    public static function countFailed(Builder $bookings): int
+    {
+        return self::failedDeliveries()->whereIn('notice.booking_id', $bookings->select('bookings.id'))->count();
+    }
+
+    private static function failedDeliveries(): QueryBuilder
+    {
+        return DB::table('booking_emails as notice')
+            ->whereIn('notice.kind', self::DASHBOARD_KINDS)
+            ->where('notice.status', 'failed')
+            ->whereNotExists(fn (QueryBuilder $newer) => $newer->selectRaw('1')->from('booking_emails as newer')
+                ->whereColumn('newer.booking_id', 'notice.booking_id')
+                ->whereColumn('newer.kind', 'notice.kind')
+                ->whereColumn('newer.revision', '>', 'notice.revision'));
     }
 
     public static function latestForBookings(Collection $bookings, bool $shopActive): Collection

@@ -8,6 +8,8 @@ import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
 import PublicShop from "./pages/Booking/PublicShop";
 import { resolveShopSlug, shopPath } from "./utils/shopLinks";
+import { adminDashboard } from "./utils/adminDashboard";
+import { useAdmin } from "./context/AdminContext";
 import Terms from "./pages/Terms/Terms";
 import Privacy from "./pages/Terms/Privacy";
 import Contact from "./pages/Contact/Contact";
@@ -30,6 +32,15 @@ function BookingRedirect({ manage = false }) {
   const pathname = shopPath(resolveShopSlug(undefined, params.get("shop")), manage);
   params.delete("shop");
   return <Navigate to={{ pathname, search: params.toString() }} replace />;
+}
+
+function DashboardHome({ kind }) {
+  const { session } = useAdmin();
+  const dashboard = adminDashboard(session.user.role);
+
+  if (kind !== dashboard.kind) return <Navigate to={dashboard.path} replace />;
+
+  return <AdminSettings key={dashboard.kind} dashboard={dashboard} />;
 }
 
 function App() {
@@ -71,7 +82,9 @@ function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminSettings key="dashboard" />} />
+          <Route index element={<DashboardHome />} />
+          <Route path="owner" element={<DashboardHome kind="owner" />} />
+          <Route path="staff" element={<DashboardHome kind="staff" />} />
           <Route path="appointments" element={<Admin />} />
           <Route path="appointments/new" element={<AdminBooking />} />
           <Route path="inbox" element={<AdminInbox />} />

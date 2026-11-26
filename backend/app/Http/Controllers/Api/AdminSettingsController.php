@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactMessage;
+use App\Services\BookingEmails;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
@@ -30,9 +32,12 @@ class AdminSettingsController extends Controller
         $clock = now($shop->timezone);
         $today = $clock->toDateString();
         $from = $clock->copy()->subDays($days - 1)->toDateString();
-        $period = ShopAccess::bookings($request)->whereBetween('booking_date', [$from, $today]);
+        $bookings = ShopAccess::bookings($request);
+        $todayBookings = (clone $bookings)->whereDate('booking_date', $today)->where('status', 'confirmed');
+        $period = (clone $bookings)->whereBetween('booking_date', [$from, $today]);
         $confirmed = (clone $period)->where('status', 'confirmed');
-        $canReport = in_array('reports.read', ShopAccess::permissions($request->attributes->get('shop_role')), true);
+        $permissions = ShopAccess::permissions($request->attributes->get('shop_role'));
+        $canReport = in_array('reports.read', $permissions, true);
         $statistics = [
             'days' => $days, 'from' => $from, 'to' => $today,
             'confirmed_count' => (clone $confirmed)->count(),
@@ -45,17 +50,23 @@ class AdminSettingsController extends Controller
                 ->groupBy('currency')->orderBy('currency')->get() : null,
         ];
 
-        $upcoming = ShopAccess::bookings($request)->byStart($clock, false);
+        $upcoming = (clone $bookings)->byStart($clock, false);
 
         return response()->json([
             'today' => $today,
             'timezone' => $shop->timezone,
             'shop_status' => $shop->status,
             'statistics' => $statistics,
-            'past_count' => ShopAccess::bookings($request)->byStart($clock, true)->count(),
-            'today_count' => ShopAccess::bookings($request)->whereDate('booking_date', $today)->where('status', 'confirmed')->count(),
+            'past_count' => (clone $bookings)->byStart($clock, true)->count(),
+            'today_count' => (clone $todayBookings)->count(),
+            'today_appointments' => $todayBookings->orderBy('booking_time')->orderBy('id')->limit(5)->toBase()
+                ->get(['id', 'booking_time', 'customer_name', 'service_name', 'barber_name']),
+            'new_message_count' => in_array('messages.manage', $permissions, true)
+                ? ContactMessage::where('shop_id', $shop->id)->where('status', 'new')->count() : null,
+            'failed_email_count' => in_array('bookings.write', $permissions, true)
+                ? BookingEmails::countFailed(clone $bookings) : null,
             'upcoming_count' => (clone $upcoming)->count(),
-            'cancelled_count' => ShopAccess::bookings($request)->where('status', 'cancelled')->count(),
+            'cancelled_count' => (clone $bookings)->where('status', 'cancelled')->count(),
             'next' => $upcoming->orderBy('booking_date')->orderBy('booking_time')->limit(5)->get(),
         ])->header('Cache-Control', 'no-store');
     }
