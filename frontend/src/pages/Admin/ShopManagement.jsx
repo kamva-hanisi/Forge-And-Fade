@@ -336,6 +336,7 @@ function ScheduleEditor({ data, busy, save, business = false }) {
 export default function ShopManagement() {
   const { session, setSession } = useAdmin();
   const allowed = session.user.permissions?.includes("shop.manage");
+  const canManageMembers = session.user.permissions?.includes("members.manage");
   const [params] = useSearchParams();
   const [tab, setTab] = useState(
     () => managementTabs.find(([value]) => value === params.get("tab"))?.[0] || "staff",
@@ -397,12 +398,9 @@ export default function ShopManagement() {
   return (
     <main className="staff-page shop-management">
       <header className="staff-page-heading">
-        <span className="section-label">{session.user.shop?.name} · Owner tools</span>
+        <span className="section-label">{session.user.shop?.name}</span>
         <h1 className="section-title">Shop management</h1>
-        <p>
-          Manage staff access, barber profiles, services and schedules. Changes affect only this
-          shop.
-        </p>
+        <p>Manage barber profiles, services and schedules for this shop.</p>
       </header>
       {readiness && !readiness.ready && (
         <section className="staff-card shop-management__setup" aria-labelledby="shop-setup-title">
@@ -542,24 +540,27 @@ export default function ShopManagement() {
           )}
           {tab === "staff" && (
             <>
-              <Link className="btn btn-outline" to="/admin/settings/invite">
-                Invite a staff member
-              </Link>
-              <p>
-                Manager: bookings, inbox and reports. Barber: assigned appointments only. Owners
-                cannot be changed here.
-              </p>
-              <div className="shop-management__grid">
-                {data.members.map((member) => (
-                  <MemberEditor
-                    key={`${data.version}-member-${member.id}`}
-                    member={member}
-                    barbers={data.barbers}
-                    busy={busy}
-                    save={save}
-                  />
-                ))}
-              </div>
+              {canManageMembers && (
+                <>
+                  <Link className="btn btn-outline" to="/admin/settings/invite">
+                    Invite a staff member
+                  </Link>
+                  <p>
+                    Managers handle bookings, inbox and reports. Barbers view assigned appointments.
+                  </p>
+                  <div className="shop-management__grid">
+                    {data.members.map((member) => (
+                      <MemberEditor
+                        key={`${data.version}-member-${member.id}`}
+                        member={member}
+                        barbers={data.barbers}
+                        busy={busy}
+                        save={save}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
               <h2>Barber profiles</h2>
               <p>
                 Profiles are bookable staff, not login accounts. Invite a barber account separately

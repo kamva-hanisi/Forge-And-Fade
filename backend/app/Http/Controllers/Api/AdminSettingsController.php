@@ -36,7 +36,7 @@ class AdminSettingsController extends Controller
         $todayBookings = (clone $bookings)->whereDate('booking_date', $today)->where('status', 'confirmed');
         $period = (clone $bookings)->whereBetween('booking_date', [$from, $today]);
         $confirmed = (clone $period)->where('status', 'confirmed');
-        $permissions = ShopAccess::permissions($request->attributes->get('shop_role'));
+        $permissions = $request->attributes->get('shop_permissions');
         $canReport = in_array('reports.read', $permissions, true);
         $statistics = [
             'days' => $days, 'from' => $from, 'to' => $today,
@@ -73,15 +73,13 @@ class AdminSettingsController extends Controller
 
     public function profile(Request $request)
     {
-        $this->authorizeAdmin($request);
-
-        return response()->json([...ShopAccess::identity($request->user(), $request->attributes->get('shop')->id),
+        return response()->json([...ShopAccess::accountIdentity($request),
             'joined_at' => $request->user()->created_at])->header('Cache-Control', 'no-store');
     }
 
     public function updateProfile(Request $request)
     {
-        $this->authorizeAdmin($request);
+        ShopAccess::accountIdentity($request);
         $input = $request->validate(['name' => 'required|string|max:100']);
         $request->user()->update($input);
         ShopAccess::audit($request, 'profile.updated');
@@ -91,7 +89,7 @@ class AdminSettingsController extends Controller
 
     public function password(Request $request)
     {
-        $this->authorizeAdmin($request);
+        ShopAccess::accountIdentity($request);
         $input = $request->validate(['current_password' => 'required|string|max:200', 'password' => 'required|string|min:12|max:200|confirmed|different:current_password']);
         DB::transaction(function () use ($request, $input) {
             $user = $request->user()->newQuery()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
@@ -145,7 +143,7 @@ class AdminSettingsController extends Controller
             }
         }
 
-        ShopAccess::audit($request, 'invitation.created', $id);
+        ShopAccess::audit($request, 'invitation.created', $id, ['role' => $input['role'] ?? 'manager', 'barber_id' => $input['barber_id'] ?? null]);
 
         return response()->json(['message' => $input['send_email'] ? 'Invitation accepted by the email server. Ask the recipient to check their inbox and spam folder.' : 'Private invitation created. Share it only with the named recipient.', 'link' => $link, 'expires_at' => $expires], 201)->header('Cache-Control', 'no-store');
     }

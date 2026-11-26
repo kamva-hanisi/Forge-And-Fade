@@ -53,7 +53,9 @@ class AdminRegistrationController extends Controller
                 DB::table('shop_memberships')->insert(['shop_id' => $invitation->shop_id ?? 1, 'user_id' => $user->id,
                     'role' => $invitation->role ?? 'owner', 'barber_id' => $invitation->barber_id ?? null, 'created_at' => now(), 'updated_at' => now()]);
                 DB::table('audit_events')->insert(['shop_id' => $invitation->shop_id ?? 1, 'user_id' => $user->id,
-                    'action' => 'membership.joined', 'subject_id' => $user->id, 'created_at' => now()]);
+                    'action' => 'membership.joined', 'subject_id' => $user->id,
+                    'details' => json_encode(['role' => $invitation->role ?? 'owner', 'barber_id' => $invitation->barber_id ?? null], JSON_THROW_ON_ERROR),
+                    'created_at' => now()]);
                 DB::table('admin_registration')->where('id', 1)->update(['claimed' => true]);
 
                 return response()->json([

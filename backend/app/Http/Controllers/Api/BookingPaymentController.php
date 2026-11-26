@@ -37,7 +37,7 @@ class BookingPaymentController extends Controller
 
     public function void(Request $request, int $payment)
     {
-        ShopAccess::authorize($request, 'shop.manage');
+        ShopAccess::authorize($request, 'payments.void');
 
         return DB::transaction(function () use ($request, $payment) {
             $shop = ShopCatalog::lock($request);

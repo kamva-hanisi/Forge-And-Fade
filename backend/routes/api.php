@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminMessageController;
 use App\Http\Controllers\Api\AdminRecoveryController;
 use App\Http\Controllers\Api\AdminRegistrationController;
+use App\Http\Controllers\Api\AdminRolesController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingPaymentController;
@@ -30,8 +31,16 @@ Route::post('/admin/register-shop', [ShopRegistrationController::class, 'store']
 Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/platform/overview', [PlatformController::class, 'index'])->middleware(['auth:sanctum', 'throttle:30,1']);
 Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
-Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
+Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/session', [AdminController::class, 'session']);
+    Route::get('/profile', [AdminSettingsController::class, 'profile']);
+    Route::patch('/profile', [AdminSettingsController::class, 'updateProfile']);
+    Route::put('/password', [AdminSettingsController::class, 'password'])->middleware('throttle:5,1');
+    Route::get('/roles', [AdminRolesController::class, 'index']);
+    Route::get('/roles/account', [AdminRolesController::class, 'account'])->middleware('throttle:30,1');
+    Route::put('/roles/accounts/{account}', [AdminRolesController::class, 'update'])->whereNumber('account')->middleware('throttle:20,1');
+});
+Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);
     Route::put('/management/branding', [ShopManagementController::class, 'branding'])->middleware('throttle:30,1');
@@ -51,9 +60,6 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::get('/messages', [AdminMessageController::class, 'index']);
     Route::post('/messages/{message}/reply', [AdminMessageController::class, 'reply'])->whereNumber('message')->middleware('throttle:10,1');
     Route::patch('/messages/{message}', [AdminMessageController::class, 'update'])->whereNumber('message')->middleware('throttle:30,1');
-    Route::get('/profile', [AdminSettingsController::class, 'profile']);
-    Route::patch('/profile', [AdminSettingsController::class, 'updateProfile']);
-    Route::put('/password', [AdminSettingsController::class, 'password'])->middleware('throttle:5,1');
     Route::get('/invitations', [AdminSettingsController::class, 'invitations']);
     Route::post('/invitations', [AdminSettingsController::class, 'invite'])->middleware('throttle:5,1');
     Route::get('/bookings', [AdminController::class, 'index']);

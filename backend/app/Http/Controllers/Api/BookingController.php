@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\BookingEmails;
 use App\Services\BookingSchedule;
+use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -43,6 +44,9 @@ class BookingController extends Controller
 
     public function catalog(Request $request)
     {
+        if ($request->attributes->has('shop_role')) {
+            ShopAccess::authorize($request, 'bookings.read');
+        }
         $shop = $request->attributes->get('shop');
         $paused = $shop->status !== 'active' && ! $request->attributes->has('shop_role');
 
@@ -112,6 +116,9 @@ class BookingController extends Controller
 
     public function availability(Request $request, BookingSchedule $schedule)
     {
+        if ($request->attributes->has('shop_role')) {
+            ShopAccess::authorize($request, 'bookings.read');
+        }
         $validated = $this->validateAppointment($request, false);
         $duration = ShopCatalog::services()[$validated['service_id']]['duration'];
         $barbers = $validated['barber_id'] === 'any' ? array_keys(ShopCatalog::barbers()) : [$validated['barber_id']];

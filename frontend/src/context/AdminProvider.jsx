@@ -51,9 +51,17 @@ export default function AdminProvider({ children }) {
     if (!adminPage || !stored) return;
 
     const controller = new AbortController();
-    const headers = adminHeaders({ token: stored.token, user: { shop: { id: stored.shopId } } });
-    axios
-      .get(`${apiUrl}/admin/session`, { headers, signal: controller.signal, timeout: 20000 })
+    const restore = (shopId) =>
+      axios.get(`${apiUrl}/admin/session`, {
+        headers: adminHeaders({ token: stored.token, user: { shop: { id: shopId } } }),
+        signal: controller.signal,
+        timeout: 20000,
+      });
+    restore(stored.shopId)
+      .catch((err) => {
+        if (stored.shopId && [403, 404].includes(err.response?.status)) return restore();
+        throw err;
+      })
       .then(({ data }) => setSession({ token: stored.token, user: data.user }))
       .catch((err) => {
         if (controller.signal.aborted) return;

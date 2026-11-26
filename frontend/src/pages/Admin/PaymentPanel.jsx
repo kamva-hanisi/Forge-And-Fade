@@ -55,7 +55,7 @@ export default function PaymentPanel({ booking, client, onSaved }) {
         </p>
       )}
       {((!payment && booking.status !== "cancelled") ||
-        (payment && session.user.permissions?.includes("shop.manage"))) && (
+        (payment && session.user.permissions?.includes("payments.void"))) && (
         <button
           type="button"
           className="btn btn-outline"

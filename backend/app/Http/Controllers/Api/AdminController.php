@@ -29,7 +29,7 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
             }
             $identity = ShopAccess::identity($user);
-            if (! $identity['permissions'] || (! $identity['shop'] && ! $user->is_platform_admin)) {
+            if (! $identity['permissions'] && ! $identity['website_role']) {
                 throw ValidationException::withMessages(['email' => 'Invalid administrator credentials.']);
             }
             DB::table('audit_events')->insert(['shop_id' => $identity['shop']['id'] ?? null,
@@ -44,9 +44,7 @@ class AdminController extends Controller
 
     public function session(Request $request)
     {
-        $shop = ShopAccess::authorize($request, 'bookings.read');
-
-        return response()->json(['user' => ShopAccess::identity($request->user(), $shop->id)])
+        return response()->json(['user' => ShopAccess::accountIdentity($request)])
             ->header('Cache-Control', 'no-store');
     }
 
@@ -91,7 +89,7 @@ class AdminController extends Controller
             'page' => 'nullable|integer|min:1',
         ]);
         $query = ShopAccess::bookings($request);
-        $permissions = ShopAccess::permissions($request->attributes->get('shop_role'));
+        $permissions = $request->attributes->get('shop_permissions');
         $canManageBookings = in_array('bookings.write', $permissions, true);
         if (($input['email_status'] ?? null) === 'failed') {
             abort_unless($canManageBookings, 403);

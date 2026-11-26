@@ -8,20 +8,29 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
+use App\Services\WebsiteAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class PlatformController extends Controller
 {
+    private function authorizePlatform(Request $request): void
+    {
+        $message = 'Platform administrator access is required.';
+        abort_unless(WebsiteAccess::canManagePlatform(WebsiteAccess::authorizeAccount($request, $message)), 403, $message);
+    }
+
     public function status(Request $request, int $shop)
     {
-        abort_unless($request->user()?->is_admin && $request->user()->is_platform_admin && $request->user()->tokenCan('admin'), 403, 'Platform administrator access is required.');
+        $this->authorizePlatform($request);
         $input = $request->validate(['status' => ['required', Rule::in(['active', 'suspended'])],
             'revision' => 'required|integer|min:0', 'confirm_slug' => 'required|string|max:80']);
 
         return DB::transaction(function () use ($request, $shop, $input) {
             $current = Shop::whereKey($shop)->lockForUpdate()->firstOrFail();
+            $request->user()->refresh();
+            $this->authorizePlatform($request);
             abort_unless(hash_equals($current->slug, $input['confirm_slug']), 422, 'Type the exact shop identifier to confirm this change.');
             abort_if($current->lifecycle_revision !== (int) $input['revision'], 409, 'This shop status changed. Refresh the overview before trying again.');
             if ($current->status !== $input['status']) {
@@ -36,7 +45,7 @@ class PlatformController extends Controller
 
     public function index(Request $request)
     {
-        abort_unless($request->user()?->is_admin && $request->user()->is_platform_admin && $request->user()->tokenCan('admin'), 403, 'Platform administrator access is required.');
+        $this->authorizePlatform($request);
         $input = $request->validate(['search' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1']);
         $search = trim($input['search'] ?? '');
         $shops = Shop::query()->select(['id', 'name', 'slug', 'settings', 'created_at', 'status', 'lifecycle_revision'])

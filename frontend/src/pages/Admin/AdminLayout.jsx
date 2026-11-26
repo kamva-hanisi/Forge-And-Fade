@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -15,11 +15,14 @@ import {
   Mail,
   SlidersHorizontal,
   Building2,
+  Shield,
 } from "lucide-react";
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
 import { useAdmin } from "../../context/AdminContext";
-import { adminDashboard } from "../../utils/adminDashboard";
+import { accessRoleLabel, adminDashboard, rolesPath } from "../../utils/adminDashboard";
+import { adminHeaders } from "../../utils/adminHeaders";
+import { formError } from "../../utils/formError";
 import { shopPath } from "../../utils/shopLinks";
 import "./AdminWorkspace.scss";
 
@@ -32,19 +35,25 @@ const items = [
 const settings = [
   ["/admin/settings/profile", "My profile", UserRound],
   ["/admin/settings/security", "Security", LockKeyhole],
+  [rolesPath, "Roles & Permissions", Shield],
   ["/admin/settings/invite", "Invite Member", UserPlus],
 ];
 
 export default function AdminLayout() {
   const { session, setSession } = useAdmin();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!session) return <Navigate to="/admin/signin" replace />;
   const dashboard = adminDashboard(session.user.role);
-  const navigation = [[dashboard.path, dashboard.title, LayoutDashboard], ...items];
+  const canReadBookings = session.user.permissions.includes("bookings.read");
+  const navigation = [
+    ...(canReadBookings ? [[dashboard.path, dashboard.title, LayoutDashboard]] : []),
+    ...items,
+  ];
   const current = [...navigation, ...settings].find(
     ([path]) =>
       path === pathname || (path === "/admin/appointments" && pathname.startsWith(path + "/")),
@@ -62,6 +71,24 @@ export default function AdminLayout() {
     } catch (err) {
       if (err.response?.status === 401) setSession(null);
       else setError("Unable to sign out. Check your connection and retry.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const switchShop = async (id) => {
+    setError("");
+    setBusy(true);
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/admin/session`,
+        { headers: { ...adminHeaders(session), "X-Shop-Id": id }, timeout: 20000 },
+      );
+      setSession({ token: session.token, user: data.user });
+      setOpen(false);
+      navigate("/admin", { replace: true });
+    } catch (failure) {
+      if (failure.response?.status === 401) setSession(null);
+      else setError(formError(failure));
     } finally {
       setBusy(false);
     }
@@ -98,15 +125,32 @@ export default function AdminLayout() {
           <Brand />
           <span className="section-label">Administration</span>
         </div>
+        {session.user.shops?.length > 1 && (
+          <label className="staff-shop-switcher">
+            Active shop
+            <select
+              value={session.user.shop?.id ?? ""}
+              onChange={(event) => switchShop(event.target.value)}
+              disabled={busy}
+            >
+              {session.user.shops.map((shop) => (
+                <option key={shop.id} value={shop.id}>
+                  {shop.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <nav aria-label="Admin sidebar">
           {navigation
             .filter(
               ([path]) =>
+                (path !== "/admin/appointments" || canReadBookings) &&
                 (path !== "/admin/inbox" ||
                   session.user.permissions?.includes("messages.manage")) &&
                 (path !== "/admin/management" ||
                   session.user.permissions?.includes("shop.manage")) &&
-                (path !== "/admin/platform" || session.user.role === "platform_admin"),
+                (path !== "/admin/platform" || session.user.platform_access),
             )
             .map(renderLink)}
           <div className="staff-settings">
@@ -132,12 +176,11 @@ export default function AdminLayout() {
           </div>
         </nav>
         <div className="staff-sidebar-bottom">
-          <Link
-            to={shopPath(session.user.shop?.slug || "forge-and-fade")}
-            className="staff-site-link"
-          >
-            View website <ArrowUpRight size={16} aria-hidden="true" />
-          </Link>
+          {session.user.shop && (
+            <Link to={shopPath(session.user.shop.slug)} className="staff-site-link">
+              View website <ArrowUpRight size={16} aria-hidden="true" />
+            </Link>
+          )}
           <div className="staff-identity">
             <span className="staff-avatar" aria-hidden="true">
               {session.user.name?.slice(0, 1).toUpperCase()}
@@ -145,7 +188,11 @@ export default function AdminLayout() {
             <div>
               <strong>{session.user.name}</strong>
               <small>
-                {session.user.role?.replace("_", " ") || "Staff"} · {session.user.shop?.name}
+                {accessRoleLabel(
+                  session.user.website_role ||
+                    (session.user.role === "owner" ? "shop_owner" : session.user.role),
+                )}
+                {session.user.shop && ` · ${session.user.shop.name}`}
               </small>
             </div>
           </div>
@@ -172,7 +219,7 @@ export default function AdminLayout() {
           </span>
           <span className="staff-topbar-name">{session.user.name}</span>
         </div>
-        <Outlet />
+        <Outlet key={session.user.shop?.id ?? "platform"} />
         {session.user.role === "barber" && (
           <p className="staff-read-only">
             Read-only staff access: only appointments assigned to your barber profile are visible.

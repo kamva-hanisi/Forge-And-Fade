@@ -8,7 +8,7 @@ import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
 import PublicShop from "./pages/Booking/PublicShop";
 import { resolveShopSlug, shopPath } from "./utils/shopLinks";
-import { adminDashboard } from "./utils/adminDashboard";
+import { adminDashboard, adminLanding, rolesPath } from "./utils/adminDashboard";
 import { useAdmin } from "./context/AdminContext";
 import Terms from "./pages/Terms/Terms";
 import Privacy from "./pages/Terms/Privacy";
@@ -25,6 +25,7 @@ import AdminInbox from "./pages/Admin/AdminInbox";
 import AdminBooking from "./pages/Admin/AdminBooking";
 import ShopManagement from "./pages/Admin/ShopManagement";
 import PlatformOverview from "./pages/Admin/PlatformOverview";
+import AdminRoles from "./pages/Admin/AdminRoles";
 
 function BookingRedirect({ manage = false }) {
   const { search } = useLocation();
@@ -37,10 +38,19 @@ function BookingRedirect({ manage = false }) {
 function DashboardHome({ kind }) {
   const { session } = useAdmin();
   const dashboard = adminDashboard(session.user.role);
-
-  if (kind !== dashboard.kind) return <Navigate to={dashboard.path} replace />;
+  const landing = adminLanding(session.user);
+  if (landing !== dashboard.path || kind !== dashboard.kind) {
+    return <Navigate to={landing} replace />;
+  }
 
   return <AdminSettings key={dashboard.kind} dashboard={dashboard} />;
+}
+
+function Appointments({ create = false }) {
+  const { session } = useAdmin();
+  const permission = create ? "bookings.write" : "bookings.read";
+  if (!session.user.permissions.includes(permission)) return <Navigate to={rolesPath} replace />;
+  return create ? <AdminBooking /> : <Admin />;
 }
 
 function App() {
@@ -85,8 +95,8 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="owner" element={<DashboardHome kind="owner" />} />
           <Route path="staff" element={<DashboardHome kind="staff" />} />
-          <Route path="appointments" element={<Admin />} />
-          <Route path="appointments/new" element={<AdminBooking />} />
+          <Route path="appointments" element={<Appointments />} />
+          <Route path="appointments/new" element={<Appointments create />} />
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="management" element={<ShopManagement />} />
           <Route path="platform" element={<PlatformOverview />} />
@@ -96,6 +106,7 @@ function App() {
             element={<AdminSettings key="security" page="security" />}
           />
           <Route path="settings/invite" element={<AdminSettings key="invite" page="invite" />} />
+          <Route path="settings/roles" element={<AdminRoles />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
         <Route path="/admin/signin" element={<AdminAccess key="admin-signin" />} />

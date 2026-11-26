@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Shop;
 use App\Services\ShopAccess;
+use App\Services\WebsiteAccess;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,25 +15,8 @@ class ResolveShop
     public function handle(Request $request, Closure $next, string $mode = 'public'): Response
     {
         if ($mode === 'admin') {
-            abort_unless($request->user()?->is_admin && $request->user()->tokenCan('admin'), 403);
-            $memberships = DB::table('shop_memberships')->where('user_id', $request->user()->id)->whereIn('role', ['owner', 'manager', 'barber']);
-            $requested = $request->header('X-Shop-Id');
-            if ($requested !== null) {
-                abort_unless(ctype_digit((string) $requested), 403);
-                $memberships->where('shop_id', $requested);
-            }
-            $membership = $memberships->orderBy('id')->first();
-            if ($request->user()->is_platform_admin) {
-                $shop = Shop::findOrFail($requested ?? $membership?->shop_id ?? 1);
-                $role = 'platform_admin';
-            } else {
-                abort_unless($membership && count(ShopAccess::permissions($membership->role)) > 0, 403);
-                abort_if($membership->role === 'barber' && ! $membership->barber_id, 403);
-                $shop = Shop::findOrFail($membership->shop_id);
-                $role = $membership->role;
-            }
-            $request->attributes->set('membership', $membership);
-            $request->attributes->set('shop_role', $role);
+            $selected = $this->shopContext($request);
+            $shop = Shop::findOrFail($selected->id);
         } else {
             $input = $request->validate(['shop' => 'sometimes|string|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/']);
             $shop = Shop::where('slug', $input['shop'] ?? 'forge-and-fade')->firstOrFail();
@@ -48,17 +32,27 @@ class ResolveShop
         return DB::transaction(function () use ($request, $shop, $mode, $next) {
             $current = Shop::whereKey($shop->id)->lockForUpdate()->firstOrFail();
             $request->attributes->set('shop', $current);
-            if ($mode === 'admin' && ! $request->user()->is_platform_admin) {
-                $membership = DB::table('shop_memberships')->where('shop_id', $current->id)->where('user_id', $request->user()->id)->whereIn('role', ['owner', 'manager', 'barber'])->first();
-                abort_unless($membership && count(ShopAccess::permissions($membership->role)) > 0, 403);
-                abort_if($membership->role === 'barber' && ! $membership->barber_id, 403);
-                $request->attributes->set('membership', $membership);
-                $request->attributes->set('shop_role', $membership->role);
+            if ($mode === 'admin') {
+                $request->user()->refresh();
+                $this->shopContext($request, $current->id);
             }
             $this->checkStatus($request, $current, $mode);
 
             return $next($request);
         }, 5);
+    }
+
+    private function shopContext(Request $request, ?int $shopId = null): Shop
+    {
+        $user = WebsiteAccess::authorizeAccount($request);
+        ['shop' => $shop, 'membership' => $membership, 'role' => $role, 'permissions' => $permissions]
+            = ShopAccess::context($user, $shopId ?? ShopAccess::requestedShop($request));
+        abort_unless($shop && $permissions, 403);
+        $request->attributes->set('membership', $membership);
+        $request->attributes->set('shop_role', $role);
+        $request->attributes->set('shop_permissions', $permissions);
+
+        return $shop;
     }
 
     private function checkStatus(Request $request, Shop $shop, string $mode): void

@@ -65,7 +65,7 @@ function ShopStatusControl({ shop, busy, save }) {
 
 export default function PlatformOverview() {
   const { session, setSession } = useAdmin();
-  const allowed = session?.user.role === "platform_admin";
+  const allowed = session?.user.platform_access;
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState({ search: "", page: 1, refresh: 0 });
   const [state, setState] = useState({ key: "", data: null, error: "" });

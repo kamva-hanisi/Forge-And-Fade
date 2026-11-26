@@ -45,6 +45,8 @@ class User extends Authenticatable
         return [
             'is_admin' => 'boolean',
             'is_platform_admin' => 'boolean',
+            'website_suspended' => 'boolean',
+            'website_access_version' => 'integer',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];

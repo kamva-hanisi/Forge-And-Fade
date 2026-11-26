@@ -42,9 +42,9 @@ class ShopManagementController extends Controller
                 'breaks' => $settings['breaks'] ?? config('booking.breaks'),
                 'closed_dates' => $settings['closed_dates'] ?? config('booking.closed_dates', []),
             ],
-            'members' => DB::table('shop_memberships')->join('users', 'users.id', '=', 'shop_memberships.user_id')
+            'members' => ShopAccess::allows($request, 'members.manage') ? DB::table('shop_memberships')->join('users', 'users.id', '=', 'shop_memberships.user_id')
                 ->where('shop_memberships.shop_id', $shop->id)->orderBy('shop_memberships.id')
-                ->get(['shop_memberships.id', 'users.name', 'users.email', 'users.is_platform_admin', 'shop_memberships.role', 'shop_memberships.barber_id']),
+                ->get(['shop_memberships.id', 'users.name', 'users.email', 'users.is_platform_admin', 'shop_memberships.role', 'shop_memberships.barber_id']) : [],
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -216,20 +216,23 @@ class ShopManagementController extends Controller
 
     public function member(Request $request, int $member)
     {
+        ShopAccess::authorize($request, 'members.manage');
+
         return $this->change($request, function ($shop, &$settings) use ($request, $member) {
             $target = DB::table('shop_memberships')->where('shop_id', $shop->id)->where('id', $member)->lockForUpdate()->first();
             abort_unless($target, 404);
             abort_if(DB::table('users')->where('id', $target->user_id)->where('is_platform_admin', true)->exists(), 403, 'Platform account access is managed through trusted server access.');
             abort_if($target->role === 'owner' || $target->user_id === $request->user()->id, 403, 'Owner and self access cannot be changed here.');
-            if ($request->isMethod('delete')) {
-                DB::table('shop_memberships')->where('id', $target->id)->update(['role' => 'revoked', 'barber_id' => null, 'updated_at' => now()]);
-                ShopAccess::audit($request, 'member.removed', $target->user_id);
-            } else {
+            $before = ['role' => $target->role, 'barber_id' => $target->barber_id];
+            $after = ['role' => 'revoked', 'barber_id' => null];
+            if (! $request->isMethod('delete')) {
                 $input = $request->validate(['role' => ['required', Rule::in(['manager', 'barber'])],
                     'barber_id' => ['required_if:role,barber', 'nullable', 'integer', Rule::in(array_keys(ShopCatalog::barbers()))]]);
-                DB::table('shop_memberships')->where('id', $target->id)->update(['role' => $input['role'],
-                    'barber_id' => $input['role'] === 'barber' ? $input['barber_id'] : null, 'updated_at' => now()]);
-                ShopAccess::audit($request, 'member.updated', $target->user_id);
+                $after = ['role' => $input['role'], 'barber_id' => $input['role'] === 'barber' ? (int) $input['barber_id'] : null];
+            }
+            if ($before !== $after) {
+                DB::table('shop_memberships')->where('id', $target->id)->update([...$after, 'updated_at' => now()]);
+                ShopAccess::audit($request, $after['role'] === 'revoked' ? 'member.removed' : 'member.updated', $target->user_id, compact('before', 'after'));
             }
         });
     }
