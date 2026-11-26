@@ -47,13 +47,13 @@ export default function ShopSignup() {
   return (
     <main className="admin-access admin-access--branded admin-access--signup container">
       <AdminAccessIntro title="Your business." accent="Your own space.">
-        Give your barbershop its own workspace to manage appointments and staff access.
+        Manage appointments and staff access in your own business workspace.
       </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="shop-signup-title">
-        <h2 id="shop-signup-title">Register your shop</h2>
+        <h2 id="shop-signup-title">Register your business</h2>
         <p>
-          For owners opening a new barbershop. Create your shop and owner account, then invite your
-          team.
+          Create your business and your Business Owner account. You’ll be signed in automatically
+          and can invite your team from the dashboard.
         </p>
         {error && (
           <p className="admin-access__error" role="alert">
@@ -67,7 +67,7 @@ export default function ShopSignup() {
               onChange={(value) => setFields((previous) => ({ ...previous, website: value }))}
             />
             <label>
-              Shop name
+              Business name
               <input
                 name="shop_name"
                 autoComplete="organization"
@@ -78,20 +78,20 @@ export default function ShopSignup() {
               />
             </label>
             <label>
-              Shop identifier
+              Business identifier
               <input
                 name="shop_slug"
                 autoComplete="off"
                 minLength={3}
                 maxLength={80}
                 pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                placeholder="your-barbershop"
+                placeholder="your-business"
                 required
                 value={fields.shop_slug}
                 onChange={change}
               />
               <small>
-                Use lowercase letters, numbers and hyphens. Each shop needs a unique identifier.
+                Use lowercase letters, numbers and hyphens. Each business needs a unique identifier.
               </small>
             </label>
             <label>
@@ -145,7 +145,7 @@ export default function ShopSignup() {
               />
             </label>
             <button className="btn btn-primary admin-access__submit" disabled={busy}>
-              {busy ? "Creating your shop…" : "Create shop account"}
+              {busy ? "Creating your business…" : "Create business and account"}
               <ArrowRight size={16} aria-hidden="true" />
             </button>
           </fieldset>

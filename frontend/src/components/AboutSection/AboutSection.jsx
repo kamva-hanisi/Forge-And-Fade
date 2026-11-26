@@ -16,7 +16,7 @@ const AboutSection = () => {
           </h2>
 
           <p>
-            Forge & Fade is a modern barbershop focused on quality cuts, clean fades and
+            Forge & Fade is a modern barbering business focused on quality cuts, clean fades and
             professional grooming.
           </p>
 

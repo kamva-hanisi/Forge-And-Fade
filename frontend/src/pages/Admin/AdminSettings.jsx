@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 import { adminHeaders } from "../../utils/adminHeaders";
+import { accessRoleLabel } from "../../utils/adminDashboard";
 import {
   ArrowRight,
   CalendarDays,
@@ -49,7 +50,7 @@ function DashboardOverview({ title, shopName, data }) {
         </div>
       </header>
       {data && (
-        <div className="staff-dashboard__metrics" aria-label="Shop overview" role="group">
+        <div className="staff-dashboard__metrics" aria-label="Business overview" role="group">
           {[
             ["Today’s appointments", data.today_count, CalendarDays, todayLink, "View schedule"],
             [
@@ -93,7 +94,7 @@ function DashboardOverview({ title, shopName, data }) {
 
 function DashboardOwnerTools({ permissions }) {
   const links = [
-    ["Shop settings", "/admin/settings/profile", Settings2, "shop.write"],
+    ["Business settings", "/admin/settings/profile", Settings2, "shop.write"],
     ["Services", "/admin/management?tab=services", Scissors, "shop.manage"],
     ["Business hours", "/admin/management?tab=hours", Clock3, "shop.manage"],
     ["Invite staff", "/admin/settings/invite", UserPlus, "members.invite"],
@@ -221,7 +222,7 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
     security: ["Security", "Keep your administrator account protected."],
     invite: [
       "Invite Member",
-      `Invite a trusted colleague to help manage ${session.user.shop?.name || "your shop"}.`,
+      `Invite a trusted colleague to help manage ${session.user.shop?.name || "your business"}.`,
     ],
   };
   if (page === "invite" && !canInvite) return <Navigate to="/admin" replace />;
@@ -263,7 +264,7 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
         <>
           {data.shop_status === "suspended" && (
             <p className="admin-error" role="status">
-              This shop is suspended. New bookings and operational changes are paused. Existing
+              This business is suspended. New bookings and operational changes are paused. Existing
               appointments remain available to view or cancel. Contact the platform administrator
               for help.
             </p>
@@ -473,7 +474,7 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
                 ? "Your account details for Forge & Fade."
                 : page === "security"
                   ? "Changing your password signs out all sessions, including this one."
-                  : "Choose the access this person needs. Only the shop owner can send invitations."}
+                  : "Choose the access this person needs. Only the business owner can send invitations."}
             </p>
             <form className="staff-form" onSubmit={submit}>
               {page === "profile" && (
@@ -634,13 +635,17 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
                 ? session.user.name
                 : page === "security"
                   ? "Your password is securely hashed. It is never displayed or emailed."
-                  : "An invitation grants real access to your shop’s administration. Keep the link private."}
+                  : "An invitation grants real access to your business’s administration. Keep the link private."}
             </p>
             {page === "profile" && (
               <>
                 <p className="staff-break">{data.email}</p>
                 <p>
-                  {session.user.role?.replace("_", " ") || "Staff"} · {session.user.shop?.name}
+                  {accessRoleLabel(
+                    session.user.website_role ||
+                      (session.user.role === "owner" ? "shop_owner" : session.user.role),
+                  )}
+                  {session.user.shop && ` · ${session.user.shop.name}`}
                 </p>
                 <Link to="/admin/settings/security">Manage security →</Link>
               </>

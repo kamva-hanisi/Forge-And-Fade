@@ -50,8 +50,8 @@ export default function AdminRecovery({ reset = false }) {
 
   return (
     <main className="admin-access admin-access--branded admin-access--recovery container">
-      <AdminAccessIntro title="Get back" accent="to your shop.">
-        Recover access to the tools you use to manage appointments and run your shop.
+      <AdminAccessIntro title="Get back" accent="to your business.">
+        Recover access to the tools you use to manage appointments and run your business.
       </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="recovery-title">
         <h2 id="recovery-title">{reset ? "Choose a new password" : "Forgot your password?"}</h2>

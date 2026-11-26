@@ -14,7 +14,7 @@ export default function AdminAccessIntro({ title, accent, children }) {
         <div className="admin-access__photo-tools" />
       </div>
       <span className="admin-access__staff">
-        <ShieldCheck size={18} aria-hidden="true" /> For shop owners and authorized staff
+        <ShieldCheck size={18} aria-hidden="true" /> For business owners and authorized staff
       </span>
     </div>
   );

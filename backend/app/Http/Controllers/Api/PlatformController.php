@@ -31,14 +31,14 @@ class PlatformController extends Controller
             $current = Shop::whereKey($shop)->lockForUpdate()->firstOrFail();
             $request->user()->refresh();
             $this->authorizePlatform($request);
-            abort_unless(hash_equals($current->slug, $input['confirm_slug']), 422, 'Type the exact shop identifier to confirm this change.');
-            abort_if($current->lifecycle_revision !== (int) $input['revision'], 409, 'This shop status changed. Refresh the overview before trying again.');
+            abort_unless(hash_equals($current->slug, $input['confirm_slug']), 422, 'Type the exact business identifier to confirm this change.');
+            abort_if($current->lifecycle_revision !== (int) $input['revision'], 409, 'This business status changed. Refresh the overview before trying again.');
             if ($current->status !== $input['status']) {
                 $current->forceFill(['status' => $input['status'], 'lifecycle_revision' => $current->lifecycle_revision + 1])->save();
                 ShopAccess::audit($request, $current->status === 'suspended' ? 'shop.suspended' : 'shop.reactivated', $current->id);
             }
 
-            return response()->json(['message' => $current->status === 'suspended' ? 'Shop suspended. Existing appointments have not been cancelled.' : 'Shop reactivated.',
+            return response()->json(['message' => $current->status === 'suspended' ? 'Business suspended. Existing appointments have not been cancelled.' : 'Business reactivated.',
                 'shop' => $current->only(['id', 'slug', 'status', 'lifecycle_revision'])])->header('Cache-Control', 'no-store, private');
         }, 5);
     }

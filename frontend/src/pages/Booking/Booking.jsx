@@ -224,7 +224,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
       setError(
         err.response
           ? errorText(err)
-          : "We couldn’t confirm whether your booking was saved. Contact the shop before trying again to avoid a duplicate appointment.",
+          : "We couldn’t confirm whether your booking was saved. Contact the business before trying again to avoid a duplicate appointment.",
       );
     } finally {
       setLoading(false);
@@ -298,17 +298,17 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                 </div>
                 <div>
                   <dt>Service price</dt>
-                  <dd>{money(confirmedBooking.price)} · Pay at the shop</dd>
+                  <dd>{money(confirmedBooking.price)} · Pay at the business</dd>
                 </div>
                 <div>
                   <dt>Where</dt>
-                  <dd>{confirmedBooking.shop?.address || "Contact your shop for directions"}</dd>
+                  <dd>{confirmedBooking.shop?.address || "Contact the business for directions"}</dd>
                 </div>
               </dl>
               <p className="booking-hint">
                 All appointment times are {confirmedBooking.timezone}. No online payment has been
                 taken. Need to change your visit? Contact{" "}
-                {confirmedBooking.shop?.name || "your shop"}
+                {confirmedBooking.shop?.name || "the business"}
                 {confirmedBooking.shop?.phone && (
                   <>
                     {" "}
@@ -353,7 +353,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
               </div>
               <div className="booking-confirmation__footer">
                 <Link to={dedicated ? shopPath(shopSlug) : "/"} className="btn btn-outline">
-                  {dedicated ? "Shop booking page" : "Back to home"}
+                  {dedicated ? "Business booking page" : "Back to home"}
                 </Link>
                 <button className="btn btn-outline" type="button" onClick={startAgain}>
                   Book another appointment
@@ -428,7 +428,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                   {catalog && (!catalog.services.length || !catalog.barbers.length) && (
                     <p role="status">
                       Online booking is temporarily unavailable because no active services or
-                      barbers are listed. Please contact the shop.
+                      barbers are listed. Please contact the business.
                     </p>
                   )}
                   {error && (
@@ -543,8 +543,8 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                                 required
                               />
                               <p className="booking-hint">
-                                Available times respect this shop’s opening hours, staff schedules
-                                and breaks. Times shown in {catalog.timezone}.
+                                Available times respect this business’s opening hours, staff
+                                schedules and breaks. Times shown in {catalog.timezone}.
                               </p>
                             </div>
                             {checkingTimes && <p role="status">Checking available times…</p>}
@@ -786,7 +786,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                       <dd>{selectedService ? money(selectedService.price) : "—"}</dd>
                     </div>
                   </dl>
-                  <p>Pay at the shop. No online payment needed.</p>
+                  <p>Pay at the business. No online payment needed.</p>
                   <div className="booking-info__help">
                     <strong>Need a hand?</strong>
                     {catalog?.shop?.phone && (
@@ -794,7 +794,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                         {catalog.shop.phone}
                       </a>
                     )}
-                    <p>{catalog?.shop?.address || "Contact your shop for directions"}</p>
+                    <p>{catalog?.shop?.address || "Contact the business for directions"}</p>
                   </div>
                 </aside>
               </div>

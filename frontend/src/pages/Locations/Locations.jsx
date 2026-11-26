@@ -105,17 +105,17 @@ export default function Locations() {
       <header className="locations-page__hero">
         <div className="container locations-page__hero-inner">
           <div>
-            <h1>Shop locations</h1>
-            <p>Find your shop, check opening hours, and plan your visit.</p>
+            <h1>Business locations</h1>
+            <p>Find a business, check opening hours, and plan your visit.</p>
           </div>
           <img src={barberTools} alt="" />
         </div>
       </header>
       <div className="container locations-page__list">
-        {result === null && <p role="status">Loading shop locations…</p>}
+        {result === null && <p role="status">Loading business locations…</p>}
         {result === false && (
           <div className="locations-page__state">
-            <p role="alert">Shop locations are temporarily unavailable.</p>
+            <p role="alert">Business locations are temporarily unavailable.</p>
             <button
               type="button"
               className="btn btn-outline"
@@ -128,7 +128,7 @@ export default function Locations() {
             </button>
           </div>
         )}
-        {result?.length === 0 && <p>There are no active shop locations to display.</p>}
+        {result?.length === 0 && <p>There are no active business locations to display.</p>}
         {Array.isArray(result) &&
           result.map((shop) => <LocationCard key={shop.slug} shop={shop} />)}
       </div>

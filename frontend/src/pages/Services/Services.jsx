@@ -26,7 +26,7 @@ const Services = () => {
           <h1 className="section-title">Choose Your Service.</h1>
 
           <p className="section-text">
-            Compare services, prices and appointment lengths. Pay at the shop when you visit.
+            Compare services, prices and appointment lengths. Pay at the business when you visit.
           </p>
         </div>
       </section>
@@ -47,7 +47,7 @@ const Services = () => {
               <label>
                 Sort by
                 <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                  <option value="listed">Shop order</option>
+                  <option value="listed">As listed</option>
                   <option value="price">Lowest price</option>
                   <option value="duration">Shortest visit</option>
                 </select>

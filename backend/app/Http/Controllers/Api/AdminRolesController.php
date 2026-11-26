@@ -91,7 +91,7 @@ class AdminRolesController extends Controller
             'assignments.*.shop_id' => 'required|integer|distinct|exists:shops,id',
             'assignments.*.permissions' => 'required|array|max:7',
             'assignments.*.permissions.*' => ['required', 'string', Rule::in(WebsiteAccess::SUPER_ADMIN_PERMISSIONS)],
-        ]);
+        ], [], ['assignments.*.shop_id' => 'business']);
 
         return DB::transaction(function () use ($request, $account, $input) {
             DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
@@ -163,10 +163,10 @@ class AdminRolesController extends Controller
         $role = $input['role'];
         $rows = $input['assignments'];
         if ($role === null && $rows) {
-            throw ValidationException::withMessages(['assignments' => 'Remove all website shop assignments when removing the website role.']);
+            throw ValidationException::withMessages(['assignments' => 'Remove all website business assignments when removing the website role.']);
         }
         if ($role === 'admin' && ! $rows) {
-            throw ValidationException::withMessages(['assignments' => 'An Admin needs at least one shop assignment.']);
+            throw ValidationException::withMessages(['assignments' => 'An Admin needs at least one business assignment.']);
         }
         $allowed = $role === 'super_admin' ? WebsiteAccess::SUPER_ADMIN_PERMISSIONS : WebsiteAccess::ADMIN_PERMISSIONS;
         $result = [];
@@ -174,7 +174,7 @@ class AdminRolesController extends Controller
             $shop = (int) $row['shop_id'];
             $permissions = array_values(array_intersect($allowed, $row['permissions']));
             abort_if(array_diff($row['permissions'], $allowed)
-                || (! $isOwner && array_diff($permissions, $scope[$shop] ?? [])), 403, 'A shop or permission is outside your delegation scope.');
+                || (! $isOwner && array_diff($permissions, $scope[$shop] ?? [])), 403, 'A business or permission is outside your delegation scope.');
             if ((array_intersect(['bookings.write', 'reports.read', 'payments.record'], $permissions)
                     && ! in_array('bookings.read', $permissions, true))
                 || (in_array('payments.record', $permissions, true) && ! in_array('reports.read', $permissions, true))) {

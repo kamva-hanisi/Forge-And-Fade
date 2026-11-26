@@ -46,8 +46,8 @@ const About = () => {
           </div>
 
           <p>
-            No rushed appointments and no one-style-fits-all cuts. We built a barbershop around
-            attention, honest advice and work that still looks good weeks later.
+            No rushed appointments and no one-style-fits-all cuts. We built a barbering business
+            around attention, honest advice and work that still looks good weeks later.
           </p>
         </div>
       </section>
@@ -69,7 +69,7 @@ const About = () => {
           <div className="about-page__story-content">
             <span className="section-label">Our Point of View</span>
 
-            <h2 className="section-title">A barbershop should earn your trust.</h2>
+            <h2 className="section-title">A barbering business should earn your trust.</h2>
 
             <p>
               A great cut begins before a blade touches hair. It begins with paying attention: to
@@ -165,12 +165,12 @@ const About = () => {
               it.
             </li>
             <li>
-              Let the shop know in advance if you have a question about your visit or need
+              Let the business know in advance if you have a question about your visit or need
               assistance.
             </li>
           </ul>
           <Link to="/contact" className="btn btn-outline">
-            Contact the shop
+            Contact the business
           </Link>
         </div>
       </section>

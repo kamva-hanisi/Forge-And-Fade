@@ -41,7 +41,7 @@ export default function ManageBooking({ shop: requestedShop, dedicated = false }
       setError(
         failure.response
           ? formError(failure)
-          : "We could not confirm the result. Look up your booking again before retrying; contact the shop if the problem continues.",
+          : "We could not confirm the result. Look up your booking again before retrying; contact the business if the problem continues.",
       );
     } finally {
       setBusy(false);
@@ -122,7 +122,7 @@ export default function ManageBooking({ shop: requestedShop, dedicated = false }
           {result.can_cancel ? (
             <>
               <p>
-                You can cancel before the appointment starts. To reschedule, contact the shop.
+                You can cancel before the appointment starts. To reschedule, contact the business.
                 Cancelling does not issue a payment refund.
               </p>
               {!confirm ? (
@@ -159,8 +159,8 @@ export default function ManageBooking({ shop: requestedShop, dedicated = false }
           ) : (
             <p>
               {result.booking.status === "cancelled"
-                ? "Your slot has been released. Contact the shop about any payment questions."
-                : "This appointment can no longer be cancelled online. Contact the shop."}
+                ? "Your slot has been released. Contact the business about any payment questions."
+                : "This appointment can no longer be cancelled online. Contact the business."}
             </p>
           )}
         </section>

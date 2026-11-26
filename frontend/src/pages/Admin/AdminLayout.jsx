@@ -29,7 +29,7 @@ import "./AdminWorkspace.scss";
 const items = [
   ["/admin/appointments", "Appointments", CalendarDays],
   ["/admin/inbox", "Contact inbox", Mail],
-  ["/admin/management", "Shop management", SlidersHorizontal],
+  ["/admin/management", "Business management", SlidersHorizontal],
   ["/admin/platform", "Platform overview", Building2],
 ];
 const settings = [
@@ -127,7 +127,7 @@ export default function AdminLayout() {
         </div>
         {session.user.shops?.length > 1 && (
           <label className="staff-shop-switcher">
-            Active shop
+            Active business
             <select
               value={session.user.shop?.id ?? ""}
               onChange={(event) => switchShop(event.target.value)}

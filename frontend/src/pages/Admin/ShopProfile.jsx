@@ -17,7 +17,7 @@ export default function ShopProfile({ client }) {
       .then(({ data }) => setFields(data))
       .catch((err) => {
         if (!axios.isCancel(err))
-          setError("Unable to load your shop details. Refresh the page to retry.");
+          setError("Unable to load your business details. Refresh the page to retry.");
       });
     return () => controller.abort();
   }, [client]);
@@ -33,7 +33,7 @@ export default function ShopProfile({ client }) {
         ...previous,
         user: { ...previous.user, shop: { ...previous.user.shop, name: data.name } },
       }));
-      setMessage("Your shop details have been saved.");
+      setMessage("Your business details have been saved.");
     } catch (err) {
       setError(
         Object.values(err.response?.data?.errors || {})
@@ -48,7 +48,7 @@ export default function ShopProfile({ client }) {
   };
   return (
     <section className="staff-card staff-invitations">
-      <h2>Shop details and location</h2>
+      <h2>Business details and location</h2>
       <p>
         Your address and map link appear on the public Locations page. Edit opening hours under
         Business hours.
@@ -66,9 +66,9 @@ export default function ShopProfile({ client }) {
       {fields && (
         <form className="staff-form" onSubmit={submit}>
           {[
-            ["name", "Shop name", 100],
+            ["name", "Business name", 100],
             ["address", "Full street address", 255],
-            ["phone", "Shop phone", 30],
+            ["phone", "Business phone", 30],
           ].map(([field, label, limit]) => (
             <label key={field}>
               {label}
@@ -97,12 +97,12 @@ export default function ShopProfile({ client }) {
               aria-describedby="shop-directions-help"
             />
             <small id="shop-directions-help">
-              Paste the share link from your shop’s Google Maps pin. When blank, directions use your
-              street address.
+              Paste the share link from your business’s Google Maps pin. When blank, directions use
+              your street address.
             </small>
           </label>
           <p className="staff-notice">
-            Shop identifier: {fields.slug}
+            Business identifier: {fields.slug}
             <br />
             Business timezone: {fields.timezone}
             <br />
@@ -116,7 +116,7 @@ export default function ShopProfile({ client }) {
           </p>
           <div className="staff-form-actions">
             <button className="btn btn-primary" disabled={busy}>
-              {busy ? "Saving…" : "Save shop details"}
+              {busy ? "Saving…" : "Save business details"}
             </button>
           </div>
         </form>

@@ -66,8 +66,8 @@ function ShopPage({ slug, manage }) {
         if (!axios.isCancel(failure))
           setError(
             failure.response?.status === 404 || failure.response?.status === 422
-              ? "This shop could not be found. Check the booking link with your barbershop."
-              : "We could not load this shop. Check your connection and retry.",
+              ? "This business could not be found. Ask the business for its current booking link."
+              : "We could not load this business. Check your connection and retry.",
           );
       });
     return () => controller.abort();
@@ -83,7 +83,7 @@ function ShopPage({ slug, manage }) {
   if (!catalog)
     return (
       <main className="public-shop__loading container">
-        <h1>Shop booking</h1>
+        <h1>Business booking</h1>
         {error ? (
           <>
             <p role="alert">{error}</p>
@@ -94,11 +94,11 @@ function ShopPage({ slug, manage }) {
                 setRefresh((value) => value + 1);
               }}
             >
-              Retry shop
+              Retry loading
             </button>
           </>
         ) : (
-          <p role="status">Loading your barbershop…</p>
+          <p role="status">Loading the booking page…</p>
         )}
       </main>
     );
@@ -121,7 +121,7 @@ function ShopPage({ slug, manage }) {
             </span>
             {catalog.shop.name}
           </Link>
-          <nav className="public-shop__nav" aria-label="Shop booking navigation">
+          <nav className="public-shop__nav" aria-label="Business booking navigation">
             <Link to={shopPath(slug)} aria-current={!manage ? "page" : undefined}>
               Book appointment
             </Link>
@@ -149,8 +149,8 @@ function ShopPage({ slug, manage }) {
         <main className="public-shop__loading container">
           <h1>Online booking paused</h1>
           <p>
-            This shop is not accepting new online bookings. Existing appointments have not been
-            cancelled. Contact the shop for assistance.
+            This business is not accepting new online bookings. Existing appointments have not been
+            cancelled. Contact the business for assistance.
           </p>
           <Link to={shopPath(slug, true)}>Manage an existing booking</Link>
         </main>

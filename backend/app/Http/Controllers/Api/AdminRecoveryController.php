@@ -19,7 +19,7 @@ class AdminRecoveryController extends Controller
         $input = $request->validate(['email' => ['required', 'email', 'max:150']]);
 
         if (config('mail.default') !== 'smtp' || ! config('mail.mailers.smtp.username') || ! config('mail.mailers.smtp.password')) {
-            return response()->json(['message' => 'Email recovery is not configured. Please contact your shop owner or the server administrator.'], 503);
+            return response()->json(['message' => 'Email recovery is not configured. Please contact your business owner or the server administrator.'], 503);
         }
 
         try {

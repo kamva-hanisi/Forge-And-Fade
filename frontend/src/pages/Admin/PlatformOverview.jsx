@@ -11,7 +11,7 @@ function ShopStatusControl({ shop, busy, save }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const target = shop.status === "active" ? "suspended" : "active";
-  const label = target === "suspended" ? "Suspend shop" : "Reactivate shop";
+  const label = target === "suspended" ? "Suspend business" : "Reactivate business";
   if (!open)
     return (
       <button
@@ -33,7 +33,7 @@ function ShopStatusControl({ shop, busy, save }) {
       <p>
         {target === "suspended"
           ? "New online bookings and operational changes will pause. Existing appointments are not cancelled. Customers can still look up and cancel their bookings."
-          : "This shop will accept online requests again using its saved services, staff and hours."}
+          : "This business will accept online requests again using its saved services, staff and hours."}
       </p>
       <fieldset disabled={busy}>
         <label htmlFor={`confirm-shop-${shop.id}`}>Type {shop.slug} to confirm</label>
@@ -92,7 +92,7 @@ export default function PlatformOverview() {
           data: null,
           error:
             failure.response?.status === 403
-              ? "Platform access is not available for this account. Return to your shop dashboard or sign in again."
+              ? "Platform access is not available for this account. Return to your business dashboard or sign in again."
               : formError(failure),
         });
       });
@@ -120,7 +120,7 @@ export default function PlatformOverview() {
       setActionError(
         failure.response
           ? formError(failure)
-          : "The result could not be confirmed. Refresh the overview before retrying; the shop status may already have changed.",
+          : "The result could not be confirmed. Refresh the overview before retrying; the business status may already have changed.",
       );
     } finally {
       setChanging(false);
@@ -131,10 +131,7 @@ export default function PlatformOverview() {
       <header className="staff-page-heading">
         <span className="section-label">Platform administration</span>
         <h1 className="section-title">Platform overview</h1>
-        <p>
-          Oversight and reversible shop status controls across registered barbershops. This is
-          separate from your selected shop dashboard.
-        </p>
+        <p>View registered businesses and suspend or reactivate their online booking.</p>
       </header>
       <form
         className="platform-overview__search"
@@ -144,7 +141,7 @@ export default function PlatformOverview() {
           setQuery({ search: draft.trim(), page: 1, refresh: query.refresh + 1 });
         }}
       >
-        <label htmlFor="platform-shop-search">Find a shop by name or identifier</label>
+        <label htmlFor="platform-shop-search">Find a business by name or identifier</label>
         <input
           id="platform-shop-search"
           type="search"
@@ -154,11 +151,11 @@ export default function PlatformOverview() {
           onChange={(event) => setDraft(event.target.value)}
         />
         <button className="btn btn-primary" disabled={busy}>
-          Search shops
+          Search businesses
         </button>
       </form>
       {busy && (
-        <p role="status">{changing ? "Updating shop status…" : "Loading platform overview…"}</p>
+        <p role="status">{changing ? "Updating business status…" : "Loading platform overview…"}</p>
       )}
       {notice && <p role="status">{notice}</p>}
       {actionError && (
@@ -172,7 +169,7 @@ export default function PlatformOverview() {
               setQuery({ ...query, refresh: query.refresh + 1 });
             }}
           >
-            Refresh shop statuses
+            Refresh business statuses
           </button>
         </div>
       )}
@@ -191,7 +188,7 @@ export default function PlatformOverview() {
         <>
           <div className="staff-stats platform-overview__stats">
             {[
-              ["Registered shops", data.summary.shops],
+              ["Registered businesses", data.summary.shops],
               ["Admin-enabled accounts", data.summary.admin_accounts],
               ["Staff memberships", data.summary.memberships],
               ["Bookings · all time", data.summary.bookings],
@@ -207,15 +204,15 @@ export default function PlatformOverview() {
             roles and are not active login sessions. Booking counts do not prove attendance,
             payments or revenue.
           </p>
-          <h2>Registered shops</h2>
-          {!data.shops.data.length && <p role="status">No shops match this search.</p>}
+          <h2>Registered businesses</h2>
+          {!data.shops.data.length && <p role="status">No businesses match this search.</p>}
           <div className="platform-overview__shops">
             {data.shops.data.map((shop) => (
               <article className="staff-card" key={shop.id}>
                 <h3>{shop.name}</h3>
                 <p className="platform-overview__slug">{shop.slug}</p>
                 <p>
-                  Shop status: <strong>{shop.status}</strong>
+                  Business status: <strong>{shop.status}</strong>
                 </p>
                 <dl>
                   {[
@@ -241,7 +238,7 @@ export default function PlatformOverview() {
               </article>
             ))}
           </div>
-          <nav className="platform-overview__pagination" aria-label="Platform shop pages">
+          <nav className="platform-overview__pagination" aria-label="Platform business pages">
             <button
               className="btn btn-outline"
               disabled={busy || data.shops.current_page <= 1}
@@ -251,7 +248,7 @@ export default function PlatformOverview() {
             </button>
             <span>
               Page {data.shops.current_page} of {data.shops.last_page} · {data.shops.total} matching
-              shops
+              businesses
             </span>
             <button
               className="btn btn-outline"

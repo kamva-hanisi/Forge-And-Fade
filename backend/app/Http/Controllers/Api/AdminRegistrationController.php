@@ -40,7 +40,7 @@ class AdminRegistrationController extends Controller
                     $invitation = DB::table('admin_invitations')->where('token_hash', hash('sha256', $input['invitation'] ?? ''))
                         ->where('email', $input['email'])->whereNull('used_at')->where('expires_at', '>', now())->lockForUpdate()->first();
                     if (! $invitation) {
-                        throw ValidationException::withMessages(['invitation' => 'A valid, unused invitation for this email is required. Ask the shop owner for a code.']);
+                        throw ValidationException::withMessages(['invitation' => 'A valid, unused invitation for this email is required. Ask the business owner for a code.']);
                     }
                     if ($invitation->role === 'barber' && ! isset(ShopCatalog::barbers(Shop::findOrFail($invitation->shop_id))[$invitation->barber_id])) {
                         throw ValidationException::withMessages(['invitation' => 'This barber assignment is no longer available. Ask the owner for a new invitation.']);

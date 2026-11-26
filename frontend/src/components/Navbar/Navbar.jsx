@@ -41,9 +41,6 @@ export default function Navbar({ admin = false }) {
                   <NavLink to="/admin/signup" onClick={closeMenu}>
                     Staff sign up
                   </NavLink>
-                  <NavLink to="/admin/register-shop" onClick={closeMenu}>
-                    Register your shop
-                  </NavLink>
                 </>
               )}
             </>

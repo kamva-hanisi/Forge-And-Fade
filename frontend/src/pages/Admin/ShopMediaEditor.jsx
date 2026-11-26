@@ -108,7 +108,7 @@ export function BrandingEditor({ branding, busy, save }) {
     >
       <h2>Accent colour</h2>
       <label>
-        Shop accent colour
+        Business accent colour
         <input
           type="color"
           value={accent}

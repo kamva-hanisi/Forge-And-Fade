@@ -10,7 +10,7 @@ const Hero = ({ shop, cover, onFindTime }) => {
     <section className="hero">
       <div className="container hero__container">
         <div className="hero__content">
-          <span className="section-label">Forge &amp; Fade Barbershop</span>
+          <span className="section-label">Forge &amp; Fade</span>
 
           <h1>
             Cuts &amp; fades.

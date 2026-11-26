@@ -13,21 +13,21 @@ const permissionLabels = {
   "messages.manage": "Manage contact enquiries",
   "reports.read": "View booking and receipt reports",
   "payments.record": "Record payments",
-  "shop.write": "Edit shop profile",
-  "shop.manage": "Manage shop branding, services, and schedules",
-  "members.invite": "Invite shop staff",
-  "members.manage": "Manage shop staff access",
+  "shop.write": "Edit business profile",
+  "shop.manage": "Manage business branding, services, and schedules",
+  "members.invite": "Invite business staff",
+  "members.manage": "Manage business staff access",
   "payments.void": "Void payment receipts",
 };
 
 const actionLabels = {
   "website.owner_initialized": "Website ownership initialized",
   "website.role_changed": "Website role changed",
-  "website.shop_access_changed": "Website shop access changed",
-  "member.updated": "Shop membership changed",
-  "member.removed": "Shop membership revoked",
-  "invitation.created": "Shop invitation created",
-  "membership.joined": "Shop membership created",
+  "website.shop_access_changed": "Website business access changed",
+  "member.updated": "Business membership changed",
+  "member.removed": "Business membership revoked",
+  "invitation.created": "Business invitation created",
+  "membership.joined": "Business membership created",
   "platform.access.granted": "Legacy platform access granted",
 };
 
@@ -127,7 +127,7 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
               />
               Suspend website access
             </label>
-            <h3>Shop assignments</h3>
+            <h3>Business assignments</h3>
             <p>
               Booking edits and reports require appointment viewing. Payment recording also requires
               report access.
@@ -154,16 +154,16 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
                     type="button"
                     onClick={() => removeShop(shop.id)}
                   >
-                    Remove shop
+                    Remove business
                   </button>
                 </fieldset>
               ))}
             {available.length > 0 && (
               <div className="access-add-shop">
                 <label>
-                  Add a shop
+                  Add a business
                   <select value={shopToAdd} onChange={(event) => setShopToAdd(event.target.value)}>
-                    <option value="">Choose a shop</option>
+                    <option value="">Choose a business</option>
                     {available.map((shop) => (
                       <option key={shop.id} value={shop.id}>
                         {shop.name}
@@ -180,14 +180,14 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
                     setShopToAdd("");
                   }}
                 >
-                  Add shop
+                  Add business
                 </button>
               </div>
             )}
             {invalid && (
               <p>
-                Choose at least one permission for each assigned shop. Admins need at least one
-                shop.
+                Choose at least one permission for each assigned business. Admins need at least one
+                business.
               </p>
             )}
           </>
@@ -381,7 +381,7 @@ export default function AdminRoles() {
               {accessRoleLabel(role)}
               {identity.shop && ` · ${identity.shop.name}`}
             </p>
-            {identity.platform_access && <p>Platform overview and shop status controls</p>}
+            {identity.platform_access && <p>Platform overview and business status controls</p>}
             {identity.permissions.length > 0 && (
               <ul className="access-permissions">
                 {identity.permissions.map((permission) => (
@@ -390,16 +390,18 @@ export default function AdminRoles() {
               </ul>
             )}
             {role === "barber" && <p>Appointment access covers your assigned barber profile.</p>}
-            {identity.website_role && !identity.shop && <p>No shop is assigned to this account.</p>}
+            {identity.website_role && !identity.shop && (
+              <p>No business is assigned to this account.</p>
+            )}
             {Object.keys(data.my_assignments).length > 0 && (
               <details>
-                <summary>Website permissions by shop</summary>
+                <summary>Website permissions by business</summary>
                 <ul className="access-list">
                   {Object.entries(data.my_assignments).map(([id, permissions]) => (
                     <li key={id}>
                       <strong>
                         {identity.shops.find((shop) => String(shop.id) === id)?.name ||
-                          `Shop #${id}`}
+                          `Business #${id}`}
                       </strong>
                       <div>
                         <AccessDetails access={{ permissions }} />
@@ -414,11 +416,11 @@ export default function AdminRoles() {
             <h2>Website roles</h2>
             <dl className="access-roles">
               <dt>Website Owner</dt>
-              <dd>Full website and shop access. Manages Super Admin and Admin access.</dd>
+              <dd>Full website and business access. Manages Super Admin and Admin access.</dd>
               <dt>Super Admin</dt>
-              <dd>Oversees shops and manages Admin access within their delegation scope.</dd>
+              <dd>Oversees businesses and manages Admin access within their delegation scope.</dd>
               <dt>Admin</dt>
-              <dd>Uses the operational permissions granted for each assigned shop.</dd>
+              <dd>Uses the operational permissions granted for each assigned business.</dd>
             </dl>
           </section>
           {data.can_manage && (
@@ -485,13 +487,13 @@ export default function AdminRoles() {
           )}
           {identity.permissions.includes("members.manage") && (
             <section className="staff-card access-card">
-              <h2>Shop staff access</h2>
+              <h2>Business staff access</h2>
               <div className="staff-form-actions">
                 <Link className="btn btn-outline" to="/admin/management?tab=staff">
-                  Manage shop staff
+                  Manage business staff
                 </Link>
                 <Link className="btn btn-outline" to="/admin/settings/invite">
-                  Invite shop staff
+                  Invite business staff
                 </Link>
               </div>
             </section>

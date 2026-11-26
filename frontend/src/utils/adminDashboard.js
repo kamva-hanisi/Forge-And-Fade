@@ -3,7 +3,7 @@ export function adminDashboard(role) {
     return {
       kind: "owner",
       path: "/admin/owner",
-      title: role === "owner" ? "Shop Owner dashboard" : "Shop dashboard",
+      title: role === "owner" ? "Business Owner dashboard" : "Business dashboard",
     };
   }
 
@@ -23,7 +23,7 @@ export function accessRoleLabel(role) {
       owner: "Website Owner",
       super_admin: "Super Admin",
       admin: "Admin",
-      shop_owner: "Shop Owner",
+      shop_owner: "Business Owner",
       manager: "Manager",
       barber: "Barber",
       platform_admin: "Legacy platform administrator",

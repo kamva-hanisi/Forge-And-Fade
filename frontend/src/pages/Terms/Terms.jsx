@@ -24,8 +24,8 @@ const Terms = () => {
               <h2>1. About Forge & Fade</h2>
 
               <p>
-                Forge &amp; Fade provides online booking for participating barbershops. The shop
-                named on your booking page is responsible for providing your service.
+                Forge &amp; Fade provides online booking for participating barbering businesses. The
+                business named on your booking page is responsible for providing your service.
               </p>
             </section>
 
@@ -59,7 +59,7 @@ const Terms = () => {
               <p>
                 You can cancel before the appointment starts from Manage booking using the reference
                 and email address from your booking. To change an appointment or ask about a late
-                cancellation, contact the shop directly.
+                cancellation, contact the business directly.
               </p>
             </section>
 
@@ -77,8 +77,8 @@ const Terms = () => {
               <h2>6. Prices</h2>
 
               <p>
-                Service prices are shown in South African Rand. Each shop manages the services and
-                prices displayed on its booking page. Pay the shop directly.
+                Service prices are shown in South African Rand. Each business manages the services
+                and prices displayed on its booking page. Pay the business directly.
               </p>
             </section>
 

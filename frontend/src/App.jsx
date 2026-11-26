@@ -85,7 +85,7 @@ function App() {
           element={
             <main className="public-shop__loading container">
               <h1>Booking page not found</h1>
-              <p>Check the link with your barbershop.</p>
+              <p>Ask the business for its current booking link.</p>
             </main>
           }
         />

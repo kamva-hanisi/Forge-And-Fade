@@ -57,7 +57,7 @@ class ShopManagementController extends Controller
             $shop = ShopCatalog::lock($request);
             $settings = $shop->settings ?? [];
             if ((int) $request->input('version') !== ($settings['management_revision'] ?? 0)) {
-                return response()->json(['message' => 'Shop settings changed. Refresh before saving your changes.'], 409);
+                return response()->json(['message' => 'Business settings changed. Refresh before saving your changes.'], 409);
             }
             $operation($shop, $settings);
             $settings['management_revision'] = ($settings['management_revision'] ?? 0) + 1;

@@ -20,7 +20,10 @@ class ShopRegistrationController extends Controller
         $input = $request->validate(['shop_name' => 'required|string|max:100',
             'shop_slug' => 'required|string|min:3|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:shops,slug',
             'name' => 'required|string|max:100', 'email' => 'required|email|max:150|unique:users,email',
-            'password' => 'required|string|min:12|max:200|confirmed']);
+            'password' => 'required|string|min:12|max:200|confirmed'], [], [
+                'shop_name' => 'business name',
+                'shop_slug' => 'business identifier',
+            ]);
         try {
             return DB::transaction(function () use ($input) {
                 $shop = Shop::create(['name' => $input['shop_name'], 'slug' => $input['shop_slug'],
@@ -41,7 +44,7 @@ class ShopRegistrationController extends Controller
                     ->header('Cache-Control', 'no-store');
             }, 5);
         } catch (UniqueConstraintViolationException $exception) {
-            throw ValidationException::withMessages(['shop_slug' => 'That shop address or email is already registered. Please check your details.']);
+            throw ValidationException::withMessages(['shop_slug' => 'That business address or email is already registered. Please check your details.']);
         }
     }
 
@@ -71,7 +74,7 @@ class ShopRegistrationController extends Controller
                         && ($path === '/maps' || str_starts_with($path, '/maps/'));
                     $sharedPin = $host === 'maps.app.goo.gl' && preg_match('#^/[A-Za-z0-9_-]+/?$#D', $path);
                     if ((! $maps && ! $sharedPin) || isset($url['user']) || isset($url['port'])) {
-                        $fail('Enter a Google Maps link for your shop pin.');
+                        $fail('Enter a Google Maps link for your business pin.');
                     }
                 }],
         ]);

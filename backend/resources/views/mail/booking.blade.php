@@ -13,14 +13,14 @@
         <dt>Time</dt><dd>{{ substr($booking->booking_time, 0, 5) }} ({{ $booking->timezone }})</dd>
         <dt>Service price</dt><dd>{{ $booking->currency }} {{ $booking->price }}</dd>
         <dt>Status</dt><dd>{{ $booking->status }}</dd>
-        <dt>Location</dt><dd>{{ $shop->address ?: 'Contact the shop for directions.' }}</dd>
+        <dt>Location</dt><dd>{{ $shop->address ?: 'Contact the business for directions.' }}</dd>
     </dl>
     <p><a href="{{ $manageUrl }}" style="color:#765a30">Manage your appointment</a></p>
     <p>Use your reference and the email you booked with. Keep your reference private.</p>
-    <p>Online cancellation is available before the appointment starts. Contact the shop to reschedule.</p>
+    <p>Online cancellation is available before the appointment starts. Contact the business to reschedule.</p>
     <p>This message is not a payment receipt and cancellation does not issue a refund.</p>
     @if($shop->phone)
-        <p>Shop phone: {{ $shop->phone }}</p>
+        <p>Business phone: {{ $shop->phone }}</p>
     @endif
 </main>
 </body>

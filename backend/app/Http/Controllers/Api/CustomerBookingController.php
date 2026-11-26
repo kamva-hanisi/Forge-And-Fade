@@ -28,7 +28,7 @@ class CustomerBookingController extends Controller
                 return $this->respond($booking);
             }
             abort_if($booking->revision !== $request->integer('revision'), 409, 'This appointment changed. Look it up again before cancelling.');
-            abort_unless(CarbonImmutable::parse($booking->starts_at)->isFuture(), 409, 'This appointment has already started. Contact the shop.');
+            abort_unless(CarbonImmutable::parse($booking->starts_at)->isFuture(), 409, 'This appointment has already started. Contact the business.');
             $schedule->lockDay($booking->barber_id, $booking->booking_date->toDateString());
             $booking->status = 'cancelled';
             $booking->revision++;
@@ -47,7 +47,7 @@ class CustomerBookingController extends Controller
         $query = Booking::where('shop_id', $request->attributes->get('shop')->id)
             ->where('reference', $input['reference']);
         $booking = ($lock ? $query->lockForUpdate() : $query)->first();
-        abort_unless($booking && hash_equals(strtolower($booking->email), strtolower(trim($input['email']))), 404, 'No matching booking found. Check your reference, email and shop.');
+        abort_unless($booking && hash_equals(strtolower($booking->email), strtolower(trim($input['email']))), 404, 'No matching booking found. Check your reference, email and business.');
 
         return $booking;
     }

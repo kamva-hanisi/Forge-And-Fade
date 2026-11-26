@@ -8,7 +8,7 @@ export default function Privacy() {
         <div className="container">
           <h1 className="section-title">Booking privacy</h1>
           <p className="section-text">
-            How Forge &amp; Fade uses the details you share when booking or contacting a shop.
+            How Forge &amp; Fade uses the details you share when booking or contacting a business.
           </p>
         </div>
       </section>
@@ -25,17 +25,17 @@ export default function Privacy() {
           <section>
             <h2>How your details are used</h2>
             <p>
-              Your selected shop uses these details to manage your appointment or respond to your
-              enquiry. The booking system uses your email address for appointment notifications when
-              email delivery is enabled. Keep your booking reference private because it can be used
-              with your email address to look up and cancel your appointment.
+              Your selected business uses these details to manage your appointment or respond to
+              your enquiry. The booking system uses your email address for appointment notifications
+              when email delivery is enabled. Keep your booking reference private because it can be
+              used with your email address to look up and cancel your appointment.
             </p>
           </section>
           <section>
             <h2>Questions and requests</h2>
             <p>
-              Contact the shop shown on your booking page if you have a privacy question or want to
-              request access, a correction or deletion. For questions about Forge &amp; Fade, use
+              Contact the business shown on your booking page if you have a privacy question or want
+              to request access, a correction or deletion. For questions about Forge &amp; Fade, use
               the <Link to="/contact">contact form</Link>.
             </p>
           </section>

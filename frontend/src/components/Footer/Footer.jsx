@@ -14,9 +14,7 @@ const Footer = () => {
         <div className="footer__brand">
           <Brand dark />
 
-          <p>
-            Professional cuts, clean fades and beard grooming in a comfortable modern barbershop.
-          </p>
+          <p>Professional cuts, clean fades and beard grooming in a comfortable, modern setting.</p>
         </div>
 
         {/* NAVIGATION */}
@@ -39,7 +37,7 @@ const Footer = () => {
 
           <Link to="/contact" className="footer__detail">
             <Mail aria-hidden="true" />
-            Contact the shop
+            Contact the business
           </Link>
         </div>
 

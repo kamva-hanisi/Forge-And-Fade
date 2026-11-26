@@ -89,7 +89,7 @@ export default function AdminAccess({ signup = false }) {
     <main
       className={`admin-access admin-access--branded container${signup ? " admin-access--signup" : ""}`}
     >
-      <AdminAccessIntro title="Your shop." accent="Your schedule.">
+      <AdminAccessIntro title="Your business." accent="Your schedule.">
         One place to manage appointments, look after your team, and keep the day running smoothly.
       </AdminAccessIntro>
       <section className="admin-access__card" aria-labelledby="admin-access-title">
@@ -113,13 +113,13 @@ export default function AdminAccess({ signup = false }) {
             ? checking
               ? "Checking account setup…"
               : firstAdminSetup
-                ? "Create the first owner account for the existing Forge & Fade shop."
-                : "For staff invited to an existing shop. Use the work email and invitation code from your shop owner."
-            : "Shop owners and staff can sign in here to access their dashboard."}
+                ? "Create the first Business Owner account for the existing Forge & Fade business."
+                : "For staff invited to an existing business. Use your work email and the invitation code from your Business Owner."
+            : "Website administrators, Business Owners, and staff sign in here."}
         </p>
         {signup && (
           <p>
-            Opening a new barbershop? <Link to="/admin/register-shop">Register your shop</Link>
+            Setting up a business? <Link to="/admin/register-shop">Register your business</Link>
           </p>
         )}
         {error && (
@@ -231,7 +231,7 @@ export default function AdminAccess({ signup = false }) {
               : signup
                 ? firstAdminSetup
                   ? "Create owner account"
-                  : "Join your shop"
+                  : "Join your business"
                 : "Sign in to dashboard"}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
@@ -246,11 +246,10 @@ export default function AdminAccess({ signup = false }) {
             <p>
               Already have an account? <Link to="/admin/signin">Sign in</Link>
             </p>
-            <Link to="/">Back to the website</Link>
           </div>
         ) : (
           <p className="admin-access__registration">
-            Opening a new barbershop? <Link to="/admin/register-shop">Register your shop</Link>
+            Use the email address associated with your account.
           </p>
         )}
       </section>

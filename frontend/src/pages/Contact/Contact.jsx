@@ -75,10 +75,10 @@ const Contact = () => {
     <main className="contact-page">
       <section className="contact-page__header">
         <div className="container">
-          <h1 className="section-title">Visit or contact the shop</h1>
+          <h1 className="section-title">Visit or contact the business</h1>
 
           <p className="section-text">
-            Find the shop’s hours and directions, manage an appointment, or send us a question.
+            Find the business’s hours and directions, manage an appointment, or send us a question.
           </p>
         </div>
       </section>
@@ -86,13 +86,13 @@ const Contact = () => {
       <section className="contact-page__content">
         <div className="container contact-page__grid">
           <div className="contact-info">
-            <h2>{profile?.name || "Shop details"}</h2>
-            {shopLoading && <p role="status">Loading shop details…</p>}
+            <h2>{profile?.name || "Business details"}</h2>
+            {shopLoading && <p role="status">Loading business details…</p>}
             {shopError && (
               <div role="alert">
-                <p>Shop details are temporarily unavailable.</p>
+                <p>Business details are temporarily unavailable.</p>
                 <button type="button" className="btn btn-outline" onClick={retry}>
-                  Reload shop details
+                  Reload business details
                 </button>
               </div>
             )}
@@ -236,12 +236,12 @@ const Contact = () => {
             <p>
               To cancel before your appointment, use{" "}
               <Link to={shopPath(shop, true)}>Manage a booking</Link> with your reference and email.
-              Contact the shop to change the time.
+              Contact the business to change the time.
             </p>
           </details>
           <details>
             <summary>Do I need to pay online?</summary>
-            <p>You can book online as a guest and pay at the shop when you visit.</p>
+            <p>You can book online as a guest and pay at the business when you visit.</p>
           </details>
           <details>
             <summary>What if I’m unsure which service to book?</summary>

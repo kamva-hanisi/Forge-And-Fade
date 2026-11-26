@@ -18,7 +18,7 @@ class ResolveShop
             $selected = $this->shopContext($request);
             $shop = Shop::findOrFail($selected->id);
         } else {
-            $input = $request->validate(['shop' => 'sometimes|string|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/']);
+            $input = $request->validate(['shop' => 'sometimes|string|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'], [], ['shop' => 'business identifier']);
             $shop = Shop::where('slug', $input['shop'] ?? 'forge-and-fade')->firstOrFail();
         }
         $request->attributes->set('shop', $shop);
@@ -61,12 +61,12 @@ class ResolveShop
             return;
         }
         if ($mode === 'public') {
-            abort_unless(in_array($request->path(), ['api/bookings/catalog', 'api/bookings/lookup', 'api/bookings/cancel'], true), 404, 'This shop is not accepting online requests.');
+            abort_unless(in_array($request->path(), ['api/bookings/catalog', 'api/bookings/lookup', 'api/bookings/cancel'], true), 404, 'This business is not accepting online requests.');
 
             return;
         }
         $personal = in_array($request->path(), ['api/admin/profile', 'api/admin/password'], true);
         $cancelling = $request->isMethod('PATCH') && preg_match('#^api/admin/bookings/\d+$#', $request->path()) && $request->input('action') === 'cancel';
-        abort_unless($request->isMethodSafe() || $personal || $cancelling, 403, 'This shop is suspended. New bookings and operational changes are paused. Existing appointments can still be viewed or cancelled.');
+        abort_unless($request->isMethodSafe() || $personal || $cancelling, 403, 'This business is suspended. New bookings and operational changes are paused. Existing appointments can still be viewed or cancelled.');
     }
 }

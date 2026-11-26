@@ -167,14 +167,14 @@ function MemberEditor({ member, barbers, busy, save }) {
               {member.role === "revoked" ? "Restore staff access" : "Save staff access"}
             </button>
             {member.role === "revoked" && (
-              <p>Shop access is revoked. Choose a role and save to restore access.</p>
+              <p>Business access is revoked. Choose a role and save to restore access.</p>
             )}
             {member.role !== "revoked" &&
               (removing ? (
                 <div role="alert">
                   <p>
-                    Revoke this person's access to this shop? Their account and other memberships
-                    remain. You can restore access here later.
+                    Revoke this person's access to this business? Their account and other
+                    memberships remain. You can restore access here later.
                   </p>
                   <button
                     type="button"
@@ -193,7 +193,7 @@ function MemberEditor({ member, barbers, busy, save }) {
                 </div>
               ) : (
                 <button type="button" className="btn btn-outline" onClick={() => setRemoving(true)}>
-                  Remove shop access
+                  Remove business access
                 </button>
               ))}
           </fieldset>
@@ -238,11 +238,11 @@ function ScheduleEditor({ data, busy, save, business = false }) {
         });
       }}
     >
-      <h2>{business ? "Shop opening hours" : "Weekly availability"}</h2>
+      <h2>{business ? "Business opening hours" : "Weekly availability"}</h2>
       <p>
         {business
-          ? "These hours, breaks and closed dates apply to every barber in your shop."
-          : "Barber hours are limited by the shop's business hours and breaks."}{" "}
+          ? "These hours, breaks and closed dates apply to every barber in your business."
+          : "Barber hours follow the business’s opening hours and breaks."}{" "}
         Upcoming and in-progress appointments must remain valid. Times use {data.timezone}.
       </p>
       <fieldset className="staff-booking-fields" disabled={busy}>
@@ -302,7 +302,7 @@ function ScheduleEditor({ data, busy, save, business = false }) {
           },
         )}
         <label>
-          {business ? "Shop-wide daily breaks" : "Additional daily breaks"}
+          {business ? "Business-wide daily breaks" : "Additional daily breaks"}
           <input
             value={breaks}
             onChange={(event) => setBreaks(event.target.value)}
@@ -312,11 +312,11 @@ function ScheduleEditor({ data, busy, save, business = false }) {
           <small>
             {business
               ? "Separate ranges with commas. These breaks apply every open day."
-              : "Separate ranges with commas. Shop-wide breaks still apply."}
+              : "Separate ranges with commas. Business-wide breaks still apply."}
           </small>
         </label>
         <label>
-          {business ? "Shop closed dates" : "Days off"}
+          {business ? "Business closed dates" : "Days off"}
           <input
             value={closed}
             onChange={(event) => setClosed(event.target.value)}
@@ -326,7 +326,7 @@ function ScheduleEditor({ data, busy, save, business = false }) {
           <small>Use YYYY-MM-DD dates separated by commas.</small>
         </label>
         <button className="btn btn-primary">
-          {business ? "Save shop hours" : "Save barber schedule"}
+          {business ? "Save business hours" : "Save barber schedule"}
         </button>
       </fieldset>
     </form>
@@ -385,7 +385,7 @@ export default function ShopManagement() {
         data: payload instanceof FormData ? payload : { ...payload, version: data.version },
       });
       setData(response.data);
-      setNotice("Shop changes saved. Existing booking prices and names are preserved.");
+      setNotice("Business changes saved. Existing booking prices and names are preserved.");
     } catch (err) {
       if (err.response?.status === 401) setSession(null);
       else setError(formError(err));
@@ -399,15 +399,15 @@ export default function ShopManagement() {
     <main className="staff-page shop-management">
       <header className="staff-page-heading">
         <span className="section-label">{session.user.shop?.name}</span>
-        <h1 className="section-title">Shop management</h1>
-        <p>Manage barber profiles, services and schedules for this shop.</p>
+        <h1 className="section-title">Business management</h1>
+        <p>Manage barber profiles, services and schedules for this business.</p>
       </header>
       {readiness && !readiness.ready && (
         <section className="staff-card shop-management__setup" aria-labelledby="shop-setup-title">
-          <h2 id="shop-setup-title">Get your shop ready</h2>
+          <h2 id="shop-setup-title">Get your business ready</h2>
           <p>
-            Your shop starts without demo services or barbers. Add your real catalog before sharing
-            your booking page.
+            Your business starts without demo services or barbers. Add your real catalog before
+            sharing your booking page.
           </p>
           <p>
             {readiness.serviceCount} active services · {readiness.barberCount} active barber
@@ -431,7 +431,7 @@ export default function ShopManagement() {
               Add barber profiles
             </button>
             <Link className="btn btn-outline" to="/admin/settings/profile">
-              Review shop details
+              Review business details
             </Link>
             <button
               type="button"
@@ -443,8 +443,8 @@ export default function ShopManagement() {
             </button>
           </div>
           <p>
-            Review your shop details and each barber’s schedule before taking bookings. New shops
-            start with the default business hours.
+            Review your business details and each barber’s schedule before taking bookings. New
+            businesses start with the default business hours.
           </p>
         </section>
       )}
@@ -453,7 +453,7 @@ export default function ShopManagement() {
           <Link to={shopPath(session.user.shop.slug)}>Preview your public booking page</Link>
         </p>
       )}
-      <nav className="shop-management__tabs" aria-label="Shop management sections">
+      <nav className="shop-management__tabs" aria-label="Business management sections">
         {managementTabs.map(([value, label]) => (
           <button
             key={value}
@@ -478,7 +478,7 @@ export default function ShopManagement() {
               setRefresh((value) => value + 1);
             }}
           >
-            Refresh shop data
+            Refresh business data
           </button>
         </div>
       )}
@@ -487,7 +487,7 @@ export default function ShopManagement() {
           {notice}
         </p>
       )}
-      {!data && !error && <p role="status">Loading shop management…</p>}
+      {!data && !error && <p role="status">Loading business management…</p>}
       {data && (
         <div className="shop-management__content">
           {tab === "branding" && (
@@ -496,7 +496,7 @@ export default function ShopManagement() {
               <div className="shop-management__grid" key={data.version}>
                 <BrandingEditor branding={data.branding || {}} busy={busy} save={save} />
                 {[
-                  ["logo", "Shop logo"],
+                  ["logo", "Business logo"],
                   ["cover", "Booking cover photo"],
                 ].map(([target, title]) => (
                   <MediaEditor

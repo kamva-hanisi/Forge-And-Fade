@@ -55,7 +55,7 @@ Artisan::command('admin:invite {email} {--shop=forge-and-fade} {--role=manager} 
     $role = $this->option('role');
     if (! $shop || ! in_array($role, ['manager', 'barber'], true)
         || ($role === 'barber' && ! array_key_exists((int) $this->option('barber'), ShopCatalog::barbers($shop)))) {
-        $this->error('Choose an existing shop, a manager/barber role, and a valid barber assignment when needed.');
+        $this->error('Choose an existing business, a manager/barber role, and a valid barber assignment when needed.');
 
         return 1;
     }
