@@ -4,7 +4,7 @@ import { MapPin } from "lucide-react";
 import Hero from "../../components/Hero/Hero";
 import ServicesSection from "../../components/ServicesSection/ServicesSection";
 import AboutSection from "../../components/AboutSection/AboutSection";
-import useShopServices from "../../hooks/useShopServices";
+import { usePublicCatalog } from "../../hooks/useShopServices";
 import NextAvailable from "../Booking/NextAvailable";
 import { bookingLink, shopPath } from "../../utils/shopLinks";
 import "./Home.scss";
@@ -65,7 +65,7 @@ function QuickBooking({ catalog }) {
 }
 
 const Home = () => {
-  const catalog = useShopServices("forge-and-fade");
+  const catalog = usePublicCatalog();
   const canFindTime = catalog.services.length > 0 && catalog.barbers.length > 0;
   const findTime = () => {
     const servicePicker = document.getElementById("home-booking-service");
@@ -76,12 +76,13 @@ const Home = () => {
     <main>
       <Hero
         shop={catalog.shop}
+        name={catalog.profile.name}
         cover={catalog.branding?.cover}
         onFindTime={canFindTime ? findTime : null}
       />
       <QuickBooking catalog={catalog} />
       <ServicesSection catalog={catalog} />
-      <AboutSection />
+      <AboutSection name={catalog.profile.name} />
       <section className="home-visit">
         <div className="container home-visit__inner">
           <div>
@@ -93,7 +94,10 @@ const Home = () => {
             )}
           </div>
           <div className="home-visit__actions">
-            <Link to="/locations" className="btn btn-primary">
+            <Link
+              to={`/contact?shop=${encodeURIComponent(catalog.shop)}`}
+              className="btn btn-primary"
+            >
               Hours and directions
             </Link>
             <Link to={shopPath(catalog.shop, true)} className="btn btn-outline">

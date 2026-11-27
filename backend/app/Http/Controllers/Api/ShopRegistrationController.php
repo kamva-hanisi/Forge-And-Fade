@@ -11,23 +11,27 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Normalizer;
 
 class ShopRegistrationController extends Controller
 {
+    private const BUSINESS_TIMEZONE = 'Africa/Johannesburg';
+
     public function store(Request $request)
     {
         $request->merge(['email' => is_string($request->email) ? strtolower(trim($request->email)) : $request->email]);
         $input = $request->validate(['shop_name' => 'required|string|max:100',
-            'shop_slug' => 'required|string|min:3|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:shops,slug',
             'name' => 'required|string|max:100', 'email' => 'required|email|max:150|unique:users,email',
             'password' => 'required|string|min:12|max:200|confirmed'], [], [
                 'shop_name' => 'business name',
-                'shop_slug' => 'business identifier',
             ]);
         try {
             return DB::transaction(function () use ($input) {
-                $shop = Shop::create(['name' => $input['shop_name'], 'slug' => $input['shop_slug'],
-                    'timezone' => 'Africa/Johannesburg', 'settings' => [
+                // Serialize identifier allocation across registrations.
+                $registration = DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
+                abort_unless($registration, 503, 'Business registration is not configured.');
+                $shop = Shop::create(['name' => $input['shop_name'], 'slug' => $this->allocateIdentifier($input['shop_name']),
+                    'timezone' => self::BUSINESS_TIMEZONE, 'settings' => [
                         'services' => [], 'barbers' => [], 'hours' => config('booking.hours'),
                         'breaks' => config('booking.breaks'), 'closed_dates' => [],
                     ]]);
@@ -44,13 +48,36 @@ class ShopRegistrationController extends Controller
                     ->header('Cache-Control', 'no-store');
             }, 5);
         } catch (UniqueConstraintViolationException $exception) {
-            throw ValidationException::withMessages(['shop_slug' => 'That business address or email is already registered. Please check your details.']);
+            if (User::where('email', $input['email'])->exists()) {
+                throw ValidationException::withMessages(['email' => 'That email is already registered.']);
+            }
+            throw $exception;
         }
+    }
+
+    private function allocateIdentifier(string $name): string
+    {
+        $name = Normalizer::normalize($name, Normalizer::FORM_KD) ?: $name;
+        $letters = preg_replace('/[^a-z]/', '', strtolower($name));
+        $first = str_pad(substr($letters, 0, 2), 2, 'x');
+        $last = str_pad(substr($letters, -2), 2, 'x');
+        $year = now(self::BUSINESS_TIMEZONE)->year;
+        $base = "$first-$year-$last";
+        $used = Shop::where('slug', $base)->orWhere('slug', 'like', $base.'-%')->pluck('slug')
+            ->merge(DB::table('retired_shop_slugs')->where('slug', $base)->orWhere('slug', 'like', $base.'-%')->pluck('slug'))
+            ->flip();
+        $identifier = $base;
+        for ($suffix = 2; $used->has($identifier); $suffix++) {
+            $identifier = "$base-$suffix";
+        }
+
+        return $identifier;
     }
 
     public function profile(Request $request)
     {
-        $shop = ShopAccess::authorize($request, 'bookings.read');
+        $permission = ShopAccess::allows($request, 'shop.write') ? 'shop.write' : 'bookings.read';
+        $shop = ShopAccess::authorize($request, $permission);
 
         return response()->json($shop->only(['name', 'slug', 'address', 'phone', 'timezone']) + [
             'directions_url' => $shop->settings['directions_url'] ?? null,

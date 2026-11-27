@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
-import useShopServices from "../../hooks/useShopServices";
+import { usePublicCatalog } from "../../hooks/useShopServices";
 import ShopHours from "../../components/ShopHours/ShopHours";
 import { shopDirections, shopPath } from "../../utils/shopLinks";
 
@@ -17,7 +17,7 @@ const Contact = () => {
     loading: shopLoading,
     error: shopError,
     retry,
-  } = useShopServices("forge-and-fade");
+  } = usePublicCatalog();
   const directions = shopDirections(profile);
   const [formData, setFormData] = useState({
     name: "",
@@ -53,7 +53,11 @@ const Contact = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post(`${apiUrl}/contact`, formData, { timeout: 20000 });
+      const response = await axios.post(
+        `${apiUrl}/contact`,
+        { ...formData, shop },
+        { timeout: 20000 },
+      );
 
       setSuccess(response.data.message);
 

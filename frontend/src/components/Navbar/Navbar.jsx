@@ -3,11 +3,13 @@ import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Brand from "../Brand/Brand";
 import { useAdmin } from "../../context/AdminContext";
+import { usePublicCatalog } from "../../hooks/useShopServices";
 import "./Navbar.scss";
 
 export default function Navbar({ admin = false }) {
   const [open, setOpen] = useState(false);
   const { session } = useAdmin();
+  const catalog = usePublicCatalog();
   const closeMenu = () => setOpen(false);
   useEffect(() => {
     if (!open) return;
@@ -22,7 +24,7 @@ export default function Navbar({ admin = false }) {
   return (
     <header className="navbar">
       <div className="container navbar__container">
-        <Brand onClick={closeMenu} />
+        <Brand onClick={closeMenu} business={catalog?.profile} logoFile={catalog?.branding?.logo} />
         <nav
           id="site-navigation"
           className={`navbar__nav${open ? " open" : ""}`}

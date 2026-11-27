@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -38,23 +39,29 @@ class ShopIsolationTest extends TestCase
 
     public function test_shop_registration_creates_an_owner_without_platform_privileges(): void
     {
-        $response = $this->postJson('/api/admin/register-shop', ['shop_name' => 'New Cuts', 'shop_slug' => 'new-cuts',
+        $year = now('Africa/Johannesburg')->year;
+        $response = $this->postJson('/api/admin/register-shop', ['shop_name' => 'New Cuts', 'shop_slug' => 'forge-and-fade',
             'name' => 'Owner', 'email' => 'NEW@example.com', 'password' => 'Owner-Password-12345',
             'password_confirmation' => 'Owner-Password-12345', 'role' => 'platform_admin', 'is_platform_admin' => true, 'shop_id' => 1])
-            ->assertCreated()->assertJsonPath('user.role', 'owner')->assertJsonPath('user.shop.slug', 'new-cuts');
+            ->assertCreated()->assertJsonPath('user.role', 'owner')->assertJsonPath('user.shop.slug', "ne-$year-ts");
         $this->assertFalse(User::where('email', 'new@example.com')->firstOrFail()->is_platform_admin);
         $this->withToken($response->json('token'))->getJson('/api/admin/bookings')->assertOk()->assertJsonPath('total', 0);
         $this->assertDatabaseHas('audit_events', ['action' => 'shop.registered']);
     }
 
-    public function test_duplicate_or_invalid_shop_identifiers_cannot_partially_register_an_account(): void
+    public function test_business_identifiers_use_the_local_year_and_handle_collisions(): void
     {
-        $payload = ['shop_name' => 'New', 'shop_slug' => 'forge-and-fade', 'name' => 'Owner', 'email' => 'new@example.com',
+        $this->travelTo(Carbon::parse('2030-12-31 22:00:00', 'UTC'));
+        $payload = ['shop_name' => 'Café & Cuts 24', 'name' => 'Owner', 'email' => 'new@example.com',
             'password' => 'Owner-Password-12345', 'password_confirmation' => 'Owner-Password-12345'];
-        $this->postJson('/api/admin/register-shop', $payload)->assertUnprocessable()->assertJsonValidationErrors('shop_slug');
-        $this->postJson('/api/admin/register-shop', [...$payload, 'shop_slug' => '../private'])->assertUnprocessable();
-        $this->assertDatabaseCount('users', 0);
-        $this->assertDatabaseCount('shops', 1);
+        $this->postJson('/api/admin/register-shop', $payload)->assertCreated()
+            ->assertJsonPath('user.shop.slug', 'ca-2031-ts');
+        $this->postJson('/api/admin/register-shop', [...$payload, 'email' => 'second@example.com'])
+            ->assertCreated()->assertJsonPath('user.shop.slug', 'ca-2031-ts-2');
+        $this->postJson('/api/admin/register-shop', $payload)->assertUnprocessable()->assertJsonValidationErrors('email');
+        $this->assertDatabaseCount('users', 2);
+        $this->assertDatabaseCount('shops', 3);
+        $this->assertDatabaseHas('shops', ['id' => 1, 'slug' => 'forge-and-fade']);
     }
 
     public function test_two_shops_can_book_the_same_barber_id_and_time_without_conflicting(): void

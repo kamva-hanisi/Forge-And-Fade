@@ -3,16 +3,20 @@ import { Clock3, Mail } from "lucide-react";
 
 import "./Footer.scss";
 import Brand from "../Brand/Brand";
+import { usePublicCatalog } from "../../hooks/useShopServices";
+import { shopPath } from "../../utils/shopLinks";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const catalog = usePublicCatalog();
+  const shop = catalog?.shop;
 
   return (
     <footer className="footer">
       <div className="container footer__grid">
         {/* BRAND */}
         <div className="footer__brand">
-          <Brand dark />
+          <Brand dark business={catalog?.profile} logoFile={catalog?.branding?.logo} />
 
           <p>Professional cuts, clean fades and beard grooming in a comfortable, modern setting.</p>
         </div>
@@ -27,8 +31,8 @@ const Footer = () => {
 
           <Link to="/about">About</Link>
 
-          <Link to="/booking">Book Appointment</Link>
-          <Link to="/booking/manage">Manage Booking</Link>
+          <Link to={shop ? shopPath(shop) : "/booking"}>Book Appointment</Link>
+          <Link to={shop ? shopPath(shop, true) : "/booking/manage"}>Manage Booking</Link>
         </div>
 
         {/* CONTACT */}
@@ -54,7 +58,9 @@ const Footer = () => {
 
       <div className="footer__bottom">
         <div className="container footer__bottom-content">
-          <p>© {currentYear} Forge & Fade. All rights reserved.</p>
+          <p>
+            © {currentYear} {catalog?.profile?.name || "Forge & Fade"}. All rights reserved.
+          </p>
 
           <div>
             <Link to="/terms">Terms & Conditions</Link>

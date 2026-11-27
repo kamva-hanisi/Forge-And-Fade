@@ -74,6 +74,7 @@ class ShopAccess
 
         return ['name' => $user->name, 'email' => $user->email, 'role' => $role,
             'shop' => $shop, 'shops' => $shops->values(), 'website_role' => WebsiteAccess::role($user),
+            ...(WebsiteAccess::role($user) === 'owner' ? ['public_shop_id' => PublicBusiness::current()?->id] : []),
             'platform_access' => WebsiteAccess::canManagePlatform($user), 'permissions' => $permissions];
     }
 

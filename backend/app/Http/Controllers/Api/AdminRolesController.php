@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class AdminRolesController extends Controller
 {
@@ -32,10 +31,12 @@ class AdminRolesController extends Controller
         $audit = DB::table('audit_events as event')
             ->leftJoin('users as actor', 'actor.id', '=', 'event.user_id')
             ->leftJoin('users as subject', fn ($join) => $join->on('subject.id', '=', 'event.subject_id')
-                ->where('event.action', '!=', 'invitation.created'))
+                ->whereNotIn('event.action', ['invitation.created', 'website.invitation.created', 'website.invitation.revoked', 'shop.deleted']))
             ->leftJoin('shops as shop', 'shop.id', '=', 'event.shop_id')
             ->whereIn('event.action', ['website.owner_initialized', 'website.role_changed', 'website.shop_access_changed',
-                'member.updated', 'member.removed', 'invitation.created', 'membership.joined', 'platform.access.granted'])
+                'member.updated', 'member.removed', 'invitation.created', 'membership.joined', 'platform.access.granted',
+                'website.invitation.created', 'website.invitation.revoked', 'website.invitation.accepted',
+                'website.public_business_changed', 'shop.deleted'])
             ->when($shopIds !== null, fn ($query) => $query->where(fn ($filter) => $filter
                 ->whereIn('event.shop_id', $shopIds)
                 ->when($role === 'super_admin', fn ($scoped) => $scoped->orWhere('event.user_id', $actor->id))))
@@ -55,6 +56,14 @@ class AdminRolesController extends Controller
             'can_manage' => $canManage,
             'can_view_activity' => $canManage || (bool) $shopIds,
             'accounts' => $accounts,
+            'pending_website_invitations' => $role === 'owner' ? DB::table('website_admin_invitations')
+                ->whereNull('used_at')->whereNull('revoked_at')->where('expires_at', '>', now())
+                ->orderByDesc('id')->get(['id', 'email', 'assignments', 'expires_at'])
+                ->map(fn ($invitation) => [
+                    'id' => $invitation->id, 'email' => $invitation->email,
+                    'assignments' => json_decode($invitation->assignments, flags: JSON_THROW_ON_ERROR),
+                    'expires_at' => Carbon::parse($invitation->expires_at)->toIso8601String(),
+                ]) : [],
             'assignable_roles' => $role === 'owner' ? ['super_admin', 'admin'] : ($canManage ? ['admin'] : []),
             'permission_options' => ['admin' => WebsiteAccess::ADMIN_PERMISSIONS,
                 'super_admin' => WebsiteAccess::SUPER_ADMIN_PERMISSIONS],
@@ -82,21 +91,17 @@ class AdminRolesController extends Controller
     public function update(Request $request, int $account)
     {
         $this->administrator($request);
-        $input = $request->validate([
-            'version' => 'required|integer|min:0',
-            'role' => ['present', 'nullable', Rule::in(['super_admin', 'admin'])],
-            'suspended' => 'required|boolean',
-            'assignments' => 'present|array|max:200',
-            'assignments.*' => 'required|array:shop_id,permissions',
-            'assignments.*.shop_id' => 'required|integer|distinct|exists:shops,id',
-            'assignments.*.permissions' => 'required|array|max:7',
-            'assignments.*.permissions.*' => ['required', 'string', Rule::in(WebsiteAccess::SUPER_ADMIN_PERMISSIONS)],
-        ], [], ['assignments.*.shop_id' => 'business']);
 
-        return DB::transaction(function () use ($request, $account, $input) {
+        return DB::transaction(function () use ($request, $account) {
             DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
             $request->user()->refresh();
             $actor = $this->administrator($request);
+            $input = $request->validate([
+                'version' => 'required|integer|min:0',
+                'role' => ['present', 'nullable', Rule::in(['super_admin', 'admin'])],
+                'suspended' => 'required|boolean',
+                ...WebsiteAccess::assignmentRules(),
+            ], [], ['assignments.*.shop_id' => 'business']);
             $target = User::whereKey($account)->lockForUpdate()->firstOrFail();
             $isOwner = WebsiteAccess::role($actor) === 'owner';
             $scope = $isOwner ? [] : WebsiteAccess::assignments($actor);
@@ -105,7 +110,7 @@ class AdminRolesController extends Controller
             abort_if(! $isOwner && $role === 'super_admin', 403, 'Only the Owner can grant Super Admin access.');
             abort_unless($target->website_access_version === (int) $input['version'], 409,
                 'Access has changed. Reload this account before saving.');
-            $assignments = $this->validatedAssignments($input, $isOwner, $scope);
+            $assignments = WebsiteAccess::validatedAssignments($input, $isOwner, $scope);
             $before = WebsiteAccess::snapshot($target);
             $after = ['role' => $role, 'suspended' => $role !== null && (bool) $input['suspended'], 'legacy_platform' => false,
                 'assignments' => (object) $assignments];
@@ -115,7 +120,7 @@ class AdminRolesController extends Controller
                 $target->forceFill(['website_role' => $role, 'website_suspended' => $after['suspended'],
                     'website_access_version' => $target->website_access_version + 1,
                     'is_admin' => $target->is_admin || $role !== null, 'is_platform_admin' => false])->save();
-                $this->saveAssignments($target, $assignments);
+                WebsiteAccess::saveAssignments($target, $assignments);
                 $this->auditChange($request, $target, $before, $after);
             }
 
@@ -156,45 +161,6 @@ class AdminRolesController extends Controller
         return ['id' => $account->id, 'name' => $account->name, 'email' => $account->email,
             'version' => $account->website_access_version,
             ...WebsiteAccess::snapshot($account)];
-    }
-
-    private function validatedAssignments(array $input, bool $isOwner, array $scope): array
-    {
-        $role = $input['role'];
-        $rows = $input['assignments'];
-        if ($role === null && $rows) {
-            throw ValidationException::withMessages(['assignments' => 'Remove all website business assignments when removing the website role.']);
-        }
-        if ($role === 'admin' && ! $rows) {
-            throw ValidationException::withMessages(['assignments' => 'An Admin needs at least one business assignment.']);
-        }
-        $allowed = $role === 'super_admin' ? WebsiteAccess::SUPER_ADMIN_PERMISSIONS : WebsiteAccess::ADMIN_PERMISSIONS;
-        $result = [];
-        foreach ($rows as $row) {
-            $shop = (int) $row['shop_id'];
-            $permissions = array_values(array_intersect($allowed, $row['permissions']));
-            abort_if(array_diff($row['permissions'], $allowed)
-                || (! $isOwner && array_diff($permissions, $scope[$shop] ?? [])), 403, 'A business or permission is outside your delegation scope.');
-            if ((array_intersect(['bookings.write', 'reports.read', 'payments.record'], $permissions)
-                    && ! in_array('bookings.read', $permissions, true))
-                || (in_array('payments.record', $permissions, true) && ! in_array('reports.read', $permissions, true))) {
-                throw ValidationException::withMessages(['assignments' => 'Booking edits and reports require appointment viewing. Payment recording also requires report access.']);
-            }
-            $result[$shop] = $permissions;
-        }
-        ksort($result);
-
-        return $result;
-    }
-
-    private function saveAssignments(User $target, array $assignments): void
-    {
-        $query = DB::table('website_shop_access')->where('user_id', $target->id);
-        $query->whereNotIn('shop_id', array_keys($assignments))->delete();
-        foreach ($assignments as $shop => $permissions) {
-            DB::table('website_shop_access')->updateOrInsert(['user_id' => $target->id, 'shop_id' => $shop],
-                ['permissions' => json_encode($permissions, JSON_THROW_ON_ERROR)]);
-        }
     }
 
     private function auditChange(Request $request, User $target, array $before, array $after): void

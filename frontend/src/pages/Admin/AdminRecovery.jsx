@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import PasswordField from "../../components/PasswordField/PasswordField";
 import { formError } from "../../utils/formError";
 import { useAdmin } from "../../context/AdminContext";
 import AdminAccessIntro from "./AdminAccessIntro";
@@ -89,34 +90,24 @@ export default function AdminRecovery({ reset = false }) {
               </label>
               {reset && (
                 <>
-                  <label htmlFor="recovery-password">
-                    New password
-                    <input
-                      id="recovery-password"
-                      type="password"
-                      autoComplete="new-password"
-                      minLength={12}
-                      maxLength={200}
-                      required
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      aria-describedby="recovery-password-hint"
-                    />
-                    <small id="recovery-password-hint">Use at least 12 characters.</small>
-                  </label>
-                  <label htmlFor="recovery-confirm">
-                    Confirm new password
-                    <input
-                      id="recovery-confirm"
-                      type="password"
-                      autoComplete="new-password"
-                      minLength={12}
-                      maxLength={200}
-                      required
-                      value={confirmation}
-                      onChange={(event) => setConfirmation(event.target.value)}
-                    />
-                  </label>
+                  <PasswordField
+                    label="New password"
+                    name="password"
+                    autoComplete="new-password"
+                    minLength={12}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    showStrength
+                    hint="Use at least 12 characters."
+                  />
+                  <PasswordField
+                    label="Confirm new password"
+                    name="password_confirmation"
+                    autoComplete="new-password"
+                    minLength={12}
+                    value={confirmation}
+                    onChange={(event) => setConfirmation(event.target.value)}
+                  />
                 </>
               )}
               <button className="btn btn-primary admin-access__submit" disabled={busy}>

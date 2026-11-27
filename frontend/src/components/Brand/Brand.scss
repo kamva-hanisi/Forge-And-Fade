@@ -11,6 +11,13 @@
     height: 100%;
     object-fit: contain;
   }
+  span {
+    padding-inline: 12px;
+    color: $text;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
   &--dark {
     background: $white;
   }

@@ -3,7 +3,9 @@ import { Link, Navigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useAdmin } from "../../context/AdminContext";
 import FormGuard from "../../components/FormGuard/FormGuard";
+import PasswordField from "../../components/PasswordField/PasswordField";
 import { formError } from "../../utils/formError";
+import { businessIdentifier } from "../../utils/shopOnboarding";
 import AdminAccessIntro from "./AdminAccessIntro";
 import "./AdminAccess.scss";
 
@@ -11,7 +13,6 @@ export default function ShopSignup() {
   const { session, authenticate, busy } = useAdmin();
   const [fields, setFields] = useState({
     shop_name: "",
-    shop_slug: "",
     name: "",
     email: "",
     password: "",
@@ -19,6 +20,7 @@ export default function ShopSignup() {
     website: "",
   });
   const [error, setError] = useState("");
+  const identifier = businessIdentifier(fields.shop_name);
   if (session)
     return (
       <Navigate
@@ -67,34 +69,6 @@ export default function ShopSignup() {
               onChange={(value) => setFields((previous) => ({ ...previous, website: value }))}
             />
             <label>
-              Business name
-              <input
-                name="shop_name"
-                autoComplete="organization"
-                maxLength={100}
-                required
-                value={fields.shop_name}
-                onChange={change}
-              />
-            </label>
-            <label>
-              Business identifier
-              <input
-                name="shop_slug"
-                autoComplete="off"
-                minLength={3}
-                maxLength={80}
-                pattern="[a-z0-9]+(-[a-z0-9]+)*"
-                placeholder="your-business"
-                required
-                value={fields.shop_slug}
-                onChange={change}
-              />
-              <small>
-                Use lowercase letters, numbers and hyphens. Each business needs a unique identifier.
-              </small>
-            </label>
-            <label>
               Your full name
               <input
                 name="name"
@@ -118,32 +92,44 @@ export default function ShopSignup() {
               />
             </label>
             <label>
-              Password
+              Business name
               <input
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                minLength={12}
-                maxLength={200}
+                name="shop_name"
+                autoComplete="organization"
+                maxLength={100}
                 required
-                value={fields.password}
+                value={fields.shop_name}
                 onChange={change}
               />
-              <small>Use at least 12 characters.</small>
             </label>
             <label>
-              Confirm password
+              Business identifier
               <input
-                name="password_confirmation"
-                type="password"
-                autoComplete="new-password"
-                minLength={12}
-                maxLength={200}
-                required
-                value={fields.password_confirmation}
-                onChange={change}
+                name="shop_slug"
+                className="admin-access__business-identifier"
+                placeholder="Generated from your business name"
+                readOnly
+                value={identifier}
               />
             </label>
+            <PasswordField
+              label="Password"
+              name="password"
+              autoComplete="new-password"
+              minLength={12}
+              value={fields.password}
+              onChange={change}
+              showStrength
+              hint="Use at least 12 characters."
+            />
+            <PasswordField
+              label="Confirm password"
+              name="password_confirmation"
+              autoComplete="new-password"
+              minLength={12}
+              value={fields.password_confirmation}
+              onChange={change}
+            />
             <button className="btn btn-primary admin-access__submit" disabled={busy}>
               {busy ? "Creating your business…" : "Create business and account"}
               <ArrowRight size={16} aria-hidden="true" />
@@ -154,7 +140,6 @@ export default function ShopSignup() {
           <p>
             Already registered? <Link to="/admin/signin">Sign in</Link>
           </p>
-          <Link to="/admin/signup">Staff sign up with an invitation</Link>
         </div>
       </section>
     </main>

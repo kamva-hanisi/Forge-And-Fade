@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -88,6 +89,47 @@ class ShopStorefrontTest extends TestCase
         }
     }
 
+    public function test_generated_branding_publishes_as_a_pair_for_the_selected_business(): void
+    {
+        Storage::fake('local');
+        $other = Shop::create(['name' => 'Kamva’s', 'slug' => 'kamvas', 'timezone' => 'Africa/Johannesburg']);
+        $owner = User::factory()->create();
+        $this->grantShopRole($owner);
+        Sanctum::actingAs($owner, ['admin']);
+        $name = Shop::findOrFail(1)->name;
+        $url = '/api/admin/management/branding/images';
+        $files = fn () => ['logo' => $this->photo(), 'cover' => $this->photo()];
+
+        $original = $this->post($url, ['version' => 0, 'business_name' => $name, ...$files()])
+            ->assertOk()->assertJsonPath('version', 1)->json('branding');
+        $this->post($url, ['version' => 0, 'business_name' => $other->name, ...$files()], ['X-Shop-Id' => $other->id])
+            ->assertForbidden();
+        $this->grantShopRole($owner, 'owner', $other->id);
+        $otherImages = $this->post($url, ['version' => 0, 'business_name' => $other->name, ...$files()], ['X-Shop-Id' => $other->id])
+            ->assertOk()->assertJsonPath('business_name', $other->name)->json('branding');
+
+        $this->post($url, ['version' => 0, 'business_name' => $name, ...$files()])->assertConflict();
+        $this->post($url, ['version' => 1, 'business_name' => $other->name, ...$files()])->assertConflict();
+        $this->post($url, ['version' => 1, 'business_name' => $name, 'logo' => $this->photo()], ['Accept' => 'application/json'])
+            ->assertUnprocessable()->assertJsonValidationErrors('cover');
+        $this->getJson('/api/bookings/catalog?shop=forge-and-fade')->assertOk()
+            ->assertJsonPath('branding.logo', $original['logo'])->assertJsonPath('branding.cover', $original['cover']);
+        $this->assertCount(2, Storage::disk('local')->files('shop-media/1'));
+
+        $replacement = $this->post($url, ['version' => 1, 'business_name' => $name, ...$files()])
+            ->assertOk()->assertJsonPath('version', 2)->json('branding');
+        $this->getJson('/api/bookings/catalog?shop=forge-and-fade')->assertOk()
+            ->assertJsonPath('branding.logo', $replacement['logo'])->assertJsonPath('branding.cover', $replacement['cover']);
+        $this->getJson('/api/bookings/catalog?shop=kamvas')->assertOk()
+            ->assertJsonPath('branding.logo', $otherImages['logo'])->assertJsonPath('branding.cover', $otherImages['cover']);
+        foreach (['logo', 'cover'] as $target) {
+            $this->get('/api/shop-media/kamvas/'.$otherImages[$target])->assertOk()->assertHeader('Content-Type', 'image/png');
+            $this->get('/api/shop-media/kamvas/'.$replacement[$target])->assertNotFound();
+            $this->get('/api/shop-media/forge-and-fade/'.$original[$target])->assertNotFound();
+        }
+        $this->assertDatabaseHas('audit_events', ['user_id' => $owner->id, 'shop_id' => $other->id, 'action' => 'shop.branding_saved']);
+    }
+
     public function test_service_description_is_published_and_preserved_by_older_catalog_editors(): void
     {
         $owner = User::factory()->create();
@@ -99,5 +141,77 @@ class ShopStorefrontTest extends TestCase
         $this->putJson('/api/admin/management/services/1', $edit + ['version' => 1])->assertOk();
         $this->getJson('/api/bookings/catalog')->assertOk()
             ->assertJsonPath('services.0.description', 'A trim finished with styling.');
+    }
+
+    public function test_branding_can_be_delegated_without_catalog_or_schedule_access(): void
+    {
+        Storage::fake('local');
+        $other = Shop::create(['name' => 'Other Business', 'slug' => 'other-branding', 'timezone' => 'Africa/Johannesburg']);
+        $owner = User::factory()->create(['is_admin' => true, 'website_role' => 'owner']);
+        $super = User::factory()->create();
+        Sanctum::actingAs($owner, ['admin']);
+        $management = '/api/admin/management';
+        $options = $this->getJson('/api/admin/roles')->assertOk()->json('permission_options');
+        $this->assertContains('shop.branding.write', $options['super_admin']);
+        $this->assertNotContains('shop.branding.write', $options['admin']);
+        $this->putJson('/api/admin/roles/accounts/'.$super->id, [
+            'version' => 0, 'role' => 'super_admin', 'suspended' => false,
+            'assignments' => [
+                ['shop_id' => 1, 'permissions' => ['shop.branding.write']],
+                ['shop_id' => $other->id, 'permissions' => ['shop.manage']],
+            ],
+        ])->assertOk();
+        $portfolio = $this->post($management.'/media', ['version' => 0, 'target' => 'portfolio', 'barber_id' => 1, 'photo' => $this->photo()])
+            ->assertOk()->json('barbers.0.portfolio.0.image');
+        Sanctum::actingAs($super->fresh(), ['admin']);
+
+        $this->getJson($management.'/branding', ['X-Shop-Id' => 1])->assertOk()
+            ->assertJsonPath('version', 1)->assertJsonMissingPath('services')->assertJsonMissingPath('schedules');
+        $this->getJson($management)->assertForbidden();
+        $this->getJson($management.'/business-hours')->assertForbidden();
+        $this->postJson($management.'/services', ['version' => 1])->assertForbidden();
+        $this->putJson($management.'/barbers/1/schedule', ['version' => 1])->assertForbidden();
+        $this->putJson($management.'/business-hours', ['version' => 1])->assertForbidden();
+        $this->post($management.'/media', ['version' => 1, 'target' => 'portfolio', 'barber_id' => 1, 'photo' => $this->photo()])
+            ->assertForbidden();
+        $this->get($management.'/media/'.$portfolio)->assertNotFound();
+        $this->getJson($management.'/branding', ['X-Shop-Id' => $other->id])->assertForbidden();
+        $this->getJson($management, ['X-Shop-Id' => $other->id])->assertOk();
+        $this->post($management.'/media', ['version' => 0, 'target' => 'cover', 'photo' => $this->photo()], ['X-Shop-Id' => $other->id])
+            ->assertForbidden();
+
+        $images = $this->post($management.'/branding/images', [
+            'version' => 1, 'business_name' => Shop::findOrFail(1)->name,
+            'logo' => $this->photo(), 'cover' => $this->photo(),
+        ])->assertOk()->assertJsonPath('version', 2)->assertJsonMissingPath('barbers')->json('branding');
+        $this->get($management.'/media/'.$images['logo'])->assertOk();
+        $this->post($management.'/media', ['version' => 2, 'target' => 'cover', 'photo' => $this->photo()])
+            ->assertOk()->assertJsonPath('version', 3);
+        $this->putJson($management.'/branding', ['version' => 3, 'accent' => '#376C62'])
+            ->assertOk()->assertJsonPath('branding.accent', '#376C62');
+        $this->postJson($management.'/media', ['version' => 4, 'target' => 'logo', 'remove' => $images['logo']])
+            ->assertOk()->assertJsonMissingPath('branding.logo');
+    }
+
+    public function test_migration_preserves_branding_access_for_existing_super_admins_and_pending_invitations(): void
+    {
+        $super = User::factory()->create(['is_admin' => true, 'website_role' => 'super_admin']);
+        $owner = User::factory()->create(['is_admin' => true, 'website_role' => 'owner']);
+        $other = Shop::create(['name' => 'Other Business', 'slug' => 'migration-branding', 'timezone' => 'Africa/Johannesburg']);
+        DB::table('website_shop_access')->insert(['user_id' => $super->id, 'shop_id' => 1, 'permissions' => '["shop.manage"]']);
+        $invitation = DB::table('website_admin_invitations')->insertGetId([
+            'email' => 'branding-invite@example.test', 'token_hash' => hash('sha256', 'fixture-branding'), 'invited_by' => $owner->id,
+            'assignments' => json_encode([1 => ['shop.manage'], $other->id => ['bookings.read']]),
+            'expires_at' => now()->addDay(), 'created_at' => now(),
+        ]);
+        $migration = require database_path('migrations/2026_11_27_000005_separate_branding_permission.php');
+        $migration->up();
+        $migration->up();
+
+        $this->assertSame(1, $super->fresh()->website_access_version);
+        $this->assertSame([1 => ['shop.manage', 'shop.branding.write'], $other->id => ['bookings.read']], json_decode(
+            DB::table('website_admin_invitations')->where('id', $invitation)->value('assignments'), true));
+        Sanctum::actingAs($super->fresh(), ['admin']);
+        $this->getJson('/api/admin/management/branding')->assertOk();
     }
 }

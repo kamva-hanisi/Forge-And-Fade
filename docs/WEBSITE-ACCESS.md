@@ -19,7 +19,9 @@ php artisan admin:website-owner owner@example.com
 
 The command runs once and requires the Owner to sign in again. After initialization, existing legacy platform accounts lose the legacy grant. Their business memberships remain available. The Website Owner can review them in **Roles & Permissions** and explicitly assign each account a website role and business access.
 
-The page assigns access to an existing account by email. For a new website-only account, use the trusted console and then assign its role in the page.
+Use **Invite Super Admin** to choose the recipient’s email, businesses and permissions before they create an account. Share the private, single-use link with that recipient. It expires after 48 hours and can be revoked while pending.
+
+Use **Find account** to manage an existing account by email. To provision a new website-only Admin account, use the trusted console and then assign its role in the page.
 
 ```sh
 php artisan admin:create staff@example.com --website-only

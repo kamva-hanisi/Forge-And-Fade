@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import useShopServices from "../../hooks/useShopServices";
+import { usePublicCatalog } from "../../hooks/useShopServices";
 import { bookingLink } from "../../utils/shopLinks";
 import { formatRand } from "../../utils/money";
 
 import "./Services.scss";
 
 const Services = () => {
-  const { services, error, loading, shop, retry } = useShopServices();
+  const { services, error, loading, shop, retry } = usePublicCatalog();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("listed");
   const term = search.trim().toLowerCase();

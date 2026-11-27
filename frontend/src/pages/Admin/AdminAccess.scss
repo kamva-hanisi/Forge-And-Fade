@@ -82,12 +82,9 @@
       gap: 24px;
       margin-top: 24px;
     }
-    label,
-    .admin-access__field {
+    label {
       display: grid;
       gap: 8px;
-    }
-    label {
       font-size: $font-small;
       font-weight: 600;
     }
@@ -97,28 +94,15 @@
       border: 1px solid $border;
       padding: 12px 14px;
       background: $white;
+
+      &.admin-access__business-identifier {
+        background: #eeeeee;
+        color: $text-light;
+      }
     }
     small {
       font-size: $font-label;
       font-weight: 400;
-      color: $text-light;
-    }
-  }
-  &__password {
-    position: relative;
-    input {
-      padding-right: 52px;
-    }
-    button {
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      bottom: 2px;
-      width: 44px;
-      min-height: 44px;
-      display: grid;
-      place-items: center;
-      background: transparent;
       color: $text-light;
     }
   }

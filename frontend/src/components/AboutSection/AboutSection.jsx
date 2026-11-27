@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 
 import "./AboutSection.scss";
 
-const AboutSection = () => {
+const AboutSection = ({ name }) => {
   return (
     <section className="about-section">
       <div className="container about-section__container">
         <div className="about-section__content">
-          <span className="section-label">About Forge & Fade</span>
+          <span className="section-label">About {name}</span>
 
           <h2 className="section-title">
             Good Hair.
@@ -16,7 +16,7 @@ const AboutSection = () => {
           </h2>
 
           <p>
-            Forge & Fade is a modern barbering business focused on quality cuts, clean fades and
+            {name} is a modern barbering business focused on quality cuts, clean fades and
             professional grooming.
           </p>
 

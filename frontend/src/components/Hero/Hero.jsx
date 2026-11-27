@@ -2,15 +2,16 @@ import { Link } from "react-router-dom";
 
 import barberTools from "../../assets/barber-tools.jpg";
 import { shopMediaUrl } from "../../utils/shopMedia";
+import { shopPath } from "../../utils/shopLinks";
 
 import "./Hero.scss";
 
-const Hero = ({ shop, cover, onFindTime }) => {
+const Hero = ({ shop, name, cover, onFindTime }) => {
   return (
     <section className="hero">
       <div className="container hero__container">
         <div className="hero__content">
-          <span className="section-label">Forge &amp; Fade</span>
+          <span className="section-label">{name}</span>
 
           <h1>
             Cuts &amp; fades.
@@ -21,7 +22,7 @@ const Hero = ({ shop, cover, onFindTime }) => {
           <p>Pick your service, book with a barber you know, or find the first available chair.</p>
 
           <div className="hero__buttons">
-            <Link to="/booking" className="btn btn-primary">
+            <Link to={shopPath(shop)} className="btn btn-primary">
               Book Appointment
             </Link>
 

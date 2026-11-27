@@ -123,7 +123,12 @@ class BookingEmails
             ->lazyById()->each(function (Booking $booking) {
                 $start = CarbonImmutable::parse($booking->starts_at);
                 if ($start->isFuture() && $start->lte(now()->addDay()) && $booking->created_at->lte($start->subDay())) {
-                    self::record($booking, 'reminder');
+                    DB::transaction(function () use ($booking) {
+                        $shop = Shop::whereKey($booking->shop_id)->lockForUpdate()->first();
+                        if ($shop?->status === 'active') {
+                            self::record($booking, 'reminder');
+                        }
+                    }, 5);
                 }
             });
     }
@@ -137,7 +142,10 @@ class BookingEmails
         }
 
         return DB::transaction(function () use ($id, $shopId) {
-            $shop = Shop::whereKey($shopId)->lockForUpdate()->firstOrFail();
+            $shop = Shop::whereKey($shopId)->lockForUpdate()->first();
+            if (! $shop) {
+                return 'skipped';
+            }
             $notice = DB::table('booking_emails')->where('id', $id)->lockForUpdate()->first();
             if (! $notice || ! in_array($notice->status, ['pending', 'failed'], true) || $notice->attempts >= self::MAX_ATTEMPTS
                 || CarbonImmutable::parse($notice->available_at)->isFuture()) {

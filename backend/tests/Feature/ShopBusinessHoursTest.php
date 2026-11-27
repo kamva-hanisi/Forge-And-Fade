@@ -7,6 +7,7 @@ use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ShopBusinessHoursTest extends TestCase
@@ -56,6 +57,72 @@ class ShopBusinessHoursTest extends TestCase
         $this->authenticate();
         $this->withHeader('X-Shop-Id', $other->id)->putJson('/api/admin/management/business-hours', $this->schedule())->assertForbidden();
         $this->assertSame(['hours' => []], $other->fresh()->settings);
+    }
+
+    public function test_opening_hours_can_be_granted_for_one_business_without_other_management_access(): void
+    {
+        $other = Shop::create(['name' => 'Other', 'slug' => 'hours-permissions']);
+        $owner = User::factory()->create(['is_admin' => true, 'website_role' => 'owner']);
+        $admin = User::factory()->create();
+        $this->withToken($owner->createToken('hours-owner', ['admin'])->plainTextToken)
+            ->putJson('/api/admin/roles/accounts/'.$admin->id, [
+                'role' => 'admin', 'version' => 0, 'suspended' => false,
+                'assignments' => [['shop_id' => 1, 'permissions' => ['shop.hours.write']]],
+            ])->assertOk()->assertJsonPath('account.assignments.1', ['shop.hours.write']);
+
+        app('auth')->forgetGuards();
+        $this->withToken($admin->createToken('hours-admin', ['admin'])->plainTextToken);
+        $this->getJson('/api/admin/management/business-hours', ['X-Shop-Id' => $other->id])->assertForbidden();
+        $this->getJson('/api/admin/management')->assertForbidden();
+        $this->patchJson('/api/admin/shop', ['name' => 'Unauthorized edit'])->assertForbidden();
+        $this->getJson('/api/admin/profile')->assertOk();
+        $this->getJson('/api/admin/management/business-hours')->assertOk()->assertJsonPath('version', 0)
+            ->assertJsonMissingPath('members');
+        $this->putJson('/api/admin/management/business-hours', $this->schedule())->assertOk()
+            ->assertJsonPath('version', 1)->assertJsonPath('business_schedule.hours.1', ['09:00', '16:00'])
+            ->assertJsonMissingPath('services');
+        $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonPath('hours.1', ['09:00', '16:00']);
+        $this->assertDatabaseHas('audit_events', ['user_id' => $admin->id, 'shop_id' => 1, 'action' => 'shop.business_hours_saved']);
+        $this->assertNull($other->fresh()->settings);
+    }
+
+    public function test_business_profile_permission_allows_phone_and_location_edits_without_hours_access(): void
+    {
+        $super = User::factory()->create(['is_admin' => true, 'website_role' => 'super_admin']);
+        DB::table('website_shop_access')->insert(['user_id' => $super->id, 'shop_id' => 1,
+            'permissions' => json_encode(['shop.write', 'shop.manage'])]);
+        $this->withToken($super->createToken('business-profile', ['admin'])->plainTextToken);
+        $this->getJson('/api/admin/management')->assertOk();
+        $this->getJson('/api/admin/management/business-hours')->assertForbidden();
+        $this->putJson('/api/admin/management/business-hours', $this->schedule())->assertForbidden();
+        $this->getJson('/api/admin/shop')->assertOk();
+        $this->patchJson('/api/admin/shop', ['name' => 'Forge & Fade', 'phone' => '0715550110',
+            'address' => '12 Fixture Street, Cape Town', 'directions_url' => 'https://maps.app.goo.gl/FixturePin'])
+            ->assertOk()->assertJsonPath('phone', '0715550110')->assertJsonPath('address', '12 Fixture Street, Cape Town');
+        $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonPath('shop.phone', '0715550110')
+            ->assertJsonPath('shop.address', '12 Fixture Street, Cape Town')
+            ->assertJsonPath('shop.directions_url', 'https://maps.app.goo.gl/FixturePin');
+    }
+
+    public function test_migration_preserves_existing_business_hours_access(): void
+    {
+        $super = User::factory()->create(['is_admin' => true, 'website_role' => 'super_admin']);
+        $owner = User::factory()->create(['is_admin' => true, 'website_role' => 'owner']);
+        DB::table('website_shop_access')->insert(['user_id' => $super->id, 'shop_id' => 1,
+            'permissions' => '["shop.manage"]']);
+        $invitation = DB::table('website_admin_invitations')->insertGetId([
+            'email' => 'hours-invite@example.test', 'token_hash' => hash('sha256', 'fixture-hours'), 'invited_by' => $owner->id,
+            'assignments' => '{"1":["shop.manage"]}', 'expires_at' => now()->addDay(), 'created_at' => now(),
+        ]);
+        $migration = require database_path('migrations/2026_11_27_000004_separate_business_hours_permission.php');
+        $migration->up();
+        $migration->up();
+        $this->assertSame(1, $super->fresh()->website_access_version);
+        $this->assertSame([1 => ['shop.manage', 'shop.hours.write']], json_decode(
+            DB::table('website_admin_invitations')->where('id', $invitation)->value('assignments'), true));
+
+        $this->withToken($super->createToken('existing-manager', ['admin'])->plainTextToken);
+        $this->getJson('/api/admin/management/business-hours')->assertOk();
     }
 
     public function test_saved_hours_breaks_and_closures_apply_to_public_and_staff_booking(): void

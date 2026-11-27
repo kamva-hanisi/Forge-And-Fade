@@ -7,15 +7,17 @@ import { formError } from "../../utils/formError";
 import { catalogReadiness } from "../../utils/shopOnboarding";
 import { shopPath } from "../../utils/shopLinks";
 import { BrandingEditor, MediaEditor } from "./ShopMediaEditor";
+import BrandingGenerator from "./BrandingGenerator";
+import ScheduleEditor from "./ScheduleEditor";
 import "./ShopManagement.scss";
 
 const managementTabs = [
-  ["staff", "Staff"],
-  ["services", "Services"],
-  ["branding", "Branding"],
-  ["portfolios", "Barber portfolios"],
-  ["hours", "Business hours"],
-  ["schedules", "Barber schedules"],
+  ["staff", "Staff", "shop.manage"],
+  ["services", "Services", "shop.manage"],
+  ["branding", "Branding", "shop.branding.write"],
+  ["portfolios", "Barber portfolios", "shop.manage"],
+  ["hours", "Business hours", "shop.hours.write"],
+  ["schedules", "Barber schedules", "shop.manage"],
 ];
 
 function CatalogEditor({ item, type, busy, save }) {
@@ -203,144 +205,22 @@ function MemberEditor({ member, barbers, busy, save }) {
   );
 }
 
-function ScheduleEditor({ data, busy, save, business = false }) {
-  const [barber, setBarber] = useState(String(data.barbers[0]?.id || ""));
-  const [draft, setDraft] = useState(business ? data.business_schedule : data.schedules[barber]);
-  const [breaks, setBreaks] = useState(
-    (draft?.breaks || []).map((range) => range.join("-")).join(", "),
-  );
-  const [closed, setClosed] = useState((draft?.closed_dates || []).join(", "));
-  const choose = (id) => {
-    const next = data.schedules[id];
-    setBarber(id);
-    setDraft(next);
-    setBreaks((next.breaks || []).map((range) => range.join("-")).join(", "));
-    setClosed((next.closed_dates || []).join(", "));
-  };
-  if (!draft) return <p>Add a barber profile first.</p>;
-  const updateDay = (day, value) => setDraft({ ...draft, hours: { ...draft.hours, [day]: value } });
-  return (
-    <form
-      className="staff-card staff-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        save(business ? "/management/business-hours" : `/management/barbers/${barber}/schedule`, {
-          hours: draft.hours,
-          breaks: breaks.trim()
-            ? breaks.split(",").map((range) =>
-                range
-                  .trim()
-                  .split("-")
-                  .map((time) => time.trim()),
-              )
-            : [],
-          closed_dates: closed.trim() ? closed.split(",").map((date) => date.trim()) : [],
-        });
-      }}
-    >
-      <h2>{business ? "Business opening hours" : "Weekly availability"}</h2>
-      <p>
-        {business
-          ? "These hours, breaks and closed dates apply to every barber in your business."
-          : "Barber hours follow the business’s opening hours and breaks."}{" "}
-        Upcoming and in-progress appointments must remain valid. Times use {data.timezone}.
-      </p>
-      <fieldset className="staff-booking-fields" disabled={busy}>
-        {!business && (
-          <label>
-            Barber profile
-            <select value={barber} onChange={(event) => choose(event.target.value)}>
-              {data.barbers.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                  {!item.active ? " (inactive)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-          (name, index) => {
-            const day = index + 1;
-            const range = draft.hours[day];
-            return (
-              <div className="shop-management__day" key={day}>
-                <label className="staff-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(range)}
-                    onChange={(event) =>
-                      updateDay(day, event.target.checked ? ["08:00", "18:00"] : null)
-                    }
-                  />
-                  {name}
-                </label>
-                {range && (
-                  <>
-                    <label>
-                      {name} start
-                      <input
-                        type="time"
-                        required
-                        value={range[0]}
-                        onChange={(event) => updateDay(day, [event.target.value, range[1]])}
-                      />
-                    </label>
-                    <label>
-                      {name} end
-                      <input
-                        type="time"
-                        required
-                        value={range[1]}
-                        onChange={(event) => updateDay(day, [range[0], event.target.value])}
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-            );
-          },
-        )}
-        <label>
-          {business ? "Business-wide daily breaks" : "Additional daily breaks"}
-          <input
-            value={breaks}
-            onChange={(event) => setBreaks(event.target.value)}
-            placeholder="13:00-14:00, 16:00-16:15"
-            maxLength={150}
-          />
-          <small>
-            {business
-              ? "Separate ranges with commas. These breaks apply every open day."
-              : "Separate ranges with commas. Business-wide breaks still apply."}
-          </small>
-        </label>
-        <label>
-          {business ? "Business closed dates" : "Days off"}
-          <input
-            value={closed}
-            onChange={(event) => setClosed(event.target.value)}
-            placeholder="2026-12-25, 2027-01-01"
-            maxLength={4500}
-          />
-          <small>Use YYYY-MM-DD dates separated by commas.</small>
-        </label>
-        <button className="btn btn-primary">
-          {business ? "Save business hours" : "Save barber schedule"}
-        </button>
-      </fieldset>
-    </form>
-  );
-}
-
 export default function ShopManagement() {
   const { session, setSession } = useAdmin();
-  const allowed = session.user.permissions?.includes("shop.manage");
-  const canManageMembers = session.user.permissions?.includes("members.manage");
+  const permissions = session.user.permissions || [];
+  const canManageCatalog = permissions.includes("shop.manage");
+  const canPublishBranding = permissions.includes("shop.branding.write");
+  const canEditHours = permissions.includes("shop.hours.write");
+  const canManageMembers = permissions.includes("members.manage");
+  const tabs = managementTabs.filter(([, , permission]) => permissions.includes(permission));
   const [params] = useSearchParams();
-  const [tab, setTab] = useState(
-    () => managementTabs.find(([value]) => value === params.get("tab"))?.[0] || "staff",
-  );
+  const [requestedTab, setTab] = useState(() => params.get("tab"));
+  const tab = tabs.find(([value]) => value === requestedTab)?.[0] || tabs[0]?.[0];
+  const managementPath = canManageCatalog
+    ? "/management"
+    : canPublishBranding
+      ? "/management/branding"
+      : null;
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -356,10 +236,10 @@ export default function ShopManagement() {
     [session],
   );
   useEffect(() => {
-    if (!allowed) return;
+    if (!managementPath) return;
     const controller = new AbortController();
     client
-      .get("/management", { signal: controller.signal })
+      .get(managementPath, { signal: controller.signal })
       .then(({ data }) => {
         setData(data);
         setError("");
@@ -371,8 +251,13 @@ export default function ShopManagement() {
         }
       });
     return () => controller.abort();
-  }, [allowed, client, refresh, setSession]);
-  const save = async (url, payload, method = "put") => {
+  }, [client, managementPath, refresh, setSession]);
+  const save = async (
+    url,
+    payload,
+    method = "put",
+    successMessage = "Business changes saved. Existing booking prices and names are preserved.",
+  ) => {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -385,22 +270,27 @@ export default function ShopManagement() {
         data: payload instanceof FormData ? payload : { ...payload, version: data.version },
       });
       setData(response.data);
-      setNotice("Business changes saved. Existing booking prices and names are preserved.");
+      setNotice(successMessage);
+      return true;
     } catch (err) {
       if (err.response?.status === 401) setSession(null);
       else setError(formError(err));
+      return false;
     } finally {
       setBusy(false);
     }
   };
-  if (!allowed) return <Navigate to="/admin" replace />;
-  const readiness = data ? catalogReadiness(data.services, data.barbers) : null;
+  if (tab === "hours") {
+    return <Navigate to="/admin/settings/profile#business-hours" replace />;
+  }
+  if (!managementPath) return <Navigate to="/admin" replace />;
+  const readiness = data && canManageCatalog ? catalogReadiness(data.services, data.barbers) : null;
+  const brandingBusy = busy || data?.shop_status !== "active";
   return (
     <main className="staff-page shop-management">
       <header className="staff-page-heading">
         <span className="section-label">{session.user.shop?.name}</span>
         <h1 className="section-title">Business management</h1>
-        <p>Manage barber profiles, services and schedules for this business.</p>
       </header>
       {readiness && !readiness.ready && (
         <section className="staff-card shop-management__setup" aria-labelledby="shop-setup-title">
@@ -433,14 +323,11 @@ export default function ShopManagement() {
             <Link className="btn btn-outline" to="/admin/settings/profile">
               Review business details
             </Link>
-            <button
-              type="button"
-              className="btn btn-outline"
-              disabled={busy}
-              onClick={() => setTab("hours")}
-            >
-              Review business hours
-            </button>
+            {canEditHours && (
+              <Link className="btn btn-outline" to="/admin/settings/profile#business-hours">
+                Review business hours
+              </Link>
+            )}
           </div>
           <p>
             Review your business details and each barber’s schedule before taking bookings. New
@@ -454,7 +341,7 @@ export default function ShopManagement() {
         </p>
       )}
       <nav className="shop-management__tabs" aria-label="Business management sections">
-        {managementTabs.map(([value, label]) => (
+        {tabs.map(([value, label]) => (
           <button
             key={value}
             className={`btn ${tab === value ? "btn-primary" : "btn-outline"}`}
@@ -492,9 +379,16 @@ export default function ShopManagement() {
         <div className="shop-management__content">
           {tab === "branding" && (
             <>
+              <BrandingGenerator
+                key={data.business_name}
+                businessName={data.business_name}
+                branding={data.branding}
+                busy={brandingBusy}
+                save={save}
+              />
               <p>JPEG, PNG or WebP, up to 2 MB and 3200 pixels wide or tall.</p>
               <div className="shop-management__grid" key={data.version}>
-                <BrandingEditor branding={data.branding || {}} busy={busy} save={save} />
+                <BrandingEditor branding={data.branding || {}} busy={brandingBusy} save={save} />
                 {[
                   ["logo", "Business logo"],
                   ["cover", "Booking cover photo"],
@@ -505,8 +399,9 @@ export default function ShopManagement() {
                     target={target}
                     slug={session.user.shop.slug}
                     images={data.branding?.[target] ? [{ image: data.branding[target] }] : []}
-                    busy={busy}
+                    busy={brandingBusy}
                     save={save}
+                    previewClient={data.shop_status !== "active" ? client : undefined}
                   />
                 ))}
               </div>
@@ -609,15 +504,6 @@ export default function ShopManagement() {
                 />
               </div>
             </>
-          )}
-          {tab === "hours" && (
-            <ScheduleEditor
-              key={`${data.version}-business`}
-              data={data}
-              busy={busy}
-              save={save}
-              business
-            />
           )}
           {tab === "schedules" && (
             <ScheduleEditor key={`${data.version}-barber`} data={data} busy={busy} save={save} />

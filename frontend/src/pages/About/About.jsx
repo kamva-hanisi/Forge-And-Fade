@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { BadgeCheck, MessageSquareText, Scissors } from "lucide-react";
 
 import barberTools from "../../assets/barber-tools.jpg";
-import useShopServices from "../../hooks/useShopServices";
-import { bookingLink } from "../../utils/shopLinks";
+import { usePublicCatalog } from "../../hooks/useShopServices";
+import { bookingLink, shopPath } from "../../utils/shopLinks";
 import { shopMediaUrl } from "../../utils/shopMedia";
 
 import "./About.scss";
@@ -30,13 +30,13 @@ const visitSteps = [
 ];
 
 const About = () => {
-  const catalog = useShopServices("forge-and-fade");
+  const catalog = usePublicCatalog();
   return (
     <main className="about-page">
       <section className="about-page__header">
         <div className="container about-page__header-grid">
           <div>
-            <span className="section-label">Inside Forge & Fade</span>
+            <span className="section-label">Inside {catalog.profile.name}</span>
 
             <h1>
               Made for the person
@@ -78,9 +78,9 @@ const About = () => {
             </p>
 
             <p>
-              Forge & Fade pairs that personal approach with disciplined technique. We respect the
-              old-school fundamentals, use modern methods where they improve the result and never
-              add complexity for show.
+              {catalog.profile.name} pairs that personal approach with disciplined technique. We
+              respect the old-school fundamentals, use modern methods where they improve the result
+              and never add complexity for show.
             </p>
 
             <Link to="/services" className="about-page__text-link">
@@ -182,7 +182,7 @@ const About = () => {
             <h2>Come in with a plan. Leave with a look.</h2>
           </div>
 
-          <Link to="/booking" className="btn btn-primary">
+          <Link to={shopPath(catalog.shop)} className="btn btn-primary">
             Book Appointment
           </Link>
         </div>

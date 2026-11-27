@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Shop;
+use App\Services\PublicBusiness;
 use App\Services\ShopAccess;
 use App\Services\WebsiteAccess;
 use Closure;
@@ -19,7 +20,8 @@ class ResolveShop
             $shop = Shop::findOrFail($selected->id);
         } else {
             $input = $request->validate(['shop' => 'sometimes|string|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'], [], ['shop' => 'business identifier']);
-            $shop = Shop::where('slug', $input['shop'] ?? 'forge-and-fade')->firstOrFail();
+            $shop = isset($input['shop']) ? Shop::where('slug', $input['shop'])->first() : PublicBusiness::current();
+            abort_unless($shop, 404, 'This business is not available.');
         }
         $request->attributes->set('shop', $shop);
 

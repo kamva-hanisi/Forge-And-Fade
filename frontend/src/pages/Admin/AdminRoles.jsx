@@ -13,8 +13,10 @@ const permissionLabels = {
   "messages.manage": "Manage contact enquiries",
   "reports.read": "View booking and receipt reports",
   "payments.record": "Record payments",
-  "shop.write": "Edit business profile",
-  "shop.manage": "Manage business branding, services, and schedules",
+  "shop.write": "Edit business profile, phone, and location",
+  "shop.manage": "Manage services, barber profiles, and barber schedules",
+  "shop.branding.write": "Publish branding",
+  "shop.hours.write": "Edit business opening hours",
   "members.invite": "Invite business staff",
   "members.manage": "Manage business staff access",
   "payments.void": "Void payment receipts",
@@ -24,6 +26,11 @@ const actionLabels = {
   "website.owner_initialized": "Website ownership initialized",
   "website.role_changed": "Website role changed",
   "website.shop_access_changed": "Website business access changed",
+  "website.invitation.created": "Super Admin invitation created",
+  "website.invitation.revoked": "Super Admin invitation revoked",
+  "website.invitation.accepted": "Super Admin invitation accepted",
+  "shop.deleted": "Business deleted",
+  "website.public_business_changed": "Public business changed",
   "member.updated": "Business membership changed",
   "member.removed": "Business membership revoked",
   "invitation.created": "Business invitation created",
@@ -50,10 +57,12 @@ function AccessDetails({ access, shop = false }) {
   return parts.join(" · ") || "—";
 }
 
-function AccountEditor({ account, data, onSave, busy, onClose }) {
-  const [role, setRole] = useState(account.role || "admin");
-  const [suspended, setSuspended] = useState(account.suspended);
-  const [assignments, setAssignments] = useState(account.assignments);
+function AccountEditor({ account, data, onSave, onInvite, busy, onClose }) {
+  const invitation = !account;
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState(invitation ? "super_admin" : account.role || "admin");
+  const [suspended, setSuspended] = useState(account?.suspended || false);
+  const [assignments, setAssignments] = useState(account?.assignments || {});
   const [shopToAdd, setShopToAdd] = useState("");
   const allowed = data.permission_options[role] || [];
   const optionsFor = (shop) => (data.identity.website_role === "owner" ? allowed : shop.delegable);
@@ -89,6 +98,10 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
       className="access-editor staff-form"
       onSubmit={(event) => {
         event.preventDefault();
+        if (invitation) {
+          onInvite({ email, assignments: payload });
+          return;
+        }
         onSave(account, {
           version: account.version,
           role: role || null,
@@ -99,35 +112,51 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
     >
       <fieldset disabled={busy}>
         <legend>
-          {account.name} · {account.email}
+          {invitation ? "Invite a Super Admin" : `${account.name} · ${account.email}`}
         </legend>
-        {account.legacy_platform && (
+        {account?.legacy_platform && (
           <p>
             This account has a legacy platform grant. Saving replaces it with the access shown here.
           </p>
         )}
-        <label>
-          Website role
-          <select value={role} onChange={(event) => setRole(event.target.value)}>
-            <option value="">Remove website access</option>
-            {data.assignable_roles.map((option) => (
-              <option key={option} value={option}>
-                {accessRoleLabel(option)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {invitation ? (
+          <label>
+            Invitee email
+            <input
+              type="email"
+              value={email}
+              maxLength={150}
+              required
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
+        ) : (
+          <label>
+            Website role
+            <select value={role} onChange={(event) => setRole(event.target.value)}>
+              <option value="">Remove website access</option>
+              {data.assignable_roles.map((option) => (
+                <option key={option} value={option}>
+                  {accessRoleLabel(option)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {role && (
           <>
-            <label className="access-check">
-              <input
-                type="checkbox"
-                checked={suspended}
-                onChange={(event) => setSuspended(event.target.checked)}
-              />
-              Suspend website access
-            </label>
+            {!invitation && (
+              <label className="access-check">
+                <input
+                  type="checkbox"
+                  checked={suspended}
+                  onChange={(event) => setSuspended(event.target.checked)}
+                />
+                Suspend website access
+              </label>
+            )}
             <h3>Business assignments</h3>
+            {invitation && <p>Leave this empty for platform access only.</p>}
             <p>
               Booking edits and reports require appointment viewing. Payment recording also requires
               report access.
@@ -194,7 +223,7 @@ function AccountEditor({ account, data, onSave, busy, onClose }) {
         )}
         <div className="staff-form-actions">
           <button className="btn btn-primary" disabled={invalid}>
-            Save access
+            {invitation ? "Create invitation link" : "Save access"}
           </button>
           <button className="btn btn-outline" type="button" onClick={onClose}>
             Close
@@ -217,9 +246,11 @@ function AccessActivity({ activity, onPage }) {
             <div>
               {event.actor_name || (event.user_id ? `Account #${event.user_id}` : "Trusted server")}
               {event.shop_name ? ` · ${event.shop_name}` : ""}
-              {event.subject_id
-                ? ` · ${event.subject_name || `${event.action === "invitation.created" ? "Invitation" : "Account"} #${event.subject_id}`}`
-                : ""}
+              {event.action === "shop.deleted"
+                ? ` · ${event.details.slug}`
+                : event.subject_id
+                  ? ` · ${event.subject_name || `${event.action.endsWith("invitation.created") || event.action.endsWith("invitation.revoked") ? "Invitation" : "Account"} #${event.subject_id}`}`
+                  : ""}
             </div>
             <time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString()}</time>
             {event.details?.before && (
@@ -277,6 +308,9 @@ export default function AdminRoles() {
   const [data, setData] = useState(null);
   const [email, setEmail] = useState("");
   const [account, setAccount] = useState(null);
+  const [inviting, setInviting] = useState(false);
+  const [createdInvitation, setCreatedInvitation] = useState(null);
+  const inviteLink = createdInvitation?.link;
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -311,6 +345,7 @@ export default function AdminRoles() {
     setError("");
     setNotice("");
     setAccount(null);
+    setInviting(false);
     try {
       const { data } = await client.get("/account", { params: { email } });
       setAccount(data.account);
@@ -340,6 +375,32 @@ export default function AdminRoles() {
         setAccount(null);
         setRefresh((value) => value + 1);
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changeInvitation(payload, invitationId) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      if (invitationId) {
+        await client.delete(`/invitations/${invitationId}`);
+        setCreatedInvitation((current) => (current?.id === invitationId ? null : current));
+        setNotice("Invitation revoked.");
+      } else {
+        const { data } = await client.post("/invitations", payload);
+        setCreatedInvitation(data);
+        setInviting(false);
+        setNotice("Super Admin invitation created.");
+      }
+      setPage(1);
+      setRefresh((value) => value + 1);
+    } catch (failure) {
+      if (failure.response?.status === 401) setSession(null);
+      else setError(formError(failure));
+      if (failure.response?.status === 409) setRefresh((value) => value + 1);
     } finally {
       setBusy(false);
     }
@@ -412,20 +473,133 @@ export default function AdminRoles() {
               </details>
             )}
           </section>
-          <section className="staff-card access-card">
-            <h2>Website roles</h2>
+          <section className="staff-card access-card" aria-labelledby="website-roles-title">
+            <h2 id="website-roles-title">Website roles</h2>
             <dl className="access-roles">
               <dt>Website Owner</dt>
               <dd>Full website and business access. Manages Super Admin and Admin access.</dd>
               <dt>Super Admin</dt>
-              <dd>Oversees businesses and manages Admin access within their delegation scope.</dd>
+              <dd>
+                Oversees assigned businesses. Can grant, change, or suspend Admin access within the
+                businesses and permissions delegated to them.
+              </dd>
               <dt>Admin</dt>
-              <dd>Uses the operational permissions granted for each assigned business.</dd>
+              <dd>
+                Handles daily operations for assigned businesses, such as appointments, contact
+                enquiries, reports, and payment recording, as permitted.
+              </dd>
+            </dl>
+            <h3>Branding and opening hours</h3>
+            <p>
+              The Website Owner has both permissions across all businesses. Business Owners have
+              both for their own businesses.
+            </p>
+            <dl className="access-roles">
+              <dt>Publish logos and cover images</dt>
+              <dd>
+                Super Admins can publish branding for businesses where they have{" "}
+                <strong>{permissionLabels["shop.branding.write"]}</strong>. The Admin website role
+                does not include this permission.
+              </dd>
+              <dt>Change business opening hours</dt>
+              <dd>
+                Super Admins and Admins can edit opening hours for businesses where they have{" "}
+                <strong>{permissionLabels["shop.hours.write"]}</strong>.
+              </dd>
             </dl>
           </section>
           {data.can_manage && (
             <section className="staff-card access-card">
               <h2>Website administrators</h2>
+              {role === "owner" && (
+                <>
+                  <div>
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      disabled={busy || inviting}
+                      onClick={() => {
+                        setInviting(true);
+                        setAccount(null);
+                        setCreatedInvitation(null);
+                        setError("");
+                        setNotice("");
+                      }}
+                    >
+                      Invite Super Admin
+                    </button>
+                  </div>
+                  {inviting && (
+                    <AccountEditor
+                      data={data}
+                      busy={busy}
+                      onInvite={changeInvitation}
+                      onClose={() => setInviting(false)}
+                    />
+                  )}
+                  {inviteLink && (
+                    <div className="staff-form access-add-shop">
+                      <label>
+                        Private invitation link · expires in 48 hours
+                        <input
+                          value={inviteLink}
+                          readOnly
+                          onFocus={(event) => event.target.select()}
+                        />
+                      </label>
+                      <button
+                        className="btn btn-outline"
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(inviteLink);
+                            setNotice("Invitation link copied.");
+                          } catch {
+                            setNotice("Select the invitation link and copy it.");
+                          }
+                        }}
+                      >
+                        Copy link
+                      </button>
+                    </div>
+                  )}
+                  {data.pending_website_invitations.length > 0 && (
+                    <>
+                      <h3>Pending Super Admin invitations</h3>
+                      <ul className="access-list">
+                        {data.pending_website_invitations.map((invitation) => (
+                          <li className="access-account" key={invitation.id}>
+                            <div>
+                              <strong>{invitation.email}</strong>
+                              <div>Expires {new Date(invitation.expires_at).toLocaleString()}</div>
+                              {Object.keys(invitation.assignments).length === 0 && (
+                                <div>Platform access only</div>
+                              )}
+                              {Object.entries(invitation.assignments).map(([id, permissions]) => (
+                                <div key={id}>
+                                  {data.shop_options.find((shop) => String(shop.id) === id)?.name ||
+                                    `Business #${id}`}
+                                  {" · "}
+                                  <AccessDetails access={{ permissions }} />
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              className="btn btn-outline"
+                              type="button"
+                              disabled={busy}
+                              aria-label={`Revoke invitation for ${invitation.email}`}
+                              onClick={() => changeInvitation(null, invitation.id)}
+                            >
+                              Revoke invitation
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
+              )}
               <form className="staff-form access-add-shop" onSubmit={lookup}>
                 <label>
                   Find an existing account by email
@@ -473,6 +647,7 @@ export default function AdminRoles() {
                       disabled={busy}
                       aria-label={`Edit access for ${item.name}`}
                       onClick={() => {
+                        setInviting(false);
                         setError("");
                         setNotice("");
                         setAccount(item);

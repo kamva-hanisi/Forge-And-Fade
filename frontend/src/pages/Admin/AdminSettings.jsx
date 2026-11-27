@@ -16,7 +16,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useAdmin } from "../../context/AdminContext";
+import PasswordField from "../../components/PasswordField/PasswordField";
 import ShopProfile from "./ShopProfile";
+import BusinessHoursSettings from "./BusinessHoursSettings";
 import "./AdminDashboard.scss";
 
 const todayLink = "/admin/appointments?view=today&status=confirmed";
@@ -96,7 +98,7 @@ function DashboardOwnerTools({ permissions }) {
   const links = [
     ["Business settings", "/admin/settings/profile", Settings2, "shop.write"],
     ["Services", "/admin/management?tab=services", Scissors, "shop.manage"],
-    ["Business hours", "/admin/management?tab=hours", Clock3, "shop.manage"],
+    ["Business hours", "/admin/settings/profile#business-hours", Clock3, "shop.hours.write"],
     ["Invite staff", "/admin/settings/invite", UserPlus, "members.invite"],
   ].filter(([, , , permission]) => permissions?.includes(permission));
 
@@ -503,20 +505,18 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
                     ["password", "New password", "new-password"],
                     ["password_confirmation", "Confirm new password", "new-password"],
                   ].map(([field, label, autocomplete]) => (
-                    <label key={field}>
-                      {label}
-                      <input
-                        type="password"
-                        autoComplete={autocomplete}
-                        required
-                        minLength={field === "current_password" ? 1 : 12}
-                        maxLength={200}
-                        value={passwords[field]}
-                        onChange={(event) =>
-                          setPasswords({ ...passwords, [field]: event.target.value })
-                        }
-                      />
-                    </label>
+                    <PasswordField
+                      key={field}
+                      label={label}
+                      name={field}
+                      autoComplete={autocomplete}
+                      minLength={field === "current_password" ? 1 : 12}
+                      value={passwords[field]}
+                      onChange={(event) =>
+                        setPasswords({ ...passwords, [field]: event.target.value })
+                      }
+                      showStrength={field === "password"}
+                    />
                   ))}
                   <small>
                     Use at least 12 characters. Choose a password you do not use elsewhere.
@@ -663,6 +663,9 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
       )}
       {page === "profile" && session.user.permissions?.includes("shop.write") && (
         <ShopProfile client={client} />
+      )}
+      {page === "profile" && session.user.permissions?.includes("shop.hours.write") && (
+        <BusinessHoursSettings client={client} />
       )}
       {page === "invite" && data && (
         <section className="staff-card staff-invitations">

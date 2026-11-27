@@ -27,7 +27,7 @@ class ShopOnboardingTest extends TestCase
     private function register(): array
     {
         return $this->postJson('/api/admin/register-shop', [
-            'shop_name' => 'Fresh Cuts', 'shop_slug' => 'fresh-cuts', 'name' => 'Test Owner', 'email' => 'onboarding@example.com',
+            'shop_name' => 'Fresh Cuts', 'name' => 'Test Owner', 'email' => 'onboarding@example.com',
             'password' => 'Onboarding-Test-12345', 'password_confirmation' => 'Onboarding-Test-12345',
             'settings' => ['services' => config('booking.services'), 'barbers' => config('booking.barbers')],
         ])->assertCreated()->json();
@@ -35,9 +35,10 @@ class ShopOnboardingTest extends TestCase
 
     public function test_new_shop_is_empty_and_cannot_book_demo_catalog_ids(): void
     {
-        $this->register();
-        $this->getJson('/api/bookings/catalog?shop=fresh-cuts')->assertOk()->assertJsonCount(0, 'services')->assertJsonCount(0, 'barbers');
-        $this->postJson('/api/bookings', ['shop' => 'fresh-cuts', 'service_id' => 2, 'barber_id' => 1,
+        $registered = $this->register();
+        $identifier = $registered['user']['shop']['slug'];
+        $this->getJson('/api/bookings/catalog?shop='.$identifier)->assertOk()->assertJsonCount(0, 'services')->assertJsonCount(0, 'barbers');
+        $this->postJson('/api/bookings', ['shop' => $identifier, 'service_id' => 2, 'barber_id' => 1,
             'booking_date' => '2026-11-03', 'booking_time' => '10:00', 'customer_name' => 'Customer',
             'email' => 'customer@example.com', 'phone' => '0712345678'])->assertUnprocessable()->assertJsonValidationErrors(['service_id', 'barber_id']);
         $this->assertDatabaseCount('bookings', 0);
@@ -51,7 +52,7 @@ class ShopOnboardingTest extends TestCase
         $this->getJson('/api/admin/management')->assertOk()->assertJsonCount(0, 'services')->assertJsonCount(0, 'barbers');
         $this->postJson('/api/admin/management/services', ['version' => 0, 'name' => 'Fresh haircut', 'duration' => 30, 'price' => 175, 'active' => true])->assertOk()->assertJsonPath('services.0.id', 1);
         $this->postJson('/api/admin/management/barbers', ['version' => 1, 'name' => 'Real barber', 'active' => true])->assertOk()->assertJsonPath('barbers.0.id', 1);
-        $this->postJson('/api/bookings', ['shop' => 'fresh-cuts', 'service_id' => 1, 'barber_id' => 'any',
+        $this->postJson('/api/bookings', ['shop' => $registered['user']['shop']['slug'], 'service_id' => 1, 'barber_id' => 'any',
             'booking_date' => '2026-11-03', 'booking_time' => '10:00', 'customer_name' => 'Customer',
             'email' => 'customer@example.com', 'phone' => '0712345678'])->assertCreated()
             ->assertJsonPath('booking.service_name', 'Fresh haircut')->assertJsonPath('booking.barber_name', 'Real barber')->assertJsonPath('booking.price', '175.00');

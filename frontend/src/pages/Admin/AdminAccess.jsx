@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import axios from "axios";
 import { useAdmin } from "../../context/AdminContext";
+import PasswordField from "../../components/PasswordField/PasswordField";
 import AdminAccessIntro from "./AdminAccessIntro";
 import "./AdminAccess.scss";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-export default function AdminAccess({ signup = false }) {
+export default function AdminAccess({ signup = false, superAdminInvite = false }) {
   const { session, authenticate, busy } = useAdmin();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const staffSignup = signup && !superAdminInvite;
   const [fields, setFields] = useState({
     name: "",
     email: signup ? params.get("email") || "" : "",
@@ -20,15 +22,17 @@ export default function AdminAccess({ signup = false }) {
     invitation: signup ? params.get("invitation") || "" : "",
   });
   const [requiresInvitation, setRequiresInvitation] = useState(true);
-  const [checking, setChecking] = useState(signup);
-  const [ready, setReady] = useState(!signup);
+  const [checking, setChecking] = useState(staffSignup);
+  const [ready, setReady] = useState(!staffSignup);
   const [refresh, setRefresh] = useState(0);
-  const [visible, setVisible] = useState(false);
   const [error, setError] = useState("");
-  const firstAdminSetup = signup && ready && !requiresInvitation;
+  const firstAdminSetup = staffSignup && ready && !requiresInvitation;
+  const invalidLink =
+    superAdminInvite && (!fields.email || !/^[a-zA-Z0-9]{64}$/.test(fields.invitation));
+  const mode = superAdminInvite ? "register-super-admin" : signup ? "register" : "login";
 
   useEffect(() => {
-    if (!signup) return;
+    if (!staffSignup) return;
     const controller = new AbortController();
     const check = async () => {
       setChecking(true);
@@ -49,7 +53,7 @@ export default function AdminAccess({ signup = false }) {
     };
     check();
     return () => controller.abort();
-  }, [signup, refresh]);
+  }, [staffSignup, refresh]);
 
   if (session) return <Navigate to="/admin" replace />;
 
@@ -59,6 +63,7 @@ export default function AdminAccess({ signup = false }) {
   };
   const submit = async (event) => {
     event.preventDefault();
+    if (busy || invalidLink) return;
     setError("");
     if (signup && fields.password !== fields.password_confirmation) {
       setError("The passwords do not match.");
@@ -66,7 +71,7 @@ export default function AdminAccess({ signup = false }) {
     }
     try {
       await authenticate(
-        signup ? "register" : "login",
+        mode,
         signup ? fields : { email: fields.email, password: fields.password },
       );
       navigate("/admin", { replace: true });
@@ -97,37 +102,43 @@ export default function AdminAccess({ signup = false }) {
           <Link to="/admin/signin" aria-current={!signup ? "page" : undefined}>
             Admin sign in
           </Link>
-          <Link to="/admin/signup" aria-current={signup ? "page" : undefined}>
+          <Link to="/admin/signup" aria-current={staffSignup ? "page" : undefined}>
             Staff sign up
           </Link>
         </nav>
         <h2 id="admin-access-title">
-          {signup
-            ? firstAdminSetup
-              ? "Set up the first admin"
-              : "Staff sign up"
-            : "Welcome back."}
+          {superAdminInvite
+            ? "Accept Super Admin invitation"
+            : signup
+              ? firstAdminSetup
+                ? "Set up the first admin"
+                : "Staff sign up"
+              : "Welcome back."}
         </h2>
         <p>
-          {signup
-            ? checking
-              ? "Checking account setup…"
-              : firstAdminSetup
-                ? "Create the first Business Owner account for the existing Forge & Fade business."
-                : "For staff invited to an existing business. Use your work email and the invitation code from your Business Owner."
-            : "Website administrators, Business Owners, and staff sign in here."}
+          {superAdminInvite
+            ? "Set up your account to accept the business access selected by the Website Owner."
+            : signup
+              ? checking
+                ? "Checking account setup…"
+                : firstAdminSetup
+                  ? "Create the first Business Owner account for the existing Forge & Fade business."
+                  : "For staff invited to an existing business. Use your work email and the invitation code from your Business Owner."
+              : "Website administrators, Business Owners, and staff sign in here."}
         </p>
-        {signup && (
+        {staffSignup && (
           <p>
             Setting up a business? <Link to="/admin/register-shop">Register your business</Link>
           </p>
         )}
-        {error && (
+        {(invalidLink || error) && (
           <div role="alert" className="admin-access__error">
-            {error}
+            {invalidLink
+              ? "This invitation link is incomplete. Ask the Website Owner for a new link."
+              : error}
           </div>
         )}
-        {signup && !ready && !checking && (
+        {staffSignup && !ready && !checking && (
           <button
             type="button"
             className="btn btn-outline"
@@ -160,53 +171,32 @@ export default function AdminAccess({ signup = false }) {
               autoComplete="username"
               maxLength={150}
               required
+              readOnly={superAdminInvite}
               value={fields.email}
               onChange={change}
             />
           </label>
-          <div className="admin-access__field">
-            <label htmlFor="admin-password">Password</label>
-            <div className="admin-access__password">
-              <input
-                id="admin-password"
-                type={visible ? "text" : "password"}
-                name="password"
-                autoComplete={signup ? "new-password" : "current-password"}
-                minLength={signup ? 12 : undefined}
-                maxLength={200}
-                required
-                value={fields.password}
-                onChange={change}
-                aria-describedby={signup ? "admin-password-hint" : undefined}
-              />
-              <button
-                type="button"
-                aria-label={visible ? "Hide password" : "Show password"}
-                aria-pressed={visible}
-                onClick={() => setVisible(!visible)}
-              >
-                {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {signup && <small id="admin-password-hint">Use at least 12 characters.</small>}
-          </div>
+          <PasswordField
+            label="Password"
+            name="password"
+            autoComplete={signup ? "new-password" : "current-password"}
+            minLength={signup ? 12 : undefined}
+            value={fields.password}
+            onChange={change}
+            showStrength
+            hint={signup ? "Use at least 12 characters." : undefined}
+          />
           {signup && (
-            <label htmlFor="admin-confirm">
-              Confirm password
-              <input
-                id="admin-confirm"
-                type={visible ? "text" : "password"}
-                name="password_confirmation"
-                autoComplete="new-password"
-                minLength={12}
-                maxLength={200}
-                required
-                value={fields.password_confirmation}
-                onChange={change}
-              />
-            </label>
+            <PasswordField
+              label="Confirm password"
+              name="password_confirmation"
+              autoComplete="new-password"
+              minLength={12}
+              value={fields.password_confirmation}
+              onChange={change}
+            />
           )}
-          {signup && requiresInvitation && (
+          {staffSignup && requiresInvitation && (
             <label className="admin-access__invitation" htmlFor="admin-invitation">
               Invitation code
               <input
@@ -224,15 +214,17 @@ export default function AdminAccess({ signup = false }) {
           )}
           <button
             className="btn btn-primary admin-access__submit"
-            disabled={busy || checking || !ready}
+            disabled={busy || checking || !ready || invalidLink}
           >
             {busy
               ? "Please wait…"
-              : signup
-                ? firstAdminSetup
-                  ? "Create owner account"
-                  : "Join your business"
-                : "Sign in to dashboard"}
+              : superAdminInvite
+                ? "Create Super Admin account"
+                : signup
+                  ? firstAdminSetup
+                    ? "Create owner account"
+                    : "Join your business"
+                  : "Sign in to dashboard"}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </form>

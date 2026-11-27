@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminMessageController;
 use App\Http\Controllers\Api\AdminRecoveryController;
 use App\Http\Controllers\Api\AdminRegistrationController;
 use App\Http\Controllers\Api\AdminRolesController;
+use App\Http\Controllers\Api\WebsiteInvitationController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingPaymentController;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/registration', [AdminRegistrationController::class, 'status']);
 Route::post('/admin/register', [AdminRegistrationController::class, 'store'])->middleware('throttle:3,1');
+Route::post('/admin/register-super-admin', [WebsiteInvitationController::class, 'accept'])->middleware('throttle:3,1');
 
 Route::post('/admin/login', [AdminController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/admin/forgot-password', [AdminRecoveryController::class, 'requestLink'])->middleware('throttle:admin-recovery');
@@ -30,7 +32,9 @@ Route::post('/admin/reset-password', [AdminRecoveryController::class, 'reset'])-
 Route::post('/admin/register-shop', [ShopRegistrationController::class, 'store'])->middleware(['throttle:3,1', ProtectPublicForm::class]);
 Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/platform/overview', [PlatformController::class, 'index'])->middleware(['auth:sanctum', 'throttle:30,1']);
+Route::put('/platform/shops/{shop}/public-default', [PlatformController::class, 'selectPublicBusiness'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:20,1']);
 Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
+Route::delete('/platform/shops/{shop}', [PlatformController::class, 'destroy'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/session', [AdminController::class, 'session']);
     Route::get('/profile', [AdminSettingsController::class, 'profile']);
@@ -38,15 +42,20 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::put('/password', [AdminSettingsController::class, 'password'])->middleware('throttle:5,1');
     Route::get('/roles', [AdminRolesController::class, 'index']);
     Route::get('/roles/account', [AdminRolesController::class, 'account'])->middleware('throttle:30,1');
+    Route::post('/roles/invitations', [WebsiteInvitationController::class, 'store'])->middleware('throttle:10,1');
+    Route::delete('/roles/invitations/{invitation}', [WebsiteInvitationController::class, 'revoke'])->whereNumber('invitation')->middleware('throttle:10,1');
     Route::put('/roles/accounts/{account}', [AdminRolesController::class, 'update'])->whereNumber('account')->middleware('throttle:20,1');
 });
 Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin')->group(function () {
     Route::get('/shop', [ShopRegistrationController::class, 'profile']);
     Route::get('/management', [ShopManagementController::class, 'index']);
+    Route::get('/management/branding', [ShopManagementController::class, 'brandingSettings']);
     Route::put('/management/branding', [ShopManagementController::class, 'branding'])->middleware('throttle:30,1');
+    Route::post('/management/branding/images', [ShopManagementController::class, 'publishBranding'])->middleware('throttle:20,1');
     Route::post('/management/media', [ShopManagementController::class, 'media'])->middleware('throttle:20,1');
     Route::get('/management/media/{image}', [ShopManagementController::class, 'previewMedia'])
         ->where('image', '[a-f0-9-]{36}\.(jpg|png|webp)')->middleware('throttle:120,1');
+    Route::get('/management/business-hours', [ShopManagementController::class, 'openingHours']);
     Route::put('/management/business-hours', [ShopManagementController::class, 'businessHours'])->middleware('throttle:30,1');
     Route::post('/management/services', [ShopManagementController::class, 'service']);
     Route::put('/management/services/{service}', [ShopManagementController::class, 'service'])->whereNumber('service');

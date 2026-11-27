@@ -49,10 +49,7 @@ export default function ShopProfile({ client }) {
   return (
     <section className="staff-card staff-invitations">
       <h2>Business details and location</h2>
-      <p>
-        Your address and map link appear on the public Locations page. Edit opening hours under
-        Business hours.
-      </p>
+      <p>Your phone number, street address and map pin appear on the public website.</p>
       {error && (
         <p className="admin-error" role="alert">
           {error}
@@ -74,6 +71,8 @@ export default function ShopProfile({ client }) {
               {label}
               <input
                 name={field}
+                type={field === "phone" ? "tel" : "text"}
+                autoComplete={field === "phone" ? "tel" : undefined}
                 maxLength={limit}
                 placeholder={
                   field === "address" ? "Street, suburb, city and postal code" : undefined
@@ -111,8 +110,6 @@ export default function ShopProfile({ client }) {
             </a>
             {" · "}
             <Link to="/locations">View Locations page</Link>
-            {" · "}
-            <Link to="/admin/management?tab=hours">Edit business hours</Link>
           </p>
           <div className="staff-form-actions">
             <button className="btn btn-primary" disabled={busy}>

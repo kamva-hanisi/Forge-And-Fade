@@ -21,7 +21,7 @@ import axios from "axios";
 import Brand from "../../components/Brand/Brand";
 import { useAdmin } from "../../context/AdminContext";
 import { accessRoleLabel, adminDashboard, rolesPath } from "../../utils/adminDashboard";
-import { adminHeaders } from "../../utils/adminHeaders";
+import { adminHeaders, platformHeaders } from "../../utils/adminHeaders";
 import { formError } from "../../utils/formError";
 import { shopPath } from "../../utils/shopLinks";
 import "./AdminWorkspace.scss";
@@ -48,6 +48,10 @@ export default function AdminLayout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!session) return <Navigate to="/admin/signin" replace />;
+  const isWebsiteOwner = session.user.website_role === "owner";
+  const publicBusiness = session.user.shops?.find(
+    (shop) => shop.id === session.user.public_shop_id,
+  );
   const dashboard = adminDashboard(session.user.role);
   const canReadBookings = session.user.permissions.includes("bookings.read");
   const navigation = [
@@ -79,10 +83,16 @@ export default function AdminLayout() {
     setError("");
     setBusy(true);
     try {
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/admin/session`,
-        { headers: { ...adminHeaders(session), "X-Shop-Id": id }, timeout: 20000 },
-      );
+      const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+      const { data } = isWebsiteOwner
+        ? await axios.put(`${apiUrl}/platform/shops/${id}/public-default`, null, {
+            headers: platformHeaders(session),
+            timeout: 20000,
+          })
+        : await axios.get(`${apiUrl}/admin/session`, {
+            headers: { ...adminHeaders(session), "X-Shop-Id": id },
+            timeout: 20000,
+          });
       setSession({ token: session.token, user: data.user });
       setOpen(false);
       navigate("/admin", { replace: true });
@@ -141,6 +151,21 @@ export default function AdminLayout() {
             </select>
           </label>
         )}
+        {isWebsiteOwner && session.user.shop && (
+          <div className="staff-shop-switcher">
+            {publicBusiness && <small>Public site: {publicBusiness.name}</small>}
+            {session.user.shop.id !== session.user.public_shop_id && (
+              <button
+                className="btn btn-outline"
+                type="button"
+                disabled={busy}
+                onClick={() => switchShop(session.user.shop.id)}
+              >
+                Use this business on the public site
+              </button>
+            )}
+          </div>
+        )}
         <nav aria-label="Admin sidebar">
           {navigation
             .filter(
@@ -149,7 +174,8 @@ export default function AdminLayout() {
                 (path !== "/admin/inbox" ||
                   session.user.permissions?.includes("messages.manage")) &&
                 (path !== "/admin/management" ||
-                  session.user.permissions?.includes("shop.manage")) &&
+                  session.user.permissions?.includes("shop.manage") ||
+                  session.user.permissions?.includes("shop.branding.write")) &&
                 (path !== "/admin/platform" || session.user.platform_access),
             )
             .map(renderLink)}
@@ -177,7 +203,10 @@ export default function AdminLayout() {
         </nav>
         <div className="staff-sidebar-bottom">
           {session.user.shop && (
-            <Link to={shopPath(session.user.shop.slug)} className="staff-site-link">
+            <Link
+              to={isWebsiteOwner ? "/" : shopPath(session.user.shop.slug)}
+              className="staff-site-link"
+            >
               View website <ArrowUpRight size={16} aria-hidden="true" />
             </Link>
           )}
@@ -219,7 +248,13 @@ export default function AdminLayout() {
           </span>
           <span className="staff-topbar-name">{session.user.name}</span>
         </div>
-        <Outlet key={session.user.shop?.id ?? "platform"} />
+        <Outlet
+          key={
+            pathname === "/admin/platform"
+              ? "platform-overview"
+              : (session.user.shop?.id ?? "platform")
+          }
+        />
         {session.user.role === "barber" && (
           <p className="staff-read-only">
             Read-only staff access: only appointments assigned to your barber profile are visible.

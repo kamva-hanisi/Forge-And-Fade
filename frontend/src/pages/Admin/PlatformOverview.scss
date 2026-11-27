@@ -1,4 +1,20 @@
+@use "../../styles/variables" as *;
+
 .platform-overview {
+  &__delete.btn {
+    color: $error-text;
+    border-color: $error-text;
+  }
+  &__delete-form {
+    border-top: 1px solid $border;
+    padding-top: 16px;
+    overflow-wrap: anywhere;
+  }
+  &__delete-confirm.btn {
+    background: $error-text;
+    border-color: $error-text;
+    color: $white;
+  }
   &__shops form {
     margin-top: 20px;
   }

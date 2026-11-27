@@ -9,6 +9,7 @@ use App\Services\BookingSchedule;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
 use App\Services\ShopMedia;
+use App\Services\WebsiteAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,9 @@ use Illuminate\Validation\ValidationException;
 
 class ShopManagementController extends Controller
 {
+    private const IMAGE_RULES = ['file', 'image', 'mimetypes:image/jpeg,image/png,image/webp',
+        'max:2048', 'dimensions:max_width=3200,max_height=3200'];
+
     public function index(Request $request)
     {
         $shop = ShopAccess::authorize($request, 'shop.manage');
@@ -30,30 +34,63 @@ class ShopManagementController extends Controller
         }
 
         return response()->json([
-            'version' => $settings['management_revision'] ?? 0,
-            'shop_status' => $shop->status,
-            'branding' => (object) ($settings['branding'] ?? []),
+            ...$this->brandingData($shop),
             'services' => collect(ShopCatalog::services($shop, true))->map(fn ($item, $id) => ['id' => $id, 'active' => true, ...$item])->values(),
             'barbers' => collect(ShopCatalog::barbers($shop, true))->map(fn ($item, $id) => ['id' => $id, ...$item])->values(),
             'schedules' => $schedules,
             'timezone' => $shop->timezone,
-            'business_schedule' => [
-                'hours' => array_replace(array_fill(1, 7, null), $settings['hours'] ?? config('booking.hours')),
-                'breaks' => $settings['breaks'] ?? config('booking.breaks'),
-                'closed_dates' => $settings['closed_dates'] ?? config('booking.closed_dates', []),
-            ],
+            'business_schedule' => $this->businessSchedule($settings),
             'members' => ShopAccess::allows($request, 'members.manage') ? DB::table('shop_memberships')->join('users', 'users.id', '=', 'shop_memberships.user_id')
                 ->where('shop_memberships.shop_id', $shop->id)->orderBy('shop_memberships.id')
                 ->get(['shop_memberships.id', 'users.name', 'users.email', 'users.is_platform_admin', 'shop_memberships.role', 'shop_memberships.barber_id']) : [],
         ])->header('Cache-Control', 'no-store');
     }
 
-    private function change(Request $request, callable $operation)
+    private function brandingData(Shop $shop): array
     {
-        ShopAccess::authorize($request, 'shop.manage');
+        return [
+            'version' => $shop->settings['management_revision'] ?? 0,
+            'shop_status' => $shop->status,
+            'business_name' => $shop->name,
+            'branding' => (object) ($shop->settings['branding'] ?? []),
+        ];
+    }
+
+    public function brandingSettings(Request $request)
+    {
+        $shop = ShopAccess::authorize($request, WebsiteAccess::BRANDING_PERMISSION);
+
+        return response()->json($this->brandingData($shop))->header('Cache-Control', 'no-store');
+    }
+
+    private function businessSchedule(array $settings): array
+    {
+        return [
+            'hours' => array_replace(array_fill(1, 7, null), $settings['hours'] ?? config('booking.hours')),
+            'breaks' => $settings['breaks'] ?? config('booking.breaks'),
+            'closed_dates' => $settings['closed_dates'] ?? config('booking.closed_dates', []),
+        ];
+    }
+
+    public function openingHours(Request $request)
+    {
+        $shop = ShopAccess::authorize($request, WebsiteAccess::BUSINESS_HOURS_PERMISSION);
+        $settings = $shop->settings ?? [];
+
+        return response()->json([
+            'version' => $settings['management_revision'] ?? 0,
+            'shop_status' => $shop->status,
+            'timezone' => $shop->timezone,
+            'business_schedule' => $this->businessSchedule($settings),
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    private function change(Request $request, callable $operation, string $permission = 'shop.manage')
+    {
+        ShopAccess::authorize($request, $permission);
         $request->validate(['version' => ['required', 'integer', 'min:0']]);
 
-        return DB::transaction(function () use ($request, $operation) {
+        return DB::transaction(function () use ($request, $operation, $permission) {
             $shop = ShopCatalog::lock($request);
             $settings = $shop->settings ?? [];
             if ((int) $request->input('version') !== ($settings['management_revision'] ?? 0)) {
@@ -63,7 +100,11 @@ class ShopManagementController extends Controller
             $settings['management_revision'] = ($settings['management_revision'] ?? 0) + 1;
             $shop->update(['settings' => $settings]);
 
-            return $this->index($request);
+            return match (true) {
+                ShopAccess::allows($request, 'shop.manage') => $this->index($request),
+                $permission === WebsiteAccess::BRANDING_PERMISSION => $this->brandingSettings($request),
+                default => $this->openingHours($request),
+            };
         }, 5);
     }
 
@@ -104,17 +145,19 @@ class ShopManagementController extends Controller
             $input = $request->validate(['accent' => ['present', 'nullable', 'regex:/^#[0-9A-Fa-f]{6}$/']]);
             $settings['branding']['accent'] = $input['accent'];
             ShopAccess::audit($request, 'shop.branding_saved', $shop->id);
-        });
+        }, WebsiteAccess::BRANDING_PERMISSION);
     }
 
     public function media(Request $request)
     {
+        $permission = in_array($request->input('target'), ['logo', 'cover'], true)
+            ? WebsiteAccess::BRANDING_PERMISSION : 'shop.manage';
+
         return $this->change($request, function ($shop, &$settings) use ($request) {
             $input = $request->validate([
                 'target' => ['required', Rule::in(['logo', 'cover', 'portfolio'])],
                 'barber_id' => 'required_if:target,portfolio|integer|min:1',
-                'photo' => ['required_without:remove', 'prohibits:remove', 'file', 'image',
-                    'mimetypes:image/jpeg,image/png,image/webp', 'max:2048', 'dimensions:max_width=3200,max_height=3200'],
+                'photo' => ['required_without:remove', 'prohibits:remove', ...self::IMAGE_RULES],
                 'caption' => 'nullable|string|max:80',
                 'remove' => ['sometimes', 'string', 'regex:/^[a-f0-9-]{36}\.(jpg|png|webp)$/'],
             ]);
@@ -151,12 +194,45 @@ class ShopManagementController extends Controller
             if ($remove) {
                 ShopMedia::removeAfterCommit($shop, $remove);
             }
-        });
+        }, $permission);
+    }
+
+    public function publishBranding(Request $request)
+    {
+        $stored = [];
+        $shop = null;
+        try {
+            return $this->change($request, function ($currentShop, &$settings) use ($request, &$stored, &$shop) {
+                $input = $request->validate([
+                    'business_name' => ['required', 'string', 'max:100'],
+                    'logo' => ['required', ...self::IMAGE_RULES],
+                    'cover' => ['required', ...self::IMAGE_RULES],
+                ]);
+                abort_if($input['business_name'] !== $currentShop->name, 409, 'The business name changed. Refresh before generating new branding.');
+                $shop = $currentShop;
+                foreach (['logo', 'cover'] as $target) {
+                    $stored[$target] ??= ShopMedia::store($shop, $input[$target]);
+                    if ($previous = $settings['branding'][$target] ?? null) {
+                        ShopMedia::removeAfterCommit($shop, $previous);
+                    }
+                    $settings['branding'][$target] = $stored[$target];
+                }
+                ShopAccess::audit($request, 'shop.branding_saved', $shop->id);
+            }, WebsiteAccess::BRANDING_PERMISSION);
+        } catch (\Throwable $failure) {
+            foreach ($stored as $image) {
+                ShopMedia::remove($shop, $image);
+            }
+            throw $failure;
+        }
     }
 
     public function previewMedia(Request $request, string $image)
     {
-        return ShopMedia::show(ShopAccess::authorize($request, 'shop.manage'), $image, true);
+        $managesCatalog = ShopAccess::allows($request, 'shop.manage');
+        $permission = $managesCatalog ? 'shop.manage' : WebsiteAccess::BRANDING_PERMISSION;
+
+        return ShopMedia::show(ShopAccess::authorize($request, $permission), $image, admin: true, brandingOnly: ! $managesCatalog);
     }
 
     private function scheduleInput(Request $request): array
@@ -199,7 +275,7 @@ class ShopManagementController extends Controller
             $shop->settings = $settings;
             $this->protectAppointments($shop, $schedule);
             ShopAccess::audit($request, 'shop.business_hours_saved', $shop->id);
-        });
+        }, WebsiteAccess::BUSINESS_HOURS_PERMISSION);
     }
 
     public function schedule(Request $request, int $barber, BookingSchedule $schedule)

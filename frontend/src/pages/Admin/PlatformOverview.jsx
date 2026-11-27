@@ -7,6 +7,8 @@ import { shopPath } from "../../utils/shopLinks";
 import { formError } from "../../utils/formError";
 import "./PlatformOverview.scss";
 
+const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
 function ShopStatusControl({ shop, busy, save }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -63,6 +65,70 @@ function ShopStatusControl({ shop, busy, save }) {
   );
 }
 
+function DeleteBusinessControl({ shop, busy, removeBusiness }) {
+  const [open, setOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+
+  if (!open) {
+    return (
+      <button
+        className="btn btn-outline platform-overview__delete"
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen(true)}
+      >
+        Delete business
+      </button>
+    );
+  }
+
+  return (
+    <form
+      className="platform-overview__delete-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!busy && confirmation === shop.slug) removeBusiness(shop, confirmation);
+      }}
+    >
+      <p>
+        Deleting {shop.name} is permanent. Its booking page, appointments, payment records,
+        messages, and staff access will be removed.
+      </p>
+      <fieldset disabled={busy}>
+        <label htmlFor={`delete-business-${shop.id}`}>
+          Type <strong>{shop.slug}</strong> to confirm deletion
+        </label>
+        <input
+          id={`delete-business-${shop.id}`}
+          value={confirmation}
+          onChange={(event) => setConfirmation(event.target.value)}
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={80}
+          required
+        />
+        <button
+          className="btn platform-overview__delete-confirm"
+          disabled={busy || confirmation !== shop.slug}
+        >
+          Permanently delete business
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={() => {
+            setConfirmation("");
+            setOpen(false);
+          }}
+        >
+          Keep business
+        </button>
+      </fieldset>
+    </form>
+  );
+}
+
 export default function PlatformOverview() {
   const { session, setSession } = useAdmin();
   const allowed = session?.user.platform_access;
@@ -77,7 +143,7 @@ export default function PlatformOverview() {
     if (!allowed) return;
     const controller = new AbortController();
     axios
-      .get(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/platform/overview`, {
+      .get(`${apiUrl}/platform/overview`, {
         headers: platformHeaders(session),
         params: { search: query.search, page: query.page },
         signal: controller.signal,
@@ -109,7 +175,7 @@ export default function PlatformOverview() {
     setActionError("");
     try {
       const { data } = await axios.put(
-        `${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"}/platform/shops/${shop.id}/status`,
+        `${apiUrl}/platform/shops/${shop.id}/status`,
         { status, revision: shop.lifecycle_revision, confirm_slug: confirmSlug },
         { headers: platformHeaders(session), timeout: 20000 },
       );
@@ -121,6 +187,43 @@ export default function PlatformOverview() {
         failure.response
           ? formError(failure)
           : "The result could not be confirmed. Refresh the overview before retrying; the business status may already have changed.",
+      );
+    } finally {
+      setChanging(false);
+    }
+  };
+  const removeBusiness = async (shop, confirmSlug) => {
+    if (busy) return;
+    setChanging(true);
+    setNotice("");
+    setActionError("");
+    try {
+      const { data: result } = await axios.delete(`${apiUrl}/platform/shops/${shop.id}`, {
+        data: { confirm_slug: confirmSlug },
+        headers: platformHeaders(session),
+        timeout: 20000,
+      });
+      const user =
+        session.user.shop?.id === shop.id
+          ? result.user
+          : {
+              ...session.user,
+              shops: result.user.shops,
+              public_shop_id: result.user.public_shop_id,
+            };
+      setSession({ token: session.token, user });
+      setNotice(result.message);
+      setQuery({
+        ...query,
+        page: data.shops.data.length === 1 ? Math.max(1, query.page - 1) : query.page,
+        refresh: query.refresh + 1,
+      });
+    } catch (failure) {
+      if (failure.response?.status === 401) setSession(null);
+      setActionError(
+        failure.response
+          ? formError(failure)
+          : "The result could not be confirmed. Refresh the overview to see whether the business was deleted.",
       );
     } finally {
       setChanging(false);
@@ -155,7 +258,7 @@ export default function PlatformOverview() {
         </button>
       </form>
       {busy && (
-        <p role="status">{changing ? "Updating business status…" : "Loading platform overview…"}</p>
+        <p role="status">{changing ? "Updating businesses…" : "Loading platform overview…"}</p>
       )}
       {notice && <p role="status">{notice}</p>}
       {actionError && (
@@ -169,7 +272,7 @@ export default function PlatformOverview() {
               setQuery({ ...query, refresh: query.refresh + 1 });
             }}
           >
-            Refresh business statuses
+            Refresh businesses
           </button>
         </div>
       )}
@@ -235,6 +338,9 @@ export default function PlatformOverview() {
                   busy={busy}
                   save={changeStatus}
                 />
+                {session.user.website_role === "owner" && (
+                  <DeleteBusinessControl shop={shop} busy={busy} removeBusiness={removeBusiness} />
+                )}
               </article>
             ))}
           </div>

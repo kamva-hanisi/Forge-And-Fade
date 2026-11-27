@@ -1,5 +1,34 @@
 @use "../../styles/variables" as *;
 
+.branding-generator {
+  .staff-form-actions {
+    flex-wrap: wrap;
+  }
+
+  &__preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 1rem;
+
+    figure {
+      margin: 0;
+    }
+
+    figcaption {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: clamp(10rem, 26vw, 17rem);
+      object-fit: contain;
+      background: $cream;
+    }
+  }
+}
+
 .shop-media-editor {
   &__images {
     list-style: none;
