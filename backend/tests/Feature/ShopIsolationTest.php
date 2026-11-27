@@ -64,6 +64,28 @@ class ShopIsolationTest extends TestCase
         $this->assertDatabaseHas('shops', ['id' => 1, 'slug' => 'forge-and-fade']);
     }
 
+    public function test_website_owner_can_add_businesses_without_changing_accounts_or_the_public_default(): void
+    {
+        $owner = $this->authenticate();
+        $this->postJson('/api/platform/shops', ['shop_name' => 'Café Cuts'])->assertForbidden();
+        $this->artisan('admin:website-owner', ['email' => $owner->email])->assertSuccessful();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($owner->fresh()->createToken('owner-dashboard', ['admin'])->plainTextToken);
+        $first = $this->postJson('/api/platform/shops', ['shop_name' => 'Café Cuts'])
+            ->assertCreated()->assertJsonCount(2, 'shops')->json('business');
+        $second = $this->postJson('/api/platform/shops', ['shop_name' => 'Café Cuts'])
+            ->assertCreated()->assertJsonCount(3, 'shops')->json('business');
+        $this->assertSame($first['slug'].'-2', $second['slug']);
+        $this->assertDatabaseCount('users', 1);
+        foreach ([$first, $second] as $business) {
+            $this->assertDatabaseHas('shop_memberships', ['user_id' => $owner->id, 'shop_id' => $business['id'], 'role' => 'owner']);
+            $this->assertDatabaseHas('audit_events', ['user_id' => $owner->id, 'shop_id' => $business['id'], 'action' => 'shop.registered']);
+            $this->getJson('/api/admin/management', ['X-Shop-Id' => $business['id']])->assertOk()
+                ->assertJsonCount(0, 'services')->assertJsonCount(0, 'barbers');
+        }
+        $this->getJson('/api/bookings/catalog')->assertOk()->assertJsonPath('shop.slug', 'forge-and-fade');
+    }
+
     public function test_two_shops_can_book_the_same_barber_id_and_time_without_conflicting(): void
     {
         $shop = $this->shop();

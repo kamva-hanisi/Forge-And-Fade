@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Models\User;
 use App\Services\ShopAccess;
+use App\Services\WebsiteAccess;
 use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -27,21 +28,11 @@ class ShopRegistrationController extends Controller
             ]);
         try {
             return DB::transaction(function () use ($input) {
-                // Serialize identifier allocation across registrations.
-                $registration = DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
-                abort_unless($registration, 503, 'Business registration is not configured.');
-                $shop = Shop::create(['name' => $input['shop_name'], 'slug' => $this->allocateIdentifier($input['shop_name']),
-                    'timezone' => self::BUSINESS_TIMEZONE, 'settings' => [
-                        'services' => [], 'barbers' => [], 'hours' => config('booking.hours'),
-                        'breaks' => config('booking.breaks'), 'closed_dates' => [],
-                    ]]);
+                $this->lockRegistration();
                 $user = new User(['name' => $input['name'], 'email' => $input['email'], 'password' => $input['password']]);
                 $user->is_admin = true;
                 $user->save();
-                DB::table('shop_memberships')->insert(['shop_id' => $shop->id, 'user_id' => $user->id,
-                    'role' => 'owner', 'created_at' => now(), 'updated_at' => now()]);
-                DB::table('audit_events')->insert(['shop_id' => $shop->id, 'user_id' => $user->id,
-                    'action' => 'shop.registered', 'created_at' => now()]);
+                $shop = $this->createBusiness($input['shop_name'], $user);
 
                 return response()->json(['user' => ShopAccess::identity($user),
                     'token' => $user->createToken('shop-dashboard', ['admin'], now()->addHours(8))->plainTextToken], 201)
@@ -53,6 +44,48 @@ class ShopRegistrationController extends Controller
             }
             throw $exception;
         }
+    }
+
+    public function addBusiness(Request $request)
+    {
+        $message = 'Only the Website Owner can add a business from Platform Overview.';
+        $owner = WebsiteAccess::authorizeAccount($request, $message);
+        abort_unless(WebsiteAccess::role($owner) === 'owner', 403, $message);
+        $input = $request->validate(['shop_name' => 'required|string|max:100'], [], ['shop_name' => 'business name']);
+
+        return DB::transaction(function () use ($input, $owner, $message) {
+            $this->lockRegistration();
+            $owner->refresh();
+            abort_unless(WebsiteAccess::role($owner) === 'owner', 403, $message);
+            $shop = $this->createBusiness($input['shop_name'], $owner);
+
+            return response()->json([
+                'business' => $shop->only(['id', 'name', 'slug']),
+                'shops' => ShopAccess::identity($owner)['shops'],
+            ], 201)->header('Cache-Control', 'no-store, private');
+        }, 5);
+    }
+
+    private function lockRegistration(): void
+    {
+        // Serialize identifier allocation across registrations.
+        $registration = DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
+        abort_unless($registration, 503, 'Business registration is not configured.');
+    }
+
+    private function createBusiness(string $name, User $owner): Shop
+    {
+        $shop = Shop::create(['name' => $name, 'slug' => $this->allocateIdentifier($name),
+            'timezone' => self::BUSINESS_TIMEZONE, 'settings' => [
+                'services' => [], 'barbers' => [], 'hours' => config('booking.hours'),
+                'breaks' => config('booking.breaks'), 'closed_dates' => [],
+            ]]);
+        DB::table('shop_memberships')->insert(['shop_id' => $shop->id, 'user_id' => $owner->id,
+            'role' => 'owner', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('audit_events')->insert(['shop_id' => $shop->id, 'user_id' => $owner->id,
+            'action' => 'shop.registered', 'created_at' => now()]);
+
+        return $shop;
     }
 
     private function allocateIdentifier(string $name): string

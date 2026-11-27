@@ -223,7 +223,7 @@ function AccountEditor({ account, data, onSave, onInvite, busy, onClose }) {
         )}
         <div className="staff-form-actions">
           <button className="btn btn-primary" disabled={invalid}>
-            {invitation ? "Create invitation link" : "Save access"}
+            {invitation ? "Send invitation" : "Save access"}
           </button>
           <button className="btn btn-outline" type="button" onClick={onClose}>
             Close
@@ -393,7 +393,11 @@ export default function AdminRoles() {
         const { data } = await client.post("/invitations", payload);
         setCreatedInvitation(data);
         setInviting(false);
-        setNotice("Super Admin invitation created.");
+        setNotice(
+          data.email_delivery === "sent"
+            ? "Super Admin invitation emailed."
+            : "Invitation created. Email delivery was unavailable. You can copy and share the link below.",
+        );
       }
       setPage(1);
       setRefresh((value) => value + 1);

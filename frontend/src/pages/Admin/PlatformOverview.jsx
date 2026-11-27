@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAdmin } from "../../context/AdminContext";
 import { platformHeaders } from "../../utils/adminHeaders";
 import { shopPath } from "../../utils/shopLinks";
+import { businessIdentifier } from "../../utils/shopOnboarding";
 import { formError } from "../../utils/formError";
 import "./PlatformOverview.scss";
 
@@ -136,6 +137,8 @@ export default function PlatformOverview() {
   const [query, setQuery] = useState({ search: "", page: 1, refresh: 0 });
   const [state, setState] = useState({ key: "", data: null, error: "" });
   const [changing, setChanging] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [businessName, setBusinessName] = useState("");
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
   const key = JSON.stringify(query);
@@ -168,6 +171,37 @@ export default function PlatformOverview() {
   const current = state.key === key;
   const data = current ? state.data : null;
   const busy = !current || changing;
+  const addBusiness = async (event) => {
+    event.preventDefault();
+    if (busy || !businessName.trim()) return;
+    setChanging(true);
+    setNotice("");
+    setActionError("");
+    try {
+      const { data } = await axios.post(
+        `${apiUrl}/platform/shops`,
+        { shop_name: businessName },
+        { headers: platformHeaders(session), timeout: 20000 },
+      );
+      setSession({ ...session, user: { ...session.user, shops: data.shops } });
+      setNotice(`${data.business.name} was added with the identifier ${data.business.slug}.`);
+      setAdding(false);
+      setBusinessName("");
+      setDraft("");
+      setQuery({ search: "", page: 1, refresh: query.refresh + 1 });
+    } catch (failure) {
+      if (failure.response?.status === 401) setSession(null);
+      else {
+        setActionError(
+          failure.response
+            ? formError(failure)
+            : "The result could not be confirmed. Check the business list before trying again.",
+        );
+      }
+    } finally {
+      setChanging(false);
+    }
+  };
   const changeStatus = async (shop, status, confirmSlug) => {
     if (busy) return;
     setChanging(true);
@@ -236,6 +270,46 @@ export default function PlatformOverview() {
         <h1 className="section-title">Platform overview</h1>
         <p>View registered businesses and suspend or reactivate their online booking.</p>
       </header>
+      {session.user.website_role === "owner" &&
+        (adding ? (
+          <form className="staff-card staff-form" onSubmit={addBusiness}>
+            <h2>Add a business</h2>
+            <label>
+              Business name
+              <input
+                value={businessName}
+                onChange={(event) => setBusinessName(event.target.value)}
+                disabled={changing}
+                maxLength={100}
+                required
+              />
+            </label>
+            <label>
+              Business identifier
+              <input value={businessIdentifier(businessName)} disabled />
+            </label>
+            <div className="staff-form-actions">
+              <button className="btn btn-primary" disabled={busy || !businessName.trim()}>
+                Create business
+              </button>
+              <button
+                className="btn btn-outline"
+                type="button"
+                disabled={changing}
+                onClick={() => {
+                  setAdding(false);
+                  setBusinessName("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button className="btn btn-primary" type="button" onClick={() => setAdding(true)}>
+            Add a business
+          </button>
+        ))}
       <form
         className="platform-overview__search"
         onSubmit={(event) => {

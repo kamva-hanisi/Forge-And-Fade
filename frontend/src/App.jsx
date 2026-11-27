@@ -199,6 +199,18 @@ function App() {
         <Route path="/signin" element={<Navigate to="/admin/signin" replace />} />
         <Route path="/signup" element={<Navigate to="/admin/signup" replace />} />
         <Route path="/account" element={<Navigate to="/admin/signin" replace />} />
+        <Route
+          path="*"
+          element={
+            <main className="public-shop__loading container">
+              <h1>Page not found</h1>
+              <p>Check the address or return to the homepage.</p>
+              <Link className="btn btn-primary" to="/">
+                Return home
+              </Link>
+            </main>
+          }
+        />
       </Routes>
       {!adminPage && !publicShopPage && <Footer />}
     </div>

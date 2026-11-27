@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WebsiteInvitationEmail;
 use App\Models\Shop;
 use App\Models\User;
+use App\Services\OutgoingMail;
 use App\Services\ShopAccess;
 use App\Services\WebsiteAccess;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +22,7 @@ class WebsiteInvitationController extends Controller
     {
         $this->authorizeOwner($request);
         $this->normalizeEmail($request);
-        return DB::transaction(function () use ($request) {
+        $invitation = DB::transaction(function () use ($request) {
             DB::table('admin_registration')->where('id', 1)->lockForUpdate()->first();
             $actor = $this->authorizeOwner($request, fresh: true);
             $input = $request->validate([
@@ -45,8 +48,23 @@ class WebsiteInvitationController extends Controller
                 'email' => $input['email'], 'invitation' => $token,
             ]);
 
-            return response()->json(['id' => $id, 'link' => $link, 'expires_at' => $expires], 201)->header('Cache-Control', 'no-store');
+            return ['id' => $id, 'link' => $link, 'expires_at' => $expires, 'email' => $input['email']];
         }, 5);
+
+        $delivery = 'unavailable';
+        if (OutgoingMail::ready()) {
+            try {
+                Mail::to($invitation['email'])->send(new WebsiteInvitationEmail($invitation['link']));
+                $delivery = 'sent';
+            } catch (\Throwable) {
+                $delivery = 'failed';
+            }
+        }
+
+        return response()->json([
+            'id' => $invitation['id'], 'link' => $invitation['link'],
+            'expires_at' => $invitation['expires_at'], 'email_delivery' => $delivery,
+        ], 201)->header('Cache-Control', 'no-store');
     }
 
     public function revoke(Request $request, int $invitation)

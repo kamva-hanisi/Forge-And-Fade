@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Mail\WebsiteInvitationEmail;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class WebsiteInvitationTest extends TestCase
@@ -49,6 +51,28 @@ class WebsiteInvitationTest extends TestCase
             'password' => 'Website-Invitation-12345', 'password_confirmation' => 'Website-Invitation-12345',
             'role' => 'owner', 'assignments' => [['shop_id' => 99, 'permissions' => ['shop.manage']]],
         ]);
+    }
+
+    public function test_invitation_is_emailed_and_still_has_a_shareable_link_if_delivery_fails(): void
+    {
+        $owner = $this->owner();
+        config([
+            'booking_mail.local_mailpit' => false, 'mail.default' => 'smtp',
+            'mail.from.address' => 'sender@example.test', 'mail.mailers.smtp.host' => 'smtp.example.test',
+            'mail.mailers.smtp.username' => 'test', 'mail.mailers.smtp.password' => 'test',
+        ]);
+        Mail::fake();
+        $email = 'invited@example.test';
+        $link = $this->asUser($owner)->postJson('/api/admin/roles/invitations', ['email' => $email, 'assignments' => []])
+            ->assertCreated()->assertJsonPath('email_delivery', 'sent')->json('link');
+        Mail::assertSent(WebsiteInvitationEmail::class, fn ($mail) => $mail->hasTo($email) && $mail->link === $link);
+
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('Simulated SMTP failure'));
+        $fallbackLink = $this->asUser($owner)->postJson('/api/admin/roles/invitations', [
+            'email' => 'fallback@example.test', 'assignments' => [],
+        ])->assertCreated()->assertJsonPath('email_delivery', 'failed')->json('link');
+        parse_str(explode('?', parse_url($fallbackLink, PHP_URL_FRAGMENT), 2)[1], $parameters);
+        $this->accept('fallback@example.test', $parameters['invitation'])->assertCreated();
     }
 
     public function test_owner_can_invite_and_the_new_account_receives_only_the_preselected_access(): void

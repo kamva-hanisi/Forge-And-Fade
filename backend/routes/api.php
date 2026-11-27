@@ -32,6 +32,7 @@ Route::post('/admin/reset-password', [AdminRecoveryController::class, 'reset'])-
 Route::post('/admin/register-shop', [ShopRegistrationController::class, 'store'])->middleware(['throttle:3,1', ProtectPublicForm::class]);
 Route::post('/admin/logout', [AdminController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/platform/overview', [PlatformController::class, 'index'])->middleware(['auth:sanctum', 'throttle:30,1']);
+Route::post('/platform/shops', [ShopRegistrationController::class, 'addBusiness'])->middleware(['auth:sanctum', 'throttle:10,1']);
 Route::put('/platform/shops/{shop}/public-default', [PlatformController::class, 'selectPublicBusiness'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:20,1']);
 Route::put('/platform/shops/{shop}/status', [PlatformController::class, 'status'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
 Route::delete('/platform/shops/{shop}', [PlatformController::class, 'destroy'])->whereNumber('shop')->middleware(['auth:sanctum', 'throttle:10,1']);
