@@ -24,6 +24,7 @@ class BookingPaymentController extends Controller
                 'method' => ['required', Rule::in(['cash', 'card', 'bank_transfer', 'other'])],
                 'received_on' => ['required', 'date_format:Y-m-d', 'after_or_equal:2000-01-01', 'before_or_equal:'.now($shop->timezone)->toDateString()]]);
             abort_if($current->status === 'cancelled', 422, 'A cancelled appointment cannot receive a new payment record.');
+            abort_if($current->payment_choice === 'online', 422, 'Online checkout tracks this appointment’s payment.');
             if ($current->activePayment()->exists()) {
                 return response()->json(['message' => 'This appointment already has a payment record. Refresh the list.'], 409);
             }

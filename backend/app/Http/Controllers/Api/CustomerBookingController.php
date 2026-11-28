@@ -27,6 +27,7 @@ class CustomerBookingController extends Controller
             if ($booking->status === 'cancelled') {
                 return $this->respond($booking);
             }
+            abort_unless(in_array($booking->status, ['confirmed', 'pending_payment'], true), 409, 'Contact the business about this payment.');
             abort_if($booking->revision !== $request->integer('revision'), 409, 'This appointment changed. Look it up again before cancelling.');
             abort_unless(CarbonImmutable::parse($booking->starts_at)->isFuture(), 409, 'This appointment has already started. Contact the business.');
             $schedule->lockDay($booking->barber_id, $booking->booking_date->toDateString());
@@ -56,7 +57,7 @@ class CustomerBookingController extends Controller
     {
         return response()->json(['booking' => [...$booking->only([
             'reference', 'service_name', 'barber_name', 'booking_date', 'booking_time',
-            'duration', 'price', 'currency', 'timezone', 'starts_at', 'ends_at', 'status', 'revision',
+            'duration', 'price', 'currency', 'payment_choice', 'timezone', 'starts_at', 'ends_at', 'status', 'revision',
         ]), 'booking_date' => $booking->booking_date->toDateString()], 'can_cancel' => $booking->status === 'confirmed' && CarbonImmutable::parse($booking->starts_at)->isFuture()])
             ->header('Cache-Control', 'no-store, private');
     }

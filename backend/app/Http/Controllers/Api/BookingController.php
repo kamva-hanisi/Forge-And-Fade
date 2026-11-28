@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\BookingEmails;
 use App\Services\BookingSchedule;
+use App\Services\PayfastCheckout;
 use App\Services\ShopAccess;
 use App\Services\ShopCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -42,7 +44,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function catalog(Request $request)
+    public function catalog(Request $request, PayfastCheckout $checkout)
     {
         if ($request->attributes->has('shop_role')) {
             ShopAccess::authorize($request, 'bookings.read');
@@ -54,6 +56,7 @@ class BookingController extends Controller
             'services' => collect($paused ? [] : ShopCatalog::services())->map(fn ($service, $id) => ['id' => $id, ...$service])->values(),
             'barbers' => collect($paused ? [] : ShopCatalog::barbers())->map(fn ($barber, $id) => ['id' => $id, ...$barber])->values(),
             'booking_status' => $shop->status,
+            'payment_options' => $paused ? [] : ($checkout->merchant($shop) ? ['cash', 'online'] : ['cash']),
             'branding' => (object) ($shop->settings['branding'] ?? []),
             'timezone' => $shop->timezone,
             'hours' => $shop->settings['hours'] ?? config('booking.hours'),
@@ -65,10 +68,34 @@ class BookingController extends Controller
 
     public function store(Request $request, BookingSchedule $schedule)
     {
-        return DB::transaction(function () use ($schedule, $request) {
+        return $this->createBooking($request, $schedule, false);
+    }
+
+    public function checkout(Request $request, BookingSchedule $schedule, PayfastCheckout $checkout)
+    {
+        return $this->createBooking($request, $schedule, true, $checkout);
+    }
+
+    private function createBooking(Request $request, BookingSchedule $schedule, bool $requireChoice, ?PayfastCheckout $checkout = null)
+    {
+        $payment = $request->validate([
+            'payment_choice' => [...($requireChoice ? [] : ['sometimes']), 'required', Rule::in(['cash', 'online'])],
+        ]);
+        $online = ($payment['payment_choice'] ?? null) === 'online';
+        $merchant = $online ? $checkout?->merchant($request->attributes->get('shop')) : null;
+        if ($online && ! $merchant) {
+            throw ValidationException::withMessages([
+                'payment_choice' => 'Online payment is unavailable for this business. Choose cash to book.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($schedule, $request, $payment, $online, $merchant, $checkout) {
             ShopCatalog::lock($request);
             $validated = $this->validateAppointment($request, true);
             $service = ShopCatalog::services()[$validated['service_id']];
+            if ($online && (float) $service['price'] <= 0) {
+                throw ValidationException::withMessages(['payment_choice' => 'Choose cash to reserve this free appointment.']);
+            }
             if (isset($validated['quoted_price']) && (int) round((float) $validated['quoted_price'] * 100) !== (int) round($service['price'] * 100)) {
                 throw ValidationException::withMessages(['quoted_price' => 'The service price has changed. Review the updated price before booking.']);
             }
@@ -98,14 +125,27 @@ class BookingController extends Controller
             }
             $booking = Booking::create([
                 ...$validated,
+                ...$payment,
                 'service_name' => $service['name'],
                 'duration' => $service['duration'],
                 'barber_name' => ShopCatalog::barbers()[$validated['barber_id']]['name'],
-                'status' => 'confirmed',
+                'status' => $online ? 'pending_payment' : 'confirmed',
+                ...($online ? [
+                    'payment_reference' => 'PF-'.Str::random(32),
+                    'payfast_merchant_id' => $merchant['merchant_id'],
+                    'payment_hold_until' => now()->addMinutes(15),
+                ] : []),
                 'price' => $service['price'],
                 'currency' => 'ZAR',
                 'shop_id' => $request->attributes->get('shop')->id,
             ]);
+
+            if ($online) {
+                return response()->json([
+                    'checkout' => $checkout->initialize($booking, $merchant),
+                    'payment_hold_until' => $booking->payment_hold_until,
+                ], 201)->header('Cache-Control', 'no-store');
+            }
 
             return response()->json(['message' => 'Your appointment has been booked successfully.', 'booking' => $booking->fresh(),
                 'email_notification' => BookingEmails::ready() ? 'pending' : 'not_configured',
@@ -153,7 +193,7 @@ class BookingController extends Controller
     private function scheduledBookings(int $shopId, array $barbers, string $from, string $to): Collection
     {
         return Booking::where('shop_id', $shopId)->whereIn('barber_id', $barbers)
-            ->whereBetween('booking_date', [$from, $to])->where('status', '!=', 'cancelled')->toBase()
+            ->whereBetween('booking_date', [$from, $to])->holdingSlot()->toBase()
             ->get(['booking_date', 'barber_id', 'booking_time', 'duration'])
             ->groupBy(['booking_date', 'barber_id']);
     }

@@ -8,6 +8,7 @@ import Home from "./pages/Home/Home";
 import Services from "./pages/Services/Services";
 import About from "./pages/About/About";
 import PublicShop from "./pages/Booking/PublicShop";
+import PaymentReturn from "./pages/Booking/PaymentReturn";
 import { shopPath } from "./utils/shopLinks";
 import useShopServices, { PublicCatalogContext, usePublicCatalog } from "./hooks/useShopServices";
 import { adminDashboard, adminLanding, rolesPath } from "./utils/adminDashboard";
@@ -104,7 +105,7 @@ function Appointments({ create = false }) {
 function App() {
   const { pathname } = useLocation();
   const adminPage = pathname === "/admin" || pathname.startsWith("/admin/");
-  const publicShopPage = pathname.startsWith("/shops/");
+  const publicShopPage = pathname.startsWith("/shops/") || pathname === "/booking/payment";
   const bookingRedirect = pathname === "/booking" || pathname === "/booking/manage";
   const adminAccess = [
     "/admin/signin",
@@ -163,6 +164,7 @@ function App() {
         />
         <Route path="/booking" element={<BookingRedirect />} />
         <Route path="/booking/manage" element={<BookingRedirect manage />} />
+        <Route path="/booking/payment" element={<PaymentReturn />} />
         <Route path="/shops/:slug/book" element={<PublicShop />} />
         <Route path="/shops/:slug/manage" element={<PublicShop manage />} />
         <Route

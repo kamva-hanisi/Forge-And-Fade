@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Shop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class BookingApiTest extends TestCase
@@ -66,6 +67,93 @@ class BookingApiTest extends TestCase
                 'email',
                 'phone',
             ]);
+    }
+
+    public function test_checkout_requires_an_available_payment_choice_and_records_cash(): void
+    {
+        $payload = $this->validBookingPayload();
+        $this->getJson('/api/bookings/catalog')
+            ->assertOk()->assertJsonPath('payment_options', ['cash']);
+        $this->postJson('/api/bookings/checkout', $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('payment_choice');
+        $this->postJson('/api/bookings/checkout', [...$payload, 'payment_choice' => 'online'])
+            ->assertUnprocessable()->assertJsonValidationErrors('payment_choice');
+        $this->assertDatabaseCount('bookings', 0);
+
+        $booking = $this->postJson('/api/bookings/checkout', [...$payload, 'payment_choice' => 'cash'])
+            ->assertCreated()->assertJsonPath('booking.payment_choice', 'cash')->json('booking');
+        $this->assertDatabaseHas('bookings', ['id' => $booking['id'], 'payment_choice' => 'cash']);
+        $this->assertDatabaseCount('booking_payments', 0);
+    }
+
+    public function test_payfast_checkout_uses_the_business_sandbox_and_requires_a_valid_notification(): void
+    {
+        config(['payfast.sandbox_merchants' => ['forge-and-fade' => [
+            'merchant_id' => '10000100', 'merchant_key' => 'sandbox-fixture', 'passphrase' => 'fixture-passphrase',
+        ]], 'payfast.notify_url' => 'https://notifications.example.test/api/payfast/notify']);
+        $this->partialMock(\App\Services\PayfastCheckout::class, function ($mock) {
+            $mock->shouldReceive('isPayfastSource')->with('192.0.2.10')->andReturnTrue();
+            $mock->shouldReceive('isPayfastSource')->with('192.0.2.11')->andReturnFalse();
+        });
+        Http::preventStrayRequests();
+        Http::fake(['https://sandbox.payfast.co.za/eng/query/validate' => Http::response('VALID')]);
+        $shop = Shop::create(['name' => 'Separate company', 'slug' => 'separate-company']);
+        $this->getJson('/api/bookings/catalog?shop='.$shop->slug)->assertJsonPath('payment_options', ['cash']);
+        $this->getJson('/api/bookings/catalog')->assertJsonPath('payment_options', ['cash', 'online']);
+
+        $payload = $this->validBookingPayload();
+        $fields = $this->postJson('/api/bookings/checkout', [...$payload, 'payment_choice' => 'online'])
+            ->assertCreated()
+            ->assertJsonPath('checkout.url', 'https://sandbox.payfast.co.za/eng/process')
+            ->assertJsonPath('checkout.fields.merchant_id', '10000100')
+            ->assertJsonMissingPath('checkout.fields.passphrase')
+            ->assertJsonMissingPath('booking')->json('checkout.fields');
+        $booking = Booking::firstOrFail();
+        $this->assertSame($booking->payment_reference, $fields['m_payment_id']);
+        $this->assertSame($booking->price, $fields['amount']);
+        $checkoutSignature = $fields['signature'];
+        unset($fields['signature']);
+        $this->assertSame(md5(http_build_query($fields).'&passphrase=fixture-passphrase'), $checkoutSignature);
+        $this->assertSame('pending_payment', $booking->status);
+        $this->postJson('/api/bookings/checkout', [...$payload, 'payment_choice' => 'cash'])->assertConflict();
+        $status = '/api/payfast/status/'.$booking->payment_reference;
+        $this->getJson($status)->assertOk()->assertJsonPath('status', 'pending_payment')->assertJsonPath('booking_reference', null);
+        Http::assertNothingSent();
+
+        $payment = [
+            'm_payment_id' => $booking->payment_reference, 'pf_payment_id' => '987654321', 'payment_status' => 'COMPLETE',
+            'amount_gross' => $booking->price, 'merchant_id' => '10000100',
+        ];
+        $this->notifyPayfast($payment, 'fixture-passphrase', '192.0.2.11')->assertUnauthorized();
+        $this->notifyPayfast($payment, 'wrong-passphrase')->assertUnauthorized();
+        $this->notifyPayfast([...$payment, 'amount_gross' => '1.00'], 'fixture-passphrase')->assertConflict();
+        $this->notifyPayfast([...$payment, 'merchant_id' => '10000200'], 'fixture-passphrase')->assertConflict();
+        $this->assertSame('pending_payment', $booking->fresh()->status);
+
+        $this->notifyPayfast($payment, 'fixture-passphrase')->assertOk();
+        $this->getJson($status)->assertOk()->assertJsonPath('status', 'confirmed')
+            ->assertJsonPath('booking_reference', $booking->reference)->assertJsonMissingPath('email');
+        $this->notifyPayfast($payment, 'fixture-passphrase')->assertOk();
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request->body() === http_build_query($payment));
+        $this->assertNotNull($booking->fresh()->online_paid_at);
+
+        $this->postJson('/api/bookings/checkout', [...$payload, 'booking_time' => '11:00', 'payment_choice' => 'online'])->assertCreated();
+        $late = Booking::where('id', '!=', $booking->id)->firstOrFail();
+        $late->update(['payment_hold_until' => now()->subMinute()]);
+        $this->notifyPayfast([...$payment, 'm_payment_id' => $late->payment_reference], 'fixture-passphrase')->assertConflict();
+        $this->notifyPayfast([...$payment, 'm_payment_id' => $late->payment_reference, 'pf_payment_id' => '987654322'], 'fixture-passphrase')->assertOk();
+        $this->assertSame('payment_review', $late->fresh()->status);
+    }
+
+    private function notifyPayfast(array $payment, string $passphrase, string $source = '192.0.2.10')
+    {
+        $params = http_build_query($payment);
+        $body = $params.'&signature='.md5($params.'&passphrase='.urlencode($passphrase));
+
+        return $this->call('POST', '/api/payfast/notify', [], [], [], [
+            'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'REMOTE_ADDR' => $source, 'HTTP_ACCEPT' => 'application/json',
+        ], $body);
     }
 
     public function test_customer_cannot_book_an_occupied_barber_time(): void

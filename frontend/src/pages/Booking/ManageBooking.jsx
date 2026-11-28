@@ -116,6 +116,18 @@ export default function ManageBooking({ shop: requestedShop, dedicated = false }
             <dd>
               {result.booking.currency} {result.booking.price}
             </dd>
+            {result.booking.payment_choice === "cash" && (
+              <>
+                <dt>Payment choice</dt>
+                <dd>Cash at the business</dd>
+              </>
+            )}
+            {result.booking.payment_choice === "online" && (
+              <>
+                <dt>Payment choice</dt>
+                <dd>Online test checkout</dd>
+              </>
+            )}
             <dt>Status</dt>
             <dd>{result.booking.status}</dd>
           </dl>

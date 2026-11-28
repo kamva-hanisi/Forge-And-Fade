@@ -122,8 +122,21 @@ function Appointment({ booking, barbers, busy, onUpdate, onRetryEmail, client, o
         <a href={`tel:${booking.phone}`}>{booking.phone}</a>
       </p>
       {booking.notes && <p className="admin-notes">{booking.notes}</p>}
+      {booking.payment_choice === "cash" && <p>Customer selected cash at the business.</p>}
+      {booking.payment_choice === "online" && (
+        <p>
+          Online test checkout ·{" "}
+          {booking.status === "payment_review"
+            ? "Payment received after the reservation became unavailable"
+            : booking.online_paid_at
+              ? "Test payment verified"
+              : "Awaiting test payment"}
+        </p>
+      )}
       <EmailDelivery booking={booking} busy={busy} onRetry={onRetryEmail} />
-      <PaymentPanel booking={booking} client={client} onSaved={onPaymentSaved} />
+      {booking.payment_choice !== "online" && (
+        <PaymentPanel booking={booking} client={client} onSaved={onPaymentSaved} />
+      )}
       {booking.status === "confirmed" && (
         <div className="admin-actions">
           <button

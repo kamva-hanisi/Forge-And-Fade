@@ -24,7 +24,7 @@ class BookingSchedule
 
     public function bookings(int $barber, string $date, bool $lock = false)
     {
-        $query = Booking::where('shop_id', request()->attributes->get('shop')->id)->where('barber_id', $barber)->where('booking_date', $date)->where('status', '!=', 'cancelled');
+        $query = Booking::where('shop_id', request()->attributes->get('shop')->id)->where('barber_id', $barber)->where('booking_date', $date)->holdingSlot();
 
         return ($lock ? $query->lockForUpdate() : $query)->get();
     }

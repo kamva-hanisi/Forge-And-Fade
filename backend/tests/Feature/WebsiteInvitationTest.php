@@ -53,6 +53,24 @@ class WebsiteInvitationTest extends TestCase
         ]);
     }
 
+    public function test_booking_lookup_and_sign_in_do_not_use_the_invitation_acceptance_limit(): void
+    {
+        $email = 'isolated-invite@example.test';
+        $invitation = $this->invite($this->owner(), $email);
+        $this->app['auth']->forgetGuards();
+        $this->flushHeaders();
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson('/api/bookings/lookup', [
+                'reference' => 'FF-AAAAAAAAAAAAAAAA', 'email' => 'missing@example.test',
+            ])->assertNotFound();
+        }
+        $this->postJson('/api/bookings/lookup', [
+            'reference' => 'FF-AAAAAAAAAAAAAAAA', 'email' => 'missing@example.test',
+        ])->assertTooManyRequests();
+        $this->postJson('/api/admin/login', [])->assertUnprocessable();
+        $this->accept($email, $invitation)->assertCreated();
+    }
+
     public function test_invitation_is_emailed_and_still_has_a_shareable_link_if_delivery_fails(): void
     {
         $owner = $this->owner();

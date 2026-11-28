@@ -28,6 +28,12 @@ class Booking extends Model
         'status',
         'price',
         'currency',
+        'payment_choice',
+        'payment_reference',
+        'payfast_merchant_id',
+        'payfast_transaction_id',
+        'payment_hold_until',
+        'online_paid_at',
         'timezone',
         'shop_id',
     ];
@@ -36,7 +42,11 @@ class Booking extends Model
         'booking_date' => 'date:Y-m-d',
         'price' => 'decimal:2',
         'shop_id' => 'integer',
+        'payment_hold_until' => 'immutable_datetime',
+        'online_paid_at' => 'immutable_datetime',
     ];
+
+    protected $hidden = ['payment_reference', 'payfast_merchant_id', 'payfast_transaction_id'];
 
     protected $appends = ['starts_at', 'ends_at'];
 
@@ -57,12 +67,27 @@ class Booking extends Model
         });
     }
 
+    public function scopeHoldingSlot(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $slot) => $slot->where('status', 'confirmed')
+            ->orWhere(fn (Builder $pending) => $pending->where('status', 'pending_payment')->where('payment_hold_until', '>', now())));
+    }
+
     protected static function booted(): void
     {
         static::created(function (Booking $booking) {
-            BookingEmails::record($booking, 'confirmation');
+            if ($booking->status === 'confirmed') {
+                BookingEmails::record($booking, 'confirmation');
+            }
         });
         static::updated(function (Booking $booking) {
+            if ($booking->getOriginal('status') === 'pending_payment') {
+                if ($booking->status === 'confirmed') {
+                    BookingEmails::record($booking, 'confirmation');
+                }
+
+                return;
+            }
             if ($booking->wasChanged(['status', 'booking_date', 'booking_time', 'barber_id'])) {
                 BookingEmails::record($booking, $booking->status === 'cancelled' ? 'cancelled' : 'changed');
             }

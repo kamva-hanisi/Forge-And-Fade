@@ -255,7 +255,7 @@ class ShopManagementController extends Controller
     private function protectAppointments(Shop $shop, BookingSchedule $schedule, ?int $barber = null): void
     {
         $clock = now($shop->timezone);
-        $bookings = Booking::where('shop_id', $shop->id)->where('status', 'confirmed')
+        $bookings = Booking::where('shop_id', $shop->id)->holdingSlot()
             ->whereDate('booking_date', '>=', $clock->toDateString());
         if ($barber !== null) {
             $bookings->where('barber_id', $barber);

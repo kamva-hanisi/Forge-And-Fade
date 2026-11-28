@@ -19,6 +19,7 @@ const emptyDetails = {
   customer_name: "",
   email: "",
   phone: "",
+  payment_choice: "",
   notes: "",
   website: "",
 };
@@ -72,6 +73,9 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
   const times = availability.key === availabilityKey ? availability.times : [];
   const availabilityError = availability.key === availabilityKey ? availability.error : "";
   const validTime = !checkingTimes && !availabilityError && times.includes(formData.booking_time);
+  const paymentOptions = catalog?.payment_options || ["cash"];
+  const canPayOnline = paymentOptions.includes("online");
+  const paymentSelected = paymentOptions.includes(formData.payment_choice);
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: catalog?.timezone || "Africa/Johannesburg",
     year: "numeric",
@@ -182,11 +186,15 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
       focusHeading();
       return;
     }
+    if (!paymentSelected) {
+      setError("Choose how you want to pay.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const { data } = await axios.post(
-        apiUrl + "/bookings",
+        apiUrl + "/bookings/checkout",
         {
           ...formData,
           shop: shopSlug,
@@ -196,6 +204,26 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
         },
         { timeout: 20000 },
       );
+      if (data.checkout) {
+        if (data.checkout.url !== "https://sandbox.payfast.co.za/eng/process") {
+          setError("The Payfast test checkout link was invalid.");
+          return;
+        }
+        const form = document.createElement("form");
+        form.method = "post";
+        form.action = data.checkout.url;
+        for (const [name, value] of Object.entries(data.checkout.fields)) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = name;
+          input.value = value;
+          form.append(input);
+        }
+        document.body.append(form);
+        form.submit();
+        form.remove();
+        return;
+      }
       setConfirmedBooking({
         ...data.booking,
         shop: data.shop,
@@ -299,7 +327,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                 </div>
                 <div>
                   <dt>Service price</dt>
-                  <dd>{money(confirmedBooking.price)} · Pay at the business</dd>
+                  <dd>{money(confirmedBooking.price)} · Pay cash at the business</dd>
                 </div>
                 <div>
                   <dt>Where</dt>
@@ -707,6 +735,36 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                                 placeholder="Style preferences or a note for your visit"
                               />
                             </div>
+                            <fieldset className="booking-payment">
+                              <legend>Choose how to pay</legend>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="payment_choice"
+                                  value="cash"
+                                  checked={formData.payment_choice === "cash"}
+                                  onChange={(event) => change("payment_choice", event.target.value)}
+                                  required
+                                />
+                                <span>Pay cash at the business</span>
+                              </label>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="payment_choice"
+                                  value="online"
+                                  checked={formData.payment_choice === "online"}
+                                  onChange={(event) => change("payment_choice", event.target.value)}
+                                  disabled={!canPayOnline}
+                                />
+                                <span>
+                                  Pay online{canPayOnline ? " (Payfast test checkout)" : ""}
+                                </span>
+                              </label>
+                              {!canPayOnline && (
+                                <p>Online payment is unavailable for this business.</p>
+                              )}
+                            </fieldset>
                             <p className="booking-hint">
                               <ShieldCheck size={16} aria-hidden="true" />
                               <span>
@@ -747,12 +805,16 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                           <button
                             className="btn btn-primary"
                             type="submit"
-                            disabled={loading || (step < 3 ? !canContinue : !validTime)}
+                            disabled={
+                              loading || (step < 3 ? !canContinue : !validTime || !paymentSelected)
+                            }
                           >
                             {loading
                               ? "Confirming…"
                               : step === 3
-                                ? "Confirm booking"
+                                ? formData.payment_choice === "online"
+                                  ? "Continue to Payfast"
+                                  : "Confirm booking"
                                 : "Continue to " + steps[step + 1].toLowerCase()}
                             {!loading && <ArrowRight size={16} aria-hidden="true" />}
                           </button>
@@ -797,7 +859,7 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                       <dd>{selectedService ? money(selectedService.price) : "—"}</dd>
                     </div>
                   </dl>
-                  <p>Pay at the business. No online payment needed.</p>
+                  <p>Choose how to pay before you confirm your appointment.</p>
                   <div className="booking-info__help">
                     <strong>Need a hand?</strong>
                     {catalog?.shop?.phone && (
