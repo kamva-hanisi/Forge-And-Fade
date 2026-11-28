@@ -36,7 +36,9 @@ class PayfastController
         $booking = Booking::where('payment_reference', $reference)->firstOrFail();
         $merchant = $checkout->merchant(Shop::findOrFail($booking->shop_id));
         abort_unless($merchant, 404);
-        $checkout->verify($booking, $fields, $merchant, $request->ip());
+        // Render's public ingress overwrites CF-Connecting-IP with the actual sender.
+        $source = config('payfast.render_ingress') ? $request->header('CF-Connecting-IP') : $request->ip();
+        $checkout->verify($booking, $fields, $merchant, $source);
 
         return response('', 200);
     }

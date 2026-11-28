@@ -126,3 +126,28 @@ web: php artisan migrate --force && vendor/bin/heroku-php-apache2 public/
 ```
 
 Set production environment variables for the database, app key, app URL, and CORS/frontend origin before deploying.
+
+## Payfast sandbox on Render
+
+The Render API uses its public HTTPS address for Payfast notifications at
+`/api/payfast/notify`. Payfast receives the address as `notify_url` during
+checkout, and uses that address to send the server-to-server confirmation.
+
+In the Forge & Fade API service on Render, open **Environment** and set these
+backend variables:
+
+```text
+PAYFAST_SANDBOX_ENABLED=true
+PAYFAST_SANDBOX_MERCHANTS={"forge-and-fade":{"merchant_id":"YOUR_SANDBOX_MERCHANT_ID","merchant_key":"YOUR_SANDBOX_MERCHANT_KEY","passphrase":"YOUR_SANDBOX_PASSPHRASE"}}
+```
+
+Copy the ID and key from the Payfast **Sandbox** dashboard. Use the same
+passphrase configured there, or omit the `passphrase` field if none is set.
+Keep the JSON on one line and omit surrounding shell quotes in Render.
+Save and deploy. Laravel can keep `APP_ENV=production`, and customers
+will only be directed to the Payfast sandbox. Businesses without their own
+entry continue to offer cash checkout.
+
+Render supplies its public URL automatically. If you use a custom API host,
+set `PAYFAST_CALLBACK_BASE_URL` to the HTTPS API origin and
+`PAYFAST_NOTIFY_URL` to the full HTTPS notification URL on that host.

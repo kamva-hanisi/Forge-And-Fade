@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\Shop;
+use App\Services\PayfastCheckout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -86,12 +87,27 @@ class BookingApiTest extends TestCase
         $this->assertDatabaseCount('booking_payments', 0);
     }
 
+    public function test_payfast_sandbox_checkout_supports_a_merchant_without_a_passphrase(): void
+    {
+        config(['payfast.sandbox_merchants' => ['forge-and-fade' => [
+            'merchant_id' => '10000100', 'merchant_key' => 'sandbox-fixture',
+        ]]]);
+
+        $fields = $this->postJson('/api/bookings/checkout', [
+            ...$this->validBookingPayload(), 'payment_choice' => 'online',
+        ])->assertCreated()->json('checkout.fields');
+
+        $signature = $fields['signature'];
+        unset($fields['signature']);
+        $this->assertSame(md5(http_build_query($fields)), $signature);
+    }
+
     public function test_payfast_checkout_uses_the_business_sandbox_and_requires_a_valid_notification(): void
     {
         config(['payfast.sandbox_merchants' => ['forge-and-fade' => [
             'merchant_id' => '10000100', 'merchant_key' => 'sandbox-fixture', 'passphrase' => 'fixture-passphrase',
         ]], 'payfast.notify_url' => 'https://notifications.example.test/api/payfast/notify']);
-        $this->partialMock(\App\Services\PayfastCheckout::class, function ($mock) {
+        $this->partialMock(PayfastCheckout::class, function ($mock) {
             $mock->shouldReceive('isPayfastSource')->with('192.0.2.10')->andReturnTrue();
             $mock->shouldReceive('isPayfastSource')->with('192.0.2.11')->andReturnFalse();
         });
@@ -146,13 +162,57 @@ class BookingApiTest extends TestCase
         $this->assertSame('payment_review', $late->fresh()->status);
     }
 
-    private function notifyPayfast(array $payment, string $passphrase, string $source = '192.0.2.10')
+    public function test_hosted_payfast_checkout_requires_explicit_sandbox_opt_in_and_https(): void
+    {
+        $this->app->instance('env', 'production');
+        config([
+            'payfast.sandbox_enabled' => false,
+            'payfast.sandbox_merchants' => ['forge-and-fade' => [
+                'merchant_id' => '10000100', 'merchant_key' => 'sandbox-fixture', 'passphrase' => 'fixture-passphrase',
+            ]],
+            'payfast.callback_base_url' => 'https://api.example.test',
+            'payfast.notify_url' => 'http://api.example.test/api/payfast/notify',
+            'payfast.render_ingress' => true,
+        ]);
+        $this->getJson('/api/bookings/catalog')->assertJsonPath('payment_options', ['cash']);
+        config(['payfast.sandbox_enabled' => true]);
+        $this->getJson('/api/bookings/catalog')->assertJsonPath('payment_options', ['cash']);
+        config(['payfast.notify_url' => 'https://api.example.test/api/payfast/notify']);
+        $fields = $this->postJson('/api/bookings/checkout', [
+            ...$this->validBookingPayload(), 'payment_choice' => 'online',
+        ])->assertCreated()
+            ->assertJsonPath('checkout.url', 'https://sandbox.payfast.co.za/eng/process')
+            ->assertJsonPath('checkout.fields.notify_url', 'https://api.example.test/api/payfast/notify')
+            ->json('checkout.fields');
+        $booking = Booking::firstOrFail();
+        $this->assertSame('https://api.example.test/api/payfast/return/'.$booking->payment_reference, $fields['return_url']);
+
+        $this->partialMock(PayfastCheckout::class, function ($mock) {
+            $mock->shouldReceive('isPayfastSource')->with(null)->andReturnFalse();
+            $mock->shouldReceive('isPayfastSource')->with('192.0.2.10')->andReturnTrue();
+        });
+        Http::preventStrayRequests();
+        Http::fake(['https://sandbox.payfast.co.za/eng/query/validate' => Http::response('VALID')]);
+        $payment = [
+            'm_payment_id' => $booking->payment_reference, 'pf_payment_id' => '987654321', 'payment_status' => 'COMPLETE',
+            'amount_gross' => $booking->price, 'merchant_id' => '10000100',
+        ];
+        $this->notifyPayfast($payment, 'fixture-passphrase', '192.0.2.11', [
+            'HTTP_X_FORWARDED_FOR' => '192.0.2.10',
+        ])->assertUnauthorized();
+        $this->notifyPayfast($payment, 'fixture-passphrase', '192.0.2.11', [
+            'HTTP_CF_CONNECTING_IP' => '192.0.2.10',
+        ])->assertOk();
+        $this->assertSame('confirmed', $booking->fresh()->status);
+    }
+
+    private function notifyPayfast(array $payment, string $passphrase, string $source = '192.0.2.10', array $headers = [])
     {
         $params = http_build_query($payment);
         $body = $params.'&signature='.md5($params.'&passphrase='.urlencode($passphrase));
 
         return $this->call('POST', '/api/payfast/notify', [], [], [], [
-            'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'REMOTE_ADDR' => $source, 'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'REMOTE_ADDR' => $source, 'HTTP_ACCEPT' => 'application/json', ...$headers,
         ], $body);
     }
 

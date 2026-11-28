@@ -16,16 +16,32 @@ class PayfastCheckout
     public function merchant(Shop $shop): ?array
     {
         $merchant = config('payfast.sandbox_merchants')[$shop->slug] ?? null;
-        if (! app()->environment(['local', 'testing']) || ! is_array($merchant)) {
+        if (! is_array($merchant)) {
             return null;
         }
-        foreach (['merchant_id', 'merchant_key', 'passphrase'] as $field) {
+        if (! app()->environment(['local', 'testing']) && (
+            ! config('payfast.sandbox_enabled')
+            || ! $this->isHttpsUrl(config('payfast.callback_base_url'))
+            || ! $this->isHttpsUrl(config('payfast.notify_url'))
+        )) {
+            return null;
+        }
+        foreach (['merchant_id', 'merchant_key'] as $field) {
             if (! is_string($merchant[$field] ?? null) || trim($merchant[$field]) === '') {
                 return null;
             }
         }
 
-        return preg_match('/^\d{8}$/D', $merchant['merchant_id']) ? $merchant : null;
+        $merchant['passphrase'] ??= '';
+
+        return preg_match('/^\d{8}$/D', $merchant['merchant_id']) && is_string($merchant['passphrase'])
+            ? $merchant : null;
+    }
+
+    private function isHttpsUrl(?string $url): bool
+    {
+        return $url !== null && filter_var($url, FILTER_VALIDATE_URL) !== false
+            && parse_url($url, PHP_URL_SCHEME) === 'https';
     }
 
     public function initialize(Booking $booking, array $merchant): array
@@ -128,6 +144,8 @@ class PayfastCheckout
 
     private function signature(string $parameters, string $passphrase): string
     {
-        return md5($parameters.'&passphrase='.urlencode(trim($passphrase)));
+        $passphrase = trim($passphrase);
+
+        return md5($passphrase === '' ? $parameters : $parameters.'&passphrase='.urlencode($passphrase));
     }
 }
