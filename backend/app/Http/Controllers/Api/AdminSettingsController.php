@@ -45,7 +45,7 @@ class AdminSettingsController extends Controller
             'booked_values' => $canReport ? (clone $confirmed)->whereNotNull('price')->whereNotNull('currency')
                 ->selectRaw('currency, ROUND(SUM(price), 2) as amount, COUNT(*) as booking_count')->groupBy('currency')->orderBy('currency')->toBase()->get() : null,
             'unpriced_count' => $canReport ? (clone $confirmed)->where(fn ($query) => $query->whereNull('price')->orWhereNull('currency'))->count() : null,
-            'recorded_receipts' => $canReport ? DB::table('booking_payments')->where('shop_id', $shop->id)->whereNull('voided_at')
+            'recorded_receipts' => $canReport && ShopAccess::allows($request, 'payments.read') ? DB::table('booking_payments')->where('shop_id', $shop->id)->whereNull('voided_at')
                 ->whereBetween('received_on', [$from, $today])->selectRaw('currency, ROUND(SUM(amount), 2) as amount, COUNT(*) as receipt_count')
                 ->groupBy('currency')->orderBy('currency')->get() : null,
         ];
@@ -67,7 +67,7 @@ class AdminSettingsController extends Controller
                 ? BookingEmails::countFailed(clone $bookings) : null,
             'upcoming_count' => (clone $upcoming)->count(),
             'cancelled_count' => (clone $bookings)->where('status', 'cancelled')->count(),
-            'next' => $upcoming->orderBy('booking_date')->orderBy('booking_time')->limit(5)->get(),
+            'next' => $upcoming->orderBy('booking_date')->orderBy('booking_time')->limit(5)->get()->makeHidden(['online_paid_at', 'payment_hold_until']),
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -134,7 +134,7 @@ class AdminSettingsController extends Controller
         if ($input['send_email']) {
             try {
                 $businessName = Str::squish($shop->name);
-                Mail::raw("You have been invited to join ".$businessName.".\n\nCreate your account: ".$link."\n\nThis private, single-use link expires in 48 hours and only works for ".$input['email'].'. Only accept if you expected this invitation.', function ($message) use ($input, $businessName) {
+                Mail::raw('You have been invited to join '.$businessName.".\n\nCreate your account: ".$link."\n\nThis private, single-use link expires in 48 hours and only works for ".$input['email'].'. Only accept if you expected this invitation.', function ($message) use ($input, $businessName) {
                     $message->to($input['email'])->subject('Your invitation to '.$businessName);
                 });
             } catch (\Throwable $exception) {

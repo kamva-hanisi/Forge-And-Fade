@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Building2,
   Shield,
+  Receipt,
 } from "lucide-react";
 import axios from "axios";
 import Brand from "../../components/Brand/Brand";
@@ -28,6 +29,7 @@ import "./AdminWorkspace.scss";
 
 const items = [
   ["/admin/appointments", "Appointments", CalendarDays],
+  ["/admin/payments", "Payments", Receipt],
   ["/admin/inbox", "Contact inbox", Mail],
   ["/admin/management", "Business management", SlidersHorizontal],
   ["/admin/platform", "Platform overview", Building2],
@@ -95,7 +97,12 @@ export default function AdminLayout() {
           });
       setSession({ token: session.token, user: data.user });
       setOpen(false);
-      navigate("/admin", { replace: true });
+      navigate(
+        pathname === "/admin/payments" && data.user.permissions.includes("payments.read")
+          ? pathname
+          : "/admin",
+        { replace: true },
+      );
     } catch (failure) {
       if (failure.response?.status === 401) setSession(null);
       else setError(formError(failure));
@@ -171,6 +178,8 @@ export default function AdminLayout() {
             .filter(
               ([path]) =>
                 (path !== "/admin/appointments" || canReadBookings) &&
+                (path !== "/admin/payments" ||
+                  session.user.permissions.includes("payments.read")) &&
                 (path !== "/admin/inbox" ||
                   session.user.permissions?.includes("messages.manage")) &&
                 (path !== "/admin/management" ||

@@ -14,7 +14,7 @@ export default function PaymentPanel({ booking, client, onSaved }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (!session.user.permissions?.includes("reports.read")) return null;
+  if (!session.user.permissions?.includes("payments.read")) return null;
   const payment = booking.active_payment;
   const submit = async (event) => {
     event.preventDefault();
@@ -54,7 +54,9 @@ export default function PaymentPanel({ booking, client, onSaved }) {
           {error}
         </p>
       )}
-      {((!payment && booking.status !== "cancelled") ||
+      {((!payment &&
+        booking.status !== "cancelled" &&
+        session.user.permissions.includes("payments.record")) ||
         (payment && session.user.permissions?.includes("payments.void"))) && (
         <button
           type="button"

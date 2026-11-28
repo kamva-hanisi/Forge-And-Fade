@@ -47,6 +47,35 @@ class WebsiteAccessTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_grant_business_scoped_payment_viewing_and_recording_separately(): void
+    {
+        $ownerToken = $this->token($this->owner());
+        $other = $this->shop();
+        $booking = $this->asToken($ownerToken)->postJson('/api/admin/bookings', [
+            'service_id' => 2, 'barber_id' => 1, 'booking_date' => now()->next('Tuesday')->toDateString(),
+            'booking_time' => '10:00', 'customer_name' => 'Receipt customer',
+            'email' => 'receipt@example.test', 'phone' => '0712345678',
+        ])->assertCreated()->json('booking');
+        $receipt = ['amount' => '250.00', 'method' => 'cash', 'received_on' => now('Africa/Johannesburg')->toDateString()];
+        foreach (['super_admin', 'admin'] as $role) {
+            $staff = User::factory()->create();
+            $staffToken = $this->token($staff);
+            $this->change($ownerToken, $staff, $role, [1 => ['bookings.read', 'reports.read']])->assertOk();
+            $this->asToken($staffToken)->getJson('/api/admin/payments')->assertForbidden();
+            $this->asToken($staffToken)->getJson('/api/admin/bookings')->assertOk()
+                ->assertJsonMissingPath('data.0.online_paid_at')->assertJsonMissingPath('data.0.active_payment');
+            $this->change($ownerToken, $staff, $role, [1 => ['payments.read']], 1)->assertOk();
+            $this->asToken($staffToken)->getJson('/api/admin/payments')->assertOk();
+            $this->asToken($staffToken)->getJson('/api/admin/payments', ['X-Shop-Id' => $other->id])->assertForbidden();
+            $this->asToken($staffToken)->postJson('/api/admin/bookings/'.$booking['id'].'/payments', $receipt)->assertForbidden();
+            $this->change($ownerToken, $staff, $role, [1 => ['bookings.read', 'payments.record']], 2)->assertUnprocessable();
+            $this->change($ownerToken, $staff, $role, [1 => ['bookings.read', 'payments.read', 'payments.record']], 2)->assertOk();
+            $payment = $this->asToken($staffToken)->postJson('/api/admin/bookings/'.$booking['id'].'/payments', $receipt)->assertCreated()->json('payment');
+            $this->asToken($staffToken)->postJson('/api/admin/payments/'.$payment['id'].'/void', ['reason' => 'Incorrect receipt'])->assertForbidden();
+            $this->asToken($ownerToken)->postJson('/api/admin/payments/'.$payment['id'].'/void', ['reason' => 'Incorrect receipt'])->assertOk();
+        }
+    }
+
     public function test_owner_is_explicit_unique_and_legacy_platform_grants_require_review(): void
     {
         $legacy = User::factory()->create(['is_admin' => true, 'is_platform_admin' => true]);

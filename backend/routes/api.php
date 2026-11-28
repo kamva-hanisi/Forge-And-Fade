@@ -5,17 +5,17 @@ use App\Http\Controllers\Api\AdminMessageController;
 use App\Http\Controllers\Api\AdminRecoveryController;
 use App\Http\Controllers\Api\AdminRegistrationController;
 use App\Http\Controllers\Api\AdminRolesController;
-use App\Http\Controllers\Api\WebsiteInvitationController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingPaymentController;
-use App\Http\Controllers\Api\PayfastController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CustomerBookingController;
+use App\Http\Controllers\Api\PayfastController;
 use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\ShopLocationController;
 use App\Http\Controllers\Api\ShopManagementController;
 use App\Http\Controllers\Api\ShopRegistrationController;
+use App\Http\Controllers\Api\WebsiteInvitationController;
 use App\Http\Middleware\ProtectPublicForm;
 use App\Http\Middleware\ResolveShop;
 use App\Models\Shop;
@@ -77,6 +77,7 @@ Route::middleware(['auth:sanctum', ResolveShop::class.':admin'])->prefix('admin'
     Route::get('/bookings', [AdminController::class, 'index']);
     Route::post('/bookings/{booking}/emails/{kind}/retry', [AdminController::class, 'retryEmail'])
         ->whereNumber('booking')->whereIn('kind', BookingEmails::DASHBOARD_KINDS)->middleware('throttle:10,1,retry-booking-email:');
+    Route::get('/payments', [BookingPaymentController::class, 'index']);
     Route::post('/bookings/{booking}/payments', [BookingPaymentController::class, 'store'])->whereNumber('booking')->middleware('throttle:10,1,record-booking-payment:');
     Route::post('/payments/{payment}/void', [BookingPaymentController::class, 'void'])->whereNumber('payment')->middleware('throttle:10,1,void-booking-payment:');
     Route::post('/bookings', [AdminController::class, 'store'])->middleware('throttle:10,1,staff-booking:');

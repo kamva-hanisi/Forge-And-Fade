@@ -14,7 +14,7 @@ class ShopAccess
     {
         return match ($role) {
             'owner', 'platform_admin', 'website_owner' => [...WebsiteAccess::SUPER_ADMIN_PERMISSIONS, 'members.invite', 'members.manage', 'payments.void'],
-            'manager' => ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read', 'payments.record'],
+            'manager' => ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read', 'payments.read', 'payments.record'],
             'barber' => ['bookings.read'],
             default => [],
         };

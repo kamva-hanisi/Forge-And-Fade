@@ -14,7 +14,7 @@ class WebsiteAccess
 
     public const BRANDING_PERMISSION = 'shop.branding.write';
 
-    public const ADMIN_PERMISSIONS = ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read', 'payments.record', self::BUSINESS_HOURS_PERMISSION];
+    public const ADMIN_PERMISSIONS = ['bookings.read', 'bookings.write', 'messages.manage', 'reports.read', 'payments.read', 'payments.record', self::BUSINESS_HOURS_PERMISSION];
 
     public const SUPER_ADMIN_PERMISSIONS = [...self::ADMIN_PERMISSIONS, 'shop.write', 'shop.manage', self::BRANDING_PERMISSION];
 
@@ -97,8 +97,8 @@ class WebsiteAccess
                 || (! $isOwner && array_diff($permissions, $scope[$shop] ?? [])), 403, 'A business or permission is outside your delegation scope.');
             if ((array_intersect(['bookings.write', 'reports.read', 'payments.record'], $permissions)
                     && ! in_array('bookings.read', $permissions, true))
-                || (in_array('payments.record', $permissions, true) && ! in_array('reports.read', $permissions, true))) {
-                throw ValidationException::withMessages(['assignments' => 'Booking edits and reports require appointment viewing. Payment recording also requires report access.']);
+                || (in_array('payments.record', $permissions, true) && ! in_array('payments.read', $permissions, true))) {
+                throw ValidationException::withMessages(['assignments' => 'Booking edits and reports require View appointments. Record payments requires View appointments and View payments.']);
             }
             $result[$shop] = $permissions;
         }

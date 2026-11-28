@@ -28,6 +28,7 @@ import AdminInbox from "./pages/Admin/AdminInbox";
 import AdminBooking from "./pages/Admin/AdminBooking";
 import ShopManagement from "./pages/Admin/ShopManagement";
 import PlatformOverview from "./pages/Admin/PlatformOverview";
+import AdminPayments from "./pages/Admin/AdminPayments";
 import AdminRoles from "./pages/Admin/AdminRoles";
 
 function BookingRedirect({ manage = false }) {
@@ -183,6 +184,7 @@ function App() {
           <Route path="owner" element={<DashboardHome kind="owner" />} />
           <Route path="staff" element={<DashboardHome kind="staff" />} />
           <Route path="appointments" element={<Appointments />} />
+          <Route path="payments" element={<AdminPayments />} />
           <Route path="appointments/new" element={<Appointments create />} />
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="management" element={<ShopManagement />} />

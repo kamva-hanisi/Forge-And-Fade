@@ -14,6 +14,7 @@ export const rolesPath = "/admin/settings/roles";
 
 export function adminLanding(user) {
   if (user.permissions.includes("bookings.read")) return adminDashboard(user.role).path;
+  if (user.permissions.includes("payments.read")) return "/admin/payments";
   return user.platform_access ? "/admin/platform" : rolesPath;
 }
 

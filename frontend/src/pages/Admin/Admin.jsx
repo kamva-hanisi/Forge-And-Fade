@@ -96,7 +96,16 @@ function EmailDelivery({ booking, busy, onRetry }) {
   );
 }
 
-function Appointment({ booking, barbers, busy, onUpdate, onRetryEmail, client, onPaymentSaved }) {
+function Appointment({
+  booking,
+  barbers,
+  busy,
+  onUpdate,
+  onRetryEmail,
+  client,
+  onPaymentSaved,
+  canViewPayments,
+}) {
   const [editing, setEditing] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [schedule, setSchedule] = useState({
@@ -123,7 +132,7 @@ function Appointment({ booking, barbers, busy, onUpdate, onRetryEmail, client, o
       </p>
       {booking.notes && <p className="admin-notes">{booking.notes}</p>}
       {booking.payment_choice === "cash" && <p>Customer selected cash at the business.</p>}
-      {booking.payment_choice === "online" && (
+      {canViewPayments && booking.payment_choice === "online" && (
         <p>
           Online test checkout ·{" "}
           {booking.status === "payment_review"
@@ -579,6 +588,7 @@ export default function Admin() {
               onUpdate={update}
               onRetryEmail={retryEmail}
               client={client}
+              canViewPayments={session.user.permissions.includes("payments.read")}
               onPaymentSaved={() => {
                 setMessage(
                   "Payment receipt updated. No money was charged or refunded by this website.",

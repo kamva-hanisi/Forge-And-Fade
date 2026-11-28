@@ -13,9 +13,42 @@ use Illuminate\Validation\Rule;
 
 class BookingPaymentController extends Controller
 {
+    public function index(Request $request)
+    {
+        $shop = ShopAccess::authorize($request, 'payments.read');
+        $input = $request->validate([
+            'type' => ['nullable', Rule::in(['cash', 'manual', 'payfast'])],
+            'page' => 'nullable|integer|min:1',
+        ]);
+        $receipts = DB::table('booking_payments as receipt')
+            ->join('bookings as booking', function ($join) {
+                $join->on('booking.id', '=', 'receipt.booking_id')->on('booking.shop_id', '=', 'receipt.shop_id');
+            })
+            ->where('receipt.shop_id', $shop->id)
+            ->selectRaw("'manual' as type, receipt.id as entry_id, booking.reference as booking_reference,
+                booking.customer_name, booking.service_name, receipt.amount, receipt.currency, receipt.method,
+                receipt.received_on as paid_on, CASE WHEN receipt.voided_at IS NULL THEN 'received' ELSE 'voided' END as payment_status,
+                NULL as transaction_id");
+        $online = DB::table('bookings')->where('shop_id', $shop->id)
+            ->where('payment_choice', 'online')->whereNotNull('online_paid_at')
+            ->selectRaw("CASE WHEN payfast_transaction_id IS NULL THEN 'legacy' ELSE 'payfast' END as type,
+                id as entry_id, reference as booking_reference, customer_name, service_name, price as amount, currency,
+                'online' as method, DATE(online_paid_at) as paid_on,
+                CASE WHEN status = 'payment_review' THEN 'review' ELSE 'verified' END as payment_status,
+                payfast_transaction_id as transaction_id");
+        $page = DB::query()->fromSub($receipts->unionAll($online), 'payments')
+            ->when($input['type'] ?? null, fn ($query, $type) => $type === 'cash'
+                ? $query->where('type', 'manual')->where('method', 'cash')
+                : $query->where('type', $type))
+            ->orderByDesc('paid_on')->orderBy('type')->orderByDesc('entry_id')->paginate(20);
+
+        return response()->json($page)->header('Cache-Control', 'no-store, private');
+    }
+
     public function store(Request $request, int $booking)
     {
         ShopAccess::authorize($request, 'payments.record');
+        abort_unless(ShopAccess::allows($request, 'payments.read'), 403);
 
         return DB::transaction(function () use ($request, $booking) {
             $shop = ShopCatalog::lock($request);

@@ -95,7 +95,8 @@ class AdminController extends Controller
             abort_unless($canManageBookings, 403);
             BookingEmails::filterFailed($query);
         }
-        if (in_array('reports.read', $permissions, true)) {
+        $canViewPayments = in_array('payments.read', $permissions, true);
+        if ($canViewPayments) {
             $query->with('activePayment');
         }
         $shop = $request->attributes->get('shop');
@@ -124,6 +125,9 @@ class AdminController extends Controller
         }
 
         $page = $query->orderBy('booking_date')->orderBy('booking_time')->orderBy('id')->paginate(20);
+        if (! $canViewPayments) {
+            $page->through(fn (Booking $booking) => $booking->makeHidden(['online_paid_at', 'payment_hold_until']));
+        }
         if ($page->count() && $canManageBookings) {
             $deliveries = BookingEmails::latestForBookings($page->getCollection(), $shop->status === 'active');
             $page->through(fn (Booking $booking) => $booking->setAttribute('email_deliveries', $deliveries->get($booking->id, [])));
@@ -198,7 +202,12 @@ class AdminController extends Controller
 
             ShopAccess::audit($request, 'booking.'.$input['action'], $current->id);
 
-            return response()->json(['message' => 'Appointment updated.', 'booking' => $current->fresh()]);
+            $updated = $current->fresh();
+            if (! ShopAccess::allows($request, 'payments.read')) {
+                $updated->makeHidden(['online_paid_at', 'payment_hold_until']);
+            }
+
+            return response()->json(['message' => 'Appointment updated.', 'booking' => $updated]);
         }, 5);
     }
 }

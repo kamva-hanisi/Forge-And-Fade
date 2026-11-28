@@ -11,7 +11,8 @@ const permissionLabels = {
   "bookings.read": "View appointments",
   "bookings.write": "Create, reschedule, and cancel appointments",
   "messages.manage": "Manage contact enquiries",
-  "reports.read": "View booking and receipt reports",
+  "reports.read": "View booking reports",
+  "payments.read": "View payments",
   "payments.record": "Record payments",
   "shop.write": "Edit business profile, phone, and location",
   "shop.manage": "Manage services, barber profiles, and barber schedules",
@@ -493,6 +494,12 @@ export default function AdminRoles() {
                 enquiries, reports, and payment recording, as permitted.
               </dd>
             </dl>
+            <h3>Payments</h3>
+            <p>
+              Grant <strong>View payments</strong> to give someone access to cash receipts and
+              verified Payfast payments for that business. To let them record money received, also
+              grant <strong>Record payments</strong> and <strong>View appointments</strong>.
+            </p>
             <h3>Branding and opening hours</h3>
             <p>
               The Website Owner has both permissions across all businesses. Business Owners have

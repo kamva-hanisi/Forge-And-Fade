@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Booking;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -105,5 +106,35 @@ class BookingPaymentTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-11-03 11:00:00', 'Africa/Johannesburg'));
         $this->getJson('/api/admin/bookings?view=past')->assertOk()->assertJsonPath('data.0.id', $booking['id']);
         $this->getJson('/api/admin/bookings?view=invalid')->assertUnprocessable();
+    }
+
+    public function test_payments_list_includes_manual_receipts_and_verified_payfast_only_for_the_selected_business(): void
+    {
+        $this->member();
+        $booking = $this->booking();
+        $payment = $this->postJson('/api/admin/bookings/'.$booking['id'].'/payments', $this->receipt())->assertCreated()->json('payment');
+        $manual = Booking::findOrFail($booking['id']);
+        $manual->replicate(['reference'])->fill(['payment_choice' => 'online', 'status' => 'pending_payment'])->save();
+        $manual->replicate(['reference'])->fill([
+            'payment_choice' => 'online', 'online_paid_at' => now(), 'payfast_transaction_id' => '1234567',
+        ])->save();
+        $other = Shop::create(['name' => 'Another business', 'slug' => 'payments-other']);
+        $manual->replicate(['reference'])->fill([
+            'shop_id' => $other->id, 'payment_choice' => 'online', 'online_paid_at' => now(), 'payfast_transaction_id' => '9999999',
+        ])->save();
+
+        $this->getJson('/api/admin/payments')->assertOk()->assertJsonPath('total', 2);
+        $this->getJson('/api/admin/payments?type=cash')->assertOk()->assertJsonPath('total', 1);
+        $this->getJson('/api/admin/payments?type=manual')->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.method', 'cash')->assertJsonPath('data.0.entry_id', $payment['id'])
+            ->assertJsonPath('data.0.booking_reference', $manual->reference);
+        $this->getJson('/api/admin/payments?type=payfast')->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.transaction_id', '1234567')->assertJsonPath('data.0.payment_status', 'verified')
+            ->assertJsonMissingPath('data.0.email');
+        $this->postJson('/api/admin/payments/'.$payment['id'].'/void', ['reason' => 'Duplicate receipt'])->assertOk();
+        $this->getJson('/api/admin/payments?type=manual')->assertOk()->assertJsonPath('data.0.payment_status', 'voided');
+        $this->member('owner', $other->id);
+        $this->getJson('/api/admin/payments')->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.transaction_id', '9999999');
     }
 }
