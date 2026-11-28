@@ -7,6 +7,7 @@ import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError as errorText } from "../../utils/formError";
 import "./Booking.scss";
 import { initialBookingSelection, resolveShopSlug, shopPath } from "../../utils/shopLinks";
+import BusinessLink from "../../components/BusinessLink";
 import BarberPortfolio from "./BarberPortfolio";
 import NextAvailable from "./NextAvailable";
 import { formatRand as money } from "../../utils/money";
@@ -710,13 +711,23 @@ export default function Booking({ shop, dedicated = false, initialCatalog = null
                               <ShieldCheck size={16} aria-hidden="true" />
                               <span>
                                 Read the{" "}
-                                <Link to="/terms" target="_blank" rel="noopener">
+                                <BusinessLink
+                                  to="/terms"
+                                  shop={shopSlug}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
                                   booking terms
-                                </Link>{" "}
+                                </BusinessLink>{" "}
                                 and{" "}
-                                <Link to="/privacy" target="_blank" rel="noopener">
+                                <BusinessLink
+                                  to="/privacy"
+                                  shop={shopSlug}
+                                  target="_blank"
+                                  rel="noopener"
+                                >
                                   privacy notice
-                                </Link>
+                                </BusinessLink>
                                 .
                               </span>
                             </p>

@@ -11,6 +11,10 @@
     height: 100%;
     object-fit: contain;
   }
+  img.brand__image--uploaded {
+    width: $uploaded-logo-width;
+    height: $uploaded-logo-height;
+  }
   span {
     padding-inline: 12px;
     color: $text;

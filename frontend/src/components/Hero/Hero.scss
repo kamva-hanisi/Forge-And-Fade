@@ -109,3 +109,9 @@
     }
   }
 }
+
+.hero__image--uploaded {
+  width: min(100%, $uploaded-cover-width);
+  height: $uploaded-cover-height;
+  justify-self: center;
+}

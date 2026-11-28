@@ -6,6 +6,7 @@ import Booking from "./Booking";
 import ManageBooking from "./ManageBooking";
 import { shopDirections, shopPath } from "../../utils/shopLinks";
 import ShopHours from "../../components/ShopHours/ShopHours";
+import BusinessLink from "../../components/BusinessLink";
 import { shopMediaUrl } from "../../utils/shopMedia";
 import "./PublicShop.scss";
 
@@ -32,8 +33,12 @@ function ShopDetails({ catalog }) {
             </a>
           )}
           <div className="public-shop__policy-links">
-            <Link to="/terms">Booking terms</Link>
-            <Link to="/privacy">Privacy</Link>
+            <BusinessLink to="/terms" shop={catalog.shop.slug}>
+              Booking terms
+            </BusinessLink>
+            <BusinessLink to="/privacy" shop={catalog.shop.slug}>
+              Privacy
+            </BusinessLink>
           </div>
         </div>
         {catalog.hours && (
@@ -108,7 +113,7 @@ function ShopPage({ slug, manage }) {
     "--shop-cover": branding.cover ? `url("${shopMediaUrl(slug, branding.cover)}")` : undefined,
   };
   return (
-    <div className="public-shop" style={style}>
+    <div className={`public-shop${branding.cover ? " public-shop--with-cover" : ""}`} style={style}>
       <header className="public-shop__top">
         <div className="public-shop__header container">
           <Link className="public-shop__brand" to={shopPath(slug)}>

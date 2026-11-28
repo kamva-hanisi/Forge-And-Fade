@@ -92,6 +92,7 @@ export default function useShopServices(requestedShop, { enabled = true, live = 
 
   const current = enabled && state?.requestedShop === requestedShop ? state : null;
   return {
+    requestedShop,
     services: current?.services || [],
     error: current?.error || "",
     loading: enabled && !current,

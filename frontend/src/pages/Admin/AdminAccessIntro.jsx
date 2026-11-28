@@ -3,7 +3,7 @@ import { ShieldCheck } from "lucide-react";
 export default function AdminAccessIntro({ title, accent, children }) {
   return (
     <div className="admin-access__intro">
-      <span className="section-label">Forge &amp; Fade · Administration</span>
+      <span className="section-label">Business administration</span>
       <h1 className="section-title">
         {title}
         <br /> <span>{accent}</span>

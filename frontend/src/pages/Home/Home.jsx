@@ -7,6 +7,7 @@ import AboutSection from "../../components/AboutSection/AboutSection";
 import { usePublicCatalog } from "../../hooks/useShopServices";
 import NextAvailable from "../Booking/NextAvailable";
 import { bookingLink, shopPath } from "../../utils/shopLinks";
+import BusinessLink from "../../components/BusinessLink";
 import "./Home.scss";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -94,12 +95,9 @@ const Home = () => {
             )}
           </div>
           <div className="home-visit__actions">
-            <Link
-              to={`/contact?shop=${encodeURIComponent(catalog.shop)}`}
-              className="btn btn-primary"
-            >
+            <BusinessLink to="/contact" className="btn btn-primary">
               Hours and directions
-            </Link>
+            </BusinessLink>
             <Link to={shopPath(catalog.shop, true)} className="btn btn-outline">
               Manage a booking
             </Link>

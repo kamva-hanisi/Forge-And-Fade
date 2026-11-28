@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import BusinessLink from "../../components/BusinessLink";
 import "./Terms.scss";
 
 export default function Privacy() {
@@ -8,7 +8,7 @@ export default function Privacy() {
         <div className="container">
           <h1 className="section-title">Booking privacy</h1>
           <p className="section-text">
-            How Forge &amp; Fade uses the details you share when booking or contacting a business.
+            How your details are used when you book or contact a business.
           </p>
         </div>
       </section>
@@ -34,9 +34,8 @@ export default function Privacy() {
           <section>
             <h2>Questions and requests</h2>
             <p>
-              Contact the business shown on your booking page if you have a privacy question or want
-              to request access, a correction or deletion. For questions about Forge &amp; Fade, use
-              the <Link to="/contact">contact form</Link>.
+              Use the <BusinessLink to="/contact">contact form</BusinessLink> if you have a privacy
+              question or want to request access, a correction or deletion.
             </p>
           </section>
         </div>

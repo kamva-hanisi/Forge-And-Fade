@@ -32,7 +32,7 @@ function DashboardOverview({ title, shopName, data }) {
     <div className="staff-dashboard__overview">
       <header className="staff-dashboard__hero">
         <div>
-          <p className="staff-dashboard__shop">{shopName || "Forge & Fade"}</p>
+          <p className="staff-dashboard__shop">{shopName || "Business dashboard"}</p>
           <h1>{title}</h1>
           {data && (
             <p className="staff-dashboard__date">
@@ -234,9 +234,7 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
         <DashboardOverview title={dashboard.title} shopName={session.user.shop?.name} data={data} />
       ) : (
         <header className="staff-page-heading">
-          <span className="section-label">
-            {session.user.shop?.name || "Forge & Fade"} · Settings
-          </span>
+          <span className="section-label">{session.user.shop?.name || "Account"} · Settings</span>
           <h1 className="section-title">{titles[page][0]}</h1>
           <p>{titles[page][1]}</p>
         </header>
@@ -473,7 +471,7 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
             </h2>
             <p>
               {page === "profile"
-                ? "Your account details for Forge & Fade."
+                ? "Update your account details."
                 : page === "security"
                   ? "Changing your password signs out all sessions, including this one."
                   : "Choose the access this person needs. Only the business owner can send invitations."}
@@ -656,7 +654,10 @@ export default function AdminSettings({ page = "dashboard", dashboard }) {
               </p>
             )}
             {page === "invite" && (
-              <p>This is for Forge & Fade staff—not customers or workspaces.</p>
+              <p>
+                Send an invitation to a staff member at {session.user.shop?.name || "your business"}
+                .
+              </p>
             )}
           </aside>
         </div>

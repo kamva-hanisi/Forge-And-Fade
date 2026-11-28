@@ -10,7 +10,7 @@ const Terms = () => {
           <h1 className="section-title">Terms & Conditions</h1>
 
           <p className="section-text">
-            Please read these terms before using the Forge & Fade website or booking an appointment.
+            Please read these terms before using this website or booking an appointment.
           </p>
         </div>
       </section>
@@ -21,10 +21,10 @@ const Terms = () => {
             <p className="terms-page__updated">Last updated November 2026</p>
 
             <section>
-              <h2>1. About Forge & Fade</h2>
+              <h2>1. About this website</h2>
 
               <p>
-                Forge &amp; Fade provides online booking for participating barbering businesses. The
+                This website provides online booking for participating barbering businesses. The
                 business named on your booking page is responsible for providing your service.
               </p>
             </section>

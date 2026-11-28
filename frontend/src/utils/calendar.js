@@ -1,5 +1,3 @@
-const SHOP_NAME = "Forge & Fade";
-const SHOP_LOCATION = "Cape Town, South Africa";
 const TIME_ZONE = "Africa/Johannesburg";
 
 const cleanDate = (date) => String(date).split("T")[0];
@@ -53,7 +51,9 @@ export function googleCalendarUrl(booking) {
   const { start, end } = appointmentDates(booking);
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: (booking.shop?.name || SHOP_NAME) + " - " + booking.service_name,
+    text: booking.shop?.name
+      ? booking.shop.name + " - " + booking.service_name
+      : booking.service_name,
     dates: formatUtcDate(start) + "/" + formatUtcDate(end),
     details:
       "Appointment with " +
@@ -63,7 +63,7 @@ export function googleCalendarUrl(booking) {
       ". Reference: " +
       (booking.reference || booking.id) +
       ".",
-    location: booking.shop ? booking.shop.address || "" : SHOP_LOCATION,
+    location: booking.shop?.address || "",
     ctz: booking.timezone || TIME_ZONE,
   });
   return "https://calendar.google.com/calendar/render?" + params.toString();
@@ -86,15 +86,20 @@ export function calendarIcs(booking, now = new Date()) {
       "VERSION:2.0",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
-      "PRODID:-//Forge & Fade//Booking Calendar//EN",
+      "PRODID:-//Business Booking//Appointment Calendar//EN",
       "BEGIN:VEVENT",
       "UID:" + identifier + "@forgeandfade.co.za",
       "DTSTAMP:" + formatUtcDate(now),
       "DTSTART:" + formatUtcDate(start),
       "DTEND:" + formatUtcDate(end),
-      "SUMMARY:" + escapeIcsText((booking.shop?.name || SHOP_NAME) + " - " + booking.service_name),
+      "SUMMARY:" +
+        escapeIcsText(
+          booking.shop?.name
+            ? booking.shop.name + " - " + booking.service_name
+            : booking.service_name,
+        ),
       "DESCRIPTION:" + escapeIcsText(description),
-      "LOCATION:" + escapeIcsText(booking.shop ? booking.shop.address || "" : SHOP_LOCATION),
+      "LOCATION:" + escapeIcsText(booking.shop?.address || ""),
       "END:VEVENT",
       "END:VCALENDAR",
     ]
@@ -113,7 +118,10 @@ export const downloadAppleCalendar = (booking) => {
   const link = document.createElement("a");
   link.href = url;
   link.download =
-    "forge-and-fade-" + (booking.reference || cleanDate(booking.booking_date)) + ".ics";
+    (booking.shop?.slug || "booking") +
+    "-" +
+    (booking.reference || cleanDate(booking.booking_date)) +
+    ".ics";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

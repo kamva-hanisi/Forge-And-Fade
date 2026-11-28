@@ -3,7 +3,14 @@ export function shopPath(slug, manage = false) {
 }
 
 export function resolveShopSlug(routeSlug, querySlug) {
-  return routeSlug || querySlug || "forge-and-fade";
+  return routeSlug || querySlug || null;
+}
+
+export function publicBusinessPath(path, shop) {
+  if (!shop) return path;
+  const url = new URL(path, "https://business.invalid");
+  url.searchParams.set("shop", shop);
+  return url.pathname + url.search + url.hash;
 }
 
 export function bookingLink(slug, selection = {}) {

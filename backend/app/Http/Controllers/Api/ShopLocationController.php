@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Shop;
 use App\Services\ShopCatalog;
+use Illuminate\Http\Request;
 
 class ShopLocationController
 {
-    public function index()
+    public function index(Request $request)
     {
-        $locations = Shop::query()->where('status', 'active')->orderBy('name')->orderBy('slug')->get()
+        $input = $request->validate(['shop' => 'sometimes|required|string|max:80|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/']);
+        $locations = Shop::query()->where('status', 'active')
+            ->when(isset($input['shop']), fn ($query) => $query->where('slug', $input['shop']))
+            ->orderBy('name')->orderBy('slug')->get()
             ->map(function (Shop $shop): array {
                 $settings = $shop->settings ?? [];
                 $today = now($shop->timezone)->toDateString();

@@ -30,6 +30,8 @@ test("calendar exports represent the server's exact appointment instant", () => 
   assert.equal(params.get("dates"), "20261103T080000Z/20261103T085000Z");
   assert.equal(params.get("ctz"), "Africa/Johannesburg");
   const ics = calendarIcs(booking, now);
+  assert.equal(params.get("text"), booking.service_name);
+  assert.equal(params.get("location"), "");
   assert.match(ics, /DTSTART:20261103T080000Z/);
   assert.match(ics, /DTEND:20261103T085000Z/);
   assert.match(ics, /UID:FF-EXAMPLE123456789@forgeandfade.co.za/);

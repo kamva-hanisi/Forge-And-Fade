@@ -5,6 +5,11 @@
   --shop-brass: #e0b98d;
   background: #f7f4ef;
 
+  &--with-cover {
+    --shop-cover-position: right 1rem bottom 1rem;
+    --shop-cover-size: #{$uploaded-cover-width} #{$uploaded-cover-height};
+  }
+
   &__top {
     background: var(--shop-ink);
     color: #fff8ef;
@@ -56,7 +61,7 @@
   &__mark--logo {
     width: auto;
     min-width: 2.5rem;
-    max-width: 7rem;
+    max-width: $uploaded-logo-width;
     padding: 0.2rem;
     border-radius: 0.35rem;
     background: #fff3e3;
@@ -87,7 +92,8 @@
     padding: clamp(2.75rem, 8vw, 5.75rem) 0;
     background:
       linear-gradient(90deg, var(--shop-ink) 20%, #211a16ee 38%, #211a1630 100%),
-      var(--shop-cover, url("../../assets/barber-tools.jpg")) center right / cover,
+      var(--shop-cover, url("../../assets/barber-tools.jpg"))
+        var(--shop-cover-position, center right) / var(--shop-cover-size, cover) no-repeat,
       var(--shop-ink);
     color: #fff8ef;
     border: 0;
@@ -194,7 +200,8 @@
     .booking-page__header {
       background:
         linear-gradient(90deg, #211a16f5 15%, #211a16a8 100%),
-        var(--shop-cover, url("../../assets/barber-tools.jpg")) 70% center / cover,
+        var(--shop-cover, url("../../assets/barber-tools.jpg"))
+          var(--shop-cover-position, 70% center) / var(--shop-cover-size, cover) no-repeat,
         var(--shop-ink);
     }
 
@@ -256,15 +263,10 @@
 
   &__photos {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(0, $uploaded-photo-size));
     gap: 0.8rem;
     list-style: none;
     padding: 0;
-
-    li:only-child {
-      grid-column: 1 / -1;
-      max-width: 21rem;
-    }
 
     figure {
       margin: 0;
@@ -273,7 +275,7 @@
     img {
       display: block;
       width: 100%;
-      aspect-ratio: 4 / 5;
+      aspect-ratio: 1;
       object-fit: cover;
       background: #e4d8cc;
     }

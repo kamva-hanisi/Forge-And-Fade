@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import barberTools from "../../assets/barber-tools.jpg";
 import { shopMediaUrl } from "../../utils/shopMedia";
 import { shopPath } from "../../utils/shopLinks";
+import BusinessLink from "../BusinessLink";
 
 import "./Hero.scss";
 
@@ -31,14 +32,14 @@ const Hero = ({ shop, name, cover, onFindTime }) => {
                 Find a time
               </button>
             ) : (
-              <Link to="/services" className="btn btn-outline">
+              <BusinessLink to="/services" className="btn btn-outline">
                 View Services
-              </Link>
+              </BusinessLink>
             )}
           </div>
         </div>
 
-        <div className="hero__image">
+        <div className={`hero__image${cover ? " hero__image--uploaded" : ""}`}>
           <img src={cover ? shopMediaUrl(shop, cover) : barberTools} alt="" />
         </div>
       </div>

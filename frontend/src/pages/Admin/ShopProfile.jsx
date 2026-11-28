@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
-import { shopPath } from "../../utils/shopLinks";
+import { publicBusinessPath, shopPath } from "../../utils/shopLinks";
 
 export default function ShopProfile({ client }) {
   const { setSession } = useAdmin();
@@ -109,7 +109,7 @@ export default function ShopProfile({ client }) {
               Open your public booking page
             </a>
             {" · "}
-            <Link to="/locations">View Locations page</Link>
+            <Link to={publicBusinessPath("/locations", fields.slug)}>View business location</Link>
           </p>
           <div className="staff-form-actions">
             <button className="btn btn-primary" disabled={busy}>

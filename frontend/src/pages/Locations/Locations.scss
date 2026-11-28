@@ -87,8 +87,8 @@
   }
 
   &__cover {
-    width: 100%;
-    max-height: 180px;
+    width: min(100%, $uploaded-cover-width);
+    height: $uploaded-cover-height;
     object-fit: cover;
     border-radius: 4px;
   }

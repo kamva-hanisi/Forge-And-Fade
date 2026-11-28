@@ -37,7 +37,7 @@ export function MediaEditor({ title, target, barberId, images, slug, busy, save,
     <section className="staff-card staff-form shop-media-editor">
       <h2>{title}</h2>
       {images.length > 0 && (
-        <ul className="shop-media-editor__images">
+        <ul className="shop-media-editor__images" data-target={target}>
           {images.map(({ image, caption }) => (
             <li key={image}>
               {previewClient ? (

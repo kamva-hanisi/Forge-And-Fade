@@ -1,10 +1,12 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BadgeCheck, MessageSquareText, Scissors } from "lucide-react";
+import { BadgeCheck, MessageSquareText, Scissors, UserRound } from "lucide-react";
 
 import barberTools from "../../assets/barber-tools.jpg";
 import { usePublicCatalog } from "../../hooks/useShopServices";
 import { bookingLink, shopPath } from "../../utils/shopLinks";
 import { shopMediaUrl } from "../../utils/shopMedia";
+import BusinessLink from "../../components/BusinessLink";
 
 import "./About.scss";
 
@@ -29,8 +31,71 @@ const visitSteps = [
   },
 ];
 
+function BarberPortrait({ photo, shop, name }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <span className="about-page__portrait">
+      {!loaded && <UserRound aria-hidden="true" size={32} strokeWidth={1.5} />}
+      {photo && (
+        <img
+          src={shopMediaUrl(shop, photo.image)}
+          alt={photo.caption || `A haircut by ${name}`}
+          loading="lazy"
+          data-loaded={loaded}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(false)}
+        />
+      )}
+    </span>
+  );
+}
+
+function BarberBio({ barber, onReadMore, children }) {
+  const preview = useRef(null);
+  const [truncated, setTruncated] = useState(false);
+
+  useEffect(() => {
+    if (!barber.bio) return;
+    const element = preview.current;
+    const observer = new ResizeObserver(() => {
+      setTruncated(element.scrollHeight > element.clientHeight + 1);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [barber.bio]);
+
+  return (
+    <>
+      <p ref={preview}>{barber.bio}</p>
+      <div className="about-page__bio-actions">
+        {barber.bio && truncated && (
+          <button
+            className="about-page__read-more"
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`Read more about ${barber.name}`}
+            onClick={() => onReadMore(barber)}
+          >
+            Read more
+          </button>
+        )}
+        {children}
+      </div>
+    </>
+  );
+}
+
 const About = () => {
   const catalog = usePublicCatalog();
+  const cover = catalog.branding?.cover;
+  const [selectedBarber, setSelectedBarber] = useState(null);
+  const bioDialog = useRef(null);
+
+  useEffect(() => {
+    if (selectedBarber && !bioDialog.current.open) bioDialog.current.showModal();
+  }, [selectedBarber]);
+
   return (
     <main className="about-page">
       <section className="about-page__header">
@@ -54,13 +119,11 @@ const About = () => {
 
       <section className="about-page__story">
         <div className="container about-page__story-grid">
-          <div className="about-page__story-image">
+          <div
+            className={`about-page__story-image${cover ? " about-page__story-image--uploaded" : ""}`}
+          >
             <img
-              src={
-                catalog.branding?.cover
-                  ? shopMediaUrl(catalog.shop, catalog.branding.cover)
-                  : barberTools
-              }
+              src={cover ? shopMediaUrl(catalog.shop, cover) : barberTools}
               alt=""
               loading="lazy"
             />
@@ -83,9 +146,9 @@ const About = () => {
               and never add complexity for show.
             </p>
 
-            <Link to="/services" className="about-page__text-link">
+            <BusinessLink to="/services" className="about-page__text-link">
               Explore our services
-            </Link>
+            </BusinessLink>
           </div>
         </div>
       </section>
@@ -107,22 +170,23 @@ const About = () => {
               const photo = barber.portfolio?.[0];
               return (
                 <article key={barber.id} className="about-page__barber">
-                  {photo && (
-                    <img
-                      src={shopMediaUrl(catalog.shop, photo.image)}
-                      alt={photo.caption || `A haircut by ${barber.name}`}
-                      loading="lazy"
-                    />
-                  )}
+                  <BarberPortrait
+                    key={photo?.image}
+                    photo={photo}
+                    shop={catalog.shop}
+                    name={barber.name}
+                  />
                   <div>
-                    <h3>{barber.name}</h3>
-                    {barber.bio && <p>{barber.bio}</p>}
-                    <Link
-                      className="btn btn-outline"
-                      to={bookingLink(catalog.shop, { barber: barber.id })}
-                    >
-                      Book with {barber.name}
-                    </Link>
+                    <h3 title={barber.name}>{barber.name}</h3>
+                    <BarberBio barber={barber} onReadMore={setSelectedBarber}>
+                      <Link
+                        className="btn btn-outline"
+                        to={bookingLink(catalog.shop, { barber: barber.id })}
+                        aria-label={`Book appointment with ${barber.name}`}
+                      >
+                        Book appointment
+                      </Link>
+                    </BarberBio>
                   </div>
                 </article>
               );
@@ -130,6 +194,21 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      <dialog
+        ref={bioDialog}
+        className="about-page__bio-dialog"
+        aria-labelledby="barber-bio-title"
+        onClose={() => setSelectedBarber(null)}
+      >
+        <header>
+          <h2 id="barber-bio-title">{selectedBarber?.name}</h2>
+          <form method="dialog">
+            <button className="btn btn-outline">Close</button>
+          </form>
+        </header>
+        <p>{selectedBarber?.bio}</p>
+      </dialog>
 
       <section className="about-page__visit">
         <div className="container">
@@ -169,9 +248,9 @@ const About = () => {
               assistance.
             </li>
           </ul>
-          <Link to="/contact" className="btn btn-outline">
+          <BusinessLink to="/contact" className="btn btn-outline">
             Contact the business
-          </Link>
+          </BusinessLink>
         </div>
       </section>
 

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import BusinessLink from "../BusinessLink";
 
 import "./AboutSection.scss";
 
@@ -42,9 +42,9 @@ const AboutSection = ({ name }) => {
             </div>
           </div>
 
-          <Link to="/about" className="btn btn-primary">
+          <BusinessLink to="/about" className="btn btn-primary">
             Learn More
-          </Link>
+          </BusinessLink>
         </div>
       </div>
     </section>

@@ -3,13 +3,14 @@ import { Clock3, Mail } from "lucide-react";
 
 import "./Footer.scss";
 import Brand from "../Brand/Brand";
+import BusinessLink from "../BusinessLink";
 import { usePublicCatalog } from "../../hooks/useShopServices";
 import { shopPath } from "../../utils/shopLinks";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const catalog = usePublicCatalog();
-  const shop = catalog?.shop;
+  const shop = catalog?.shop || catalog?.requestedShop;
 
   return (
     <footer className="footer">
@@ -25,11 +26,11 @@ const Footer = () => {
         <div className="footer__column">
           <h3>Quick Links</h3>
 
-          <Link to="/">Home</Link>
+          <BusinessLink to="/">Home</BusinessLink>
 
-          <Link to="/services">Services</Link>
+          <BusinessLink to="/services">Services</BusinessLink>
 
-          <Link to="/about">About</Link>
+          <BusinessLink to="/about">About</BusinessLink>
 
           <Link to={shop ? shopPath(shop) : "/booking"}>Book Appointment</Link>
           <Link to={shop ? shopPath(shop, true) : "/booking/manage"}>Manage Booking</Link>
@@ -39,32 +40,32 @@ const Footer = () => {
         <div className="footer__column">
           <h3>Contact</h3>
 
-          <Link to="/contact" className="footer__detail">
+          <BusinessLink to="/contact" className="footer__detail">
             <Mail aria-hidden="true" />
             Contact the business
-          </Link>
+          </BusinessLink>
         </div>
 
         {/* HOURS */}
         <div className="footer__column">
           <h3>Opening Hours</h3>
 
-          <Link to="/locations" className="footer__detail">
+          <BusinessLink to="/locations" className="footer__detail">
             <Clock3 aria-hidden="true" />
-            Locations and opening hours
-          </Link>
+            Location and opening hours
+          </BusinessLink>
         </div>
       </div>
 
       <div className="footer__bottom">
         <div className="container footer__bottom-content">
           <p>
-            © {currentYear} {catalog?.profile?.name || "Forge & Fade"}. All rights reserved.
+            © {currentYear} {catalog?.profile?.name || "Business booking"}. All rights reserved.
           </p>
 
           <div>
-            <Link to="/terms">Terms & Conditions</Link>
-            <Link to="/privacy">Privacy</Link>
+            <BusinessLink to="/terms">Terms & Conditions</BusinessLink>
+            <BusinessLink to="/privacy">Privacy</BusinessLink>
           </div>
         </div>
       </div>

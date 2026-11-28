@@ -4,6 +4,7 @@ import axios from "axios";
 import { ArrowUpRight, Clock3, MapPin, Phone } from "lucide-react";
 import barberTools from "../../assets/barber-tools.jpg";
 import ShopHours from "../../components/ShopHours/ShopHours";
+import { usePublicCatalog } from "../../hooks/useShopServices";
 import { shopDirections, shopPath, shopStreetAddress } from "../../utils/shopLinks";
 import { shopMediaUrl } from "../../utils/shopMedia";
 import "./Locations.scss";
@@ -86,36 +87,41 @@ function LocationCard({ shop }) {
 }
 
 export default function Locations() {
+  const { shop, profile } = usePublicCatalog();
   const [result, setResult] = useState(null);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
     axios
-      .get(`${apiUrl}/locations`, { signal: controller.signal, timeout: 20000 })
+      .get(`${apiUrl}/locations`, {
+        params: { shop },
+        signal: controller.signal,
+        timeout: 20000,
+      })
       .then(({ data }) => setResult(data.locations))
       .catch(() => {
         if (!controller.signal.aborted) setResult(false);
       });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, shop]);
 
   return (
     <main className="locations-page">
       <header className="locations-page__hero">
         <div className="container locations-page__hero-inner">
           <div>
-            <h1>Business locations</h1>
-            <p>Find a business, check opening hours, and plan your visit.</p>
+            <h1>{profile.name} location</h1>
+            <p>Check opening hours and plan your visit.</p>
           </div>
           <img src={barberTools} alt="" />
         </div>
       </header>
       <div className="container locations-page__list">
-        {result === null && <p role="status">Loading business locations…</p>}
+        {result === null && <p role="status">Loading the business location…</p>}
         {result === false && (
           <div className="locations-page__state">
-            <p role="alert">Business locations are temporarily unavailable.</p>
+            <p role="alert">The business location is temporarily unavailable.</p>
             <button
               type="button"
               className="btn btn-outline"
@@ -128,7 +134,7 @@ export default function Locations() {
             </button>
           </div>
         )}
-        {result?.length === 0 && <p>There are no active business locations to display.</p>}
+        {result?.length === 0 && <p>This business does not have an active location.</p>}
         {Array.isArray(result) &&
           result.map((shop) => <LocationCard key={shop.slug} shop={shop} />)}
       </div>

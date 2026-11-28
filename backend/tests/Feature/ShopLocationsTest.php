@@ -48,6 +48,12 @@ class ShopLocationsTest extends TestCase
             ->assertJsonPath('locations.0.can_book', false)
             ->assertJsonPath('locations.1.can_book', true)
             ->assertJsonMissingPath('locations.0.settings');
+
+        $this->getJson('/api/locations?shop='.$studio->slug)->assertOk()->assertJsonCount(1, 'locations')
+            ->assertJsonPath('locations.0.address', $studio->address)
+            ->assertJsonPath('locations.0.directions_url', 'https://maps.app.goo.gl/somePin');
+        $this->getJson('/api/locations?shop=missing-location')->assertOk()->assertJsonCount(0, 'locations');
+        $this->getJson('/api/locations?shop='.$hidden->slug)->assertOk()->assertJsonCount(0, 'locations');
     }
 
     public function test_shop_owner_can_publish_or_clear_a_pin_without_overwriting_shop_hours(): void

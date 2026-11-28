@@ -411,7 +411,7 @@ export default function Admin() {
     <main className="admin-page container">
       <div className="admin-heading">
         <div>
-          <span className="section-label">Forge & Fade · Schedule</span>
+          <span className="section-label">{session.user.shop?.name || "Business"} · Schedule</span>
           <h1 className="section-title">Appointments</h1>
           <p>Manage bookings, reschedule visits, and keep your day running smoothly.</p>
         </div>

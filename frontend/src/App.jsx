@@ -53,7 +53,7 @@ function PublicBusinessUnavailable({ catalog }) {
             <button type="button" className="btn btn-outline" onClick={catalog.retry}>
               Retry
             </button>
-            <Link to="/locations">View business locations</Link>
+            <Link to="/">View the public business</Link>
           </div>
         </>
       )}
@@ -153,7 +153,14 @@ function App() {
             </PublicBusinessPage>
           }
         />
-        <Route path="/locations" element={<Locations />} />
+        <Route
+          path="/locations"
+          element={
+            <PublicBusinessPage>
+              <Locations />
+            </PublicBusinessPage>
+          }
+        />
         <Route path="/booking" element={<BookingRedirect />} />
         <Route path="/booking/manage" element={<BookingRedirect manage />} />
         <Route path="/shops/:slug/book" element={<PublicShop />} />

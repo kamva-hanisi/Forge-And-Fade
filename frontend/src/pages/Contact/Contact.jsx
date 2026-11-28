@@ -5,6 +5,7 @@ import FormGuard from "../../components/FormGuard/FormGuard";
 import { formError } from "../../utils/formError";
 import { usePublicCatalog } from "../../hooks/useShopServices";
 import ShopHours from "../../components/ShopHours/ShopHours";
+import BusinessLink from "../../components/BusinessLink";
 import { shopDirections, shopPath } from "../../utils/shopLinks";
 
 import "./Contact.scss";
@@ -226,7 +227,8 @@ const Contact = () => {
                 {loading ? "Sending..." : "Send Message"}
               </button>
               <p className="contact-form__privacy">
-                Read our <Link to="/privacy">privacy notice</Link> before sharing personal details.
+                Read our <BusinessLink to="/privacy">privacy notice</BusinessLink> before sharing
+                personal details.
               </p>
             </div>
           </form>
@@ -250,8 +252,8 @@ const Contact = () => {
           <details>
             <summary>What if I’m unsure which service to book?</summary>
             <p>
-              <Link to="/services">Compare services and prices</Link>. If you’re between options,
-              tell us the look you want and what you’d like to keep or change.
+              <BusinessLink to="/services">Compare services and prices</BusinessLink>. If you’re
+              between options, tell us the look you want and what you’d like to keep or change.
             </p>
           </details>
         </div>

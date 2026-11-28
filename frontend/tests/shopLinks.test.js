@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   bookingLink,
   initialBookingSelection,
+  publicBusinessPath,
   resolveShopSlug,
   shopPath,
 } from "../src/utils/shopLinks.js";
@@ -16,7 +17,16 @@ test("public shop links keep booking and management scoped to the same slug", ()
 test("a dedicated shop route cannot be overridden by a shop query parameter", () => {
   assert.equal(resolveShopSlug("cape-cuts", "other-shop"), "cape-cuts");
   assert.equal(resolveShopSlug(undefined, "other-shop"), "other-shop");
-  assert.equal(resolveShopSlug(undefined, null), "forge-and-fade");
+  assert.equal(resolveShopSlug(undefined, null), null);
+});
+
+test("links preserve an explicit business while default links follow the public selection", () => {
+  assert.equal(publicBusinessPath("/locations", "kamvas"), "/locations?shop=kamvas");
+  assert.equal(publicBusinessPath("/locations"), "/locations");
+  assert.equal(
+    publicBusinessPath("/services?sort=price", "forge-and-fade"),
+    "/services?sort=price&shop=forge-and-fade",
+  );
 });
 
 test("a suggested time link preselects shop catalog choices and preserves date and time", () => {

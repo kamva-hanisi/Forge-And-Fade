@@ -133,8 +133,9 @@ class AdminSettingsController extends Controller
         $link = rtrim(config('admin.frontend_url'), '/').'/#/admin/signup?'.http_build_query(['email' => $input['email'], 'invitation' => $token]);
         if ($input['send_email']) {
             try {
-                Mail::raw("You have been invited to administer Forge & Fade.\n\nCreate your account: ".$link."\n\nThis private, single-use link expires in 48 hours and only works for ".$input['email'].'. Only accept if you expected this invitation.', function ($message) use ($input) {
-                    $message->to($input['email'])->subject('Your Forge & Fade admin invitation');
+                $businessName = Str::squish($shop->name);
+                Mail::raw("You have been invited to join ".$businessName.".\n\nCreate your account: ".$link."\n\nThis private, single-use link expires in 48 hours and only works for ".$input['email'].'. Only accept if you expected this invitation.', function ($message) use ($input, $businessName) {
+                    $message->to($input['email'])->subject('Your invitation to '.$businessName);
                 });
             } catch (\Throwable $exception) {
                 DB::table('admin_invitations')->where('id', $id)->delete();

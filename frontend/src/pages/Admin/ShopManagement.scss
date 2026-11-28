@@ -21,8 +21,8 @@
 
     img {
       display: block;
-      width: 100%;
-      height: clamp(10rem, 26vw, 17rem);
+      width: min(100%, $uploaded-cover-width);
+      height: $uploaded-cover-height;
       object-fit: contain;
       background: $cream;
     }
@@ -39,10 +39,21 @@
 
     img {
       display: block;
-      width: 100%;
-      height: 9rem;
+      width: min(100%, $uploaded-cover-width);
+      height: $uploaded-cover-height;
       object-fit: contain;
       background: $cream;
+    }
+
+    &[data-target="portfolio"] img {
+      width: min(100%, $uploaded-photo-size);
+      height: auto;
+      aspect-ratio: 1;
+    }
+
+    &[data-target="logo"] img {
+      width: min(100%, $uploaded-logo-width);
+      height: $uploaded-logo-height;
     }
 
     .btn {

@@ -4,6 +4,7 @@ import "./ServicesSection.scss";
 
 import { bookingLink } from "../../utils/shopLinks";
 import { formatRand } from "../../utils/money";
+import BusinessLink from "../BusinessLink";
 
 const ServicesSection = ({ catalog }) => {
   const { services, loading, error, shop, retry } = catalog;
@@ -50,9 +51,9 @@ const ServicesSection = ({ catalog }) => {
         </div>
 
         <div className="services-section__footer">
-          <Link to="/services" className="btn btn-outline">
+          <BusinessLink to="/services" className="btn btn-outline">
             View All Services
-          </Link>
+          </BusinessLink>
         </div>
       </div>
     </section>

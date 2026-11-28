@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Brand from "../Brand/Brand";
+import BusinessLink from "../BusinessLink";
 import { useAdmin } from "../../context/AdminContext";
 import { usePublicCatalog } from "../../hooks/useShopServices";
 import "./Navbar.scss";
@@ -48,30 +49,34 @@ export default function Navbar({ admin = false }) {
             </>
           ) : (
             <>
-              <NavLink to="/" end onClick={closeMenu}>
+              <BusinessLink as={NavLink} to="/" end onClick={closeMenu}>
                 Home
-              </NavLink>
-              <NavLink to="/services" onClick={closeMenu}>
+              </BusinessLink>
+              <BusinessLink as={NavLink} to="/services" onClick={closeMenu}>
                 Services
-              </NavLink>
-              <NavLink to="/about" onClick={closeMenu}>
+              </BusinessLink>
+              <BusinessLink as={NavLink} to="/about" onClick={closeMenu}>
                 About
-              </NavLink>
-              <NavLink to="/locations" onClick={closeMenu}>
-                Locations
-              </NavLink>
-              <NavLink to="/contact" onClick={closeMenu}>
+              </BusinessLink>
+              <BusinessLink as={NavLink} to="/locations" onClick={closeMenu}>
+                Location
+              </BusinessLink>
+              <BusinessLink as={NavLink} to="/contact" onClick={closeMenu}>
                 Contact
-              </NavLink>
+              </BusinessLink>
             </>
           )}
-          <Link to={action.to} className="btn btn-primary navbar__mobile-book" onClick={closeMenu}>
+          <BusinessLink
+            to={action.to}
+            className="btn btn-primary navbar__mobile-book"
+            onClick={closeMenu}
+          >
             {action.label}
-          </Link>
+          </BusinessLink>
         </nav>
-        <Link to={action.to} className="btn btn-primary navbar__book" onClick={closeMenu}>
+        <BusinessLink to={action.to} className="btn btn-primary navbar__book" onClick={closeMenu}>
           {action.label}
-        </Link>
+        </BusinessLink>
         <button
           type="button"
           className="icon-button navbar__menu"

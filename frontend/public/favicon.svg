@@ -4,15 +4,9 @@
   role="img"
   aria-labelledby="title"
 >
-  <title id="title">Forge &amp; Fade</title>
+  <title id="title">Business booking</title>
   <rect width="64" height="64" rx="12" fill="#111111" />
-  <path
-    fill="#f7f5f0"
-    d="M14 12h34v9H25v9h19v9H25v15H14V12Z"
-  />
-  <path
-    fill="#b88752"
-    d="m42.5 12 8 5.4-21.8 31.9-8-5.4L42.5 12Z"
-  />
-  <circle cx="24.8" cy="46.1" r="2.4" fill="#111111" />
+  <rect x="15" y="19" width="34" height="31" rx="4" fill="none" stroke="#f7f5f0" stroke-width="4" />
+  <path d="M23 14v10M41 14v10M16 30h32" fill="none" stroke="#f7f5f0" stroke-linecap="round" stroke-width="4" />
+  <path d="m26 39 4 4 8-8" fill="none" stroke="#b88752" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" />
 </svg>

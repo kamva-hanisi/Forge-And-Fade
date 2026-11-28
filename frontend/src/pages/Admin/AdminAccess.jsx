@@ -122,7 +122,7 @@ export default function AdminAccess({ signup = false, superAdminInvite = false }
               ? checking
                 ? "Checking account setup…"
                 : firstAdminSetup
-                  ? "Create the first Business Owner account for the existing Forge & Fade business."
+                  ? "Create the first Business Owner account for the existing business."
                   : "For staff invited to an existing business. Use your work email and the invitation code from your Business Owner."
               : "Website administrators, Business Owners, and staff sign in here."}
         </p>
